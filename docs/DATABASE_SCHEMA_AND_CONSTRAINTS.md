@@ -94,6 +94,14 @@ CREATE TYPE approval_status AS ENUM (
   'CANCELLED'
 );
 
+CREATE TYPE leave_request_status AS ENUM (
+  'PENDING_MANAGER',
+  'PENDING_HR',
+  'APPROVED',
+  'REJECTED',
+  'CANCELLED'
+);
+
 CREATE TYPE attendance_status AS ENUM (
   'PRESENT_ON_TIME',
   'PRESENT_GRACE',
@@ -304,7 +312,7 @@ CREATE TYPE clearance_status AS ENUM (
 ### 5.2 `idempotency_keys`
 | Column | Type | Constraints / Default | Notes |
 | :--- | :--- | :--- | :--- |
-| `key` | `VARCHAR(128)` | `PRIMARY KEY` | Client-supplied UUID |
+| `key` | `VARCHAR(128)` | `NOT NULL` | Client-supplied UUID |
 | `user_id` | `UUID` | `NOT NULL REFERENCES users(id) ON DELETE CASCADE` | |
 | `endpoint` | `VARCHAR(150)` | `NOT NULL` | |
 | `request_hash` | `CHAR(64)` | `NOT NULL` | SHA-256 of canonical request body |
@@ -312,6 +320,8 @@ CREATE TYPE clearance_status AS ENUM (
 | `response_body` | `JSONB` | `NOT NULL` | Cached deterministic reply |
 | `expires_at` | `TIMESTAMPTZ` | `NOT NULL` | 24h TTL |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
+
+- **Constraints:** `PRIMARY KEY (user_id, endpoint, key)` |
 
 ---
 
@@ -455,8 +465,10 @@ CREATE UNIQUE INDEX uq_application_vacancy_email
 | `bank_name` | `VARCHAR(120)` | `NULL` | Restricted |
 | `bank_branch` | `VARCHAR(120)` | `NULL` | Restricted |
 | `bank_account_encrypted` | `TEXT` | `NULL` | `AES-256-GCM` ciphertext |
+| `bank_account_bidx` | `CHAR(64)` | `NULL` | HMAC-SHA256 deterministic blind index for exact search |
 | `bank_account_last4` | `CHAR(4)` | `NULL` | Safe masked suffix |
 | `nin_encrypted` | `TEXT` | `NULL` | `AES-256-GCM` ciphertext |
+| `nin_bidx` | `CHAR(64)` | `NULL` | HMAC-SHA256 deterministic blind index for exact search |
 | `nin_last4` | `CHAR(4)` | `NULL` | Masked suffix |
 | `ura_tin` | `VARCHAR(30)` | `NULL` | Restricted |
 | `nssf_number` | `VARCHAR(30)` | `NULL` | Restricted |
@@ -598,7 +610,7 @@ ALTER TABLE job_offers
 
 - **Constraints:**
   - `UNIQUE (employee_id, leave_type_id, year)`
-  - `CHECK (used_days + pending_days <= entitled_days + carried_over_days)` — **Enforces sufficient available balance at the database level.**
+  - `CHECK (entitled_days = 0 OR (used_days + pending_days <= entitled_days + carried_over_days))` — **Enforces sufficient available balance for capped leave types while safely supporting uncapped/unpaid leave.**
 
 ### 10.3 `leave_requests`
 | Column | Type | Constraints / Default | Notes |
@@ -608,11 +620,12 @@ ALTER TABLE job_offers
 | `leave_type_id` | `UUID` | `NOT NULL REFERENCES leave_types(id) ON DELETE RESTRICT` | |
 | `start_date` | `DATE` | `NOT NULL` | Inclusive (`Africa/Kampala`) |
 | `end_date` | `DATE` | `NOT NULL CHECK (end_date >= start_date)` | Inclusive (`Africa/Kampala`) |
+| `half_day_period` | `VARCHAR(20)` | `NOT NULL DEFAULT 'FULL' CHECK (half_day_period IN ('FULL', 'MORNING', 'AFTERNOON'))` | Half-day leave support |
 | `working_days` | `NUMERIC(5,2)` | `NOT NULL CHECK (working_days > 0)` | Excludes days-off & Ugandan public holidays |
 | `reason` | `TEXT` | `NOT NULL CHECK (length(trim(reason)) > 0)` | Mandatory |
 | `handover_employee_id` | `UUID` | `NULL REFERENCES employees(id) ON DELETE RESTRICT` | Optional backup colleague |
 | `attachment_key` | `TEXT` | `NULL` | Private S3 key for medical/exam proof |
-| `status` | `VARCHAR(30)` | `NOT NULL DEFAULT 'PENDING_MANAGER'` | `PENDING_MANAGER`, `PENDING_HR`, `APPROVED`, `REJECTED`, `CANCELLED` |
+| `status` | `leave_request_status` | `NOT NULL DEFAULT 'PENDING_MANAGER'` | `PENDING_MANAGER`, `PENDING_HR`, `APPROVED`, `REJECTED`, `CANCELLED` |
 | `manager_reviewed_by_user_id` | `UUID` | `NULL REFERENCES users(id) ON DELETE RESTRICT` | |
 | `manager_reviewed_at` | `TIMESTAMPTZ` | `NULL` | |
 | `hr_reviewed_by_user_id` | `UUID` | `NULL REFERENCES users(id) ON DELETE RESTRICT` | |
@@ -647,6 +660,7 @@ ALTER TABLE leave_requests
 | `monthly_installment_ugx` | `NUMERIC(14,2)` | `NOT NULL CHECK (monthly_installment_ugx > 0)` | |
 | `remaining_balance_ugx` | `NUMERIC(14,2)` | `NOT NULL CHECK (remaining_balance_ugx >= 0)` | Checked by Offboarding Clearance |
 | `status` | `VARCHAR(20)` | `NOT NULL DEFAULT 'ACTIVE'` | `ACTIVE`, `SETTLED` |
+| `version` | `INTEGER` | `NOT NULL DEFAULT 1` | Optimistic concurrency control |
 | `created_by_user_id` | `UUID` | `NOT NULL REFERENCES users(id) ON DELETE RESTRICT` | |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
 
@@ -702,13 +716,29 @@ ALTER TABLE leave_requests
 | `lst_ugx` | `NUMERIC(14,2)` | `NOT NULL DEFAULT 0` | Local Service Tax |
 | `loan_deduction_ugx` | `NUMERIC(14,2)` | `NOT NULL DEFAULT 0` | |
 | `other_deductions_ugx` | `NUMERIC(14,2)` | `NOT NULL DEFAULT 0` | |
-| `net_pay_ugx` | `NUMERIC(14,2)` | `NOT NULL` | `gross - nssf_emp - paye - lst - loan - other` |
+| `net_pay_ugx` | `NUMERIC(14,2)` | `NOT NULL CHECK (net_pay_ugx >= 0)` | `gross - nssf_emp - paye - lst - loan - other` |
 | `notes` | `TEXT` | `NULL` | |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
 
-- **Constraint:** `UNIQUE (payroll_run_id, employee_id)`
+- **Constraints:**
+  - `UNIQUE (payroll_run_id, employee_id)`
+  - `CHECK (gross_pay_ugx >= 0)`
+  - `CHECK (net_pay_ugx >= 0)`
 
-### 11.4 `payroll_adjustments` *(Post-Lock Authorised Corrections)*
+### 11.4 `payroll_loan_deductions` *(Itemized Loan Repayment Ledger)*
+| Column | Type | Constraints / Default | Notes |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | |
+| `payroll_item_id` | `UUID` | `NOT NULL REFERENCES payroll_items(id) ON DELETE RESTRICT` | |
+| `staff_loan_id` | `UUID` | `NOT NULL REFERENCES staff_loans(id) ON DELETE RESTRICT` | Target active loan |
+| `deducted_amount_ugx` | `NUMERIC(14,2)` | `NOT NULL CHECK (deducted_amount_ugx > 0)` | Applied installment |
+| `balance_before_ugx` | `NUMERIC(14,2)` | `NOT NULL CHECK (balance_before_ugx >= 0)` | Snapshot before lock |
+| `balance_after_ugx` | `NUMERIC(14,2)` | `NOT NULL CHECK (balance_after_ugx >= 0)` | Snapshot after lock |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
+
+- **Constraint:** `UNIQUE (payroll_item_id, staff_loan_id)`
+
+### 11.5 `payroll_adjustments` *(Post-Lock Authorised Corrections)*
 | Column | Type | Constraints / Default | Notes |
 | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | |
@@ -725,7 +755,7 @@ ALTER TABLE leave_requests
 | `applied_in_run_id` | `UUID` | `NULL REFERENCES payroll_runs(id) ON DELETE RESTRICT` | Linked next run when settled |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
 
-### 11.5 `payslips`
+### 11.6 `payslips`
 | Column | Type | Constraints / Default | Notes |
 | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | |

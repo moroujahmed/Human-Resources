@@ -24,6 +24,8 @@ Using the active FY 2026/27 resident policy (`0–335k: 0%`, `335k–410k: 20%`,
 | `PAY-U04` | `4,850,000` | **Oct** | Resident | `242,500` | `485,000` | `1,343,250` | `25,000` | `3,239,250` |
 | `PAY-U05` | `4,850,000` | **Nov** | Resident | `242,500` | `485,000` | `1,343,250` | `0` | `3,264,250` |
 | `PAY-U06` | `12,000,000` | Nov | Resident | `600,000` | `1,200,000` | `3,688,250` | `0` | `7,711,750` |
+| `PAY-U07` | `4,850,000` | Nov | Non-Resident | `242,500` | `485,000` | `1,376,750` | `0` | `3,230,750` |
+| `PAY-U08` | `300,000` | Nov | Non-Resident | `15,000` | `30,000` | `30,000` | `0` | `255,000` |
 
 ### 2.2 Working-Day & Holiday Leave Calculator (`LeaveCalculatorService`)
 | Test ID | Schedule | Holidays in Range | Requested Range | Expected Calendar Days | Expected Working Days |
@@ -82,6 +84,7 @@ Using the active FY 2026/27 resident policy (`0–335k: 0%`, `335k–410k: 20%`,
 | :--- | :--- | :--- | :--- | :--- |
 | `SYSTEM_ADMIN` | Raymond Mugisha | `raymond.mugisha@staffhub.ug` | `UG-ADM-0001` | IT & Governance |
 | `HR_MANAGER` | Julius Okello | `julius.okello@staffhub.ug` | `UG-HR-0012` | People & Culture |
+| `HR_MANAGER` | Grace Akello | `grace.akello@staffhub.ug` | `UG-HR-0013` | People & Culture (Peer HR / Escalation Approver) |
 | `RECRUITER` | Grace Apio | `grace.apio@staffhub.ug` | `UG-REC-0019` | People & Culture |
 | `LINE_MANAGER` | Michael Kigozi | `michael.kigozi@staffhub.ug` | `UG-MGR-0089` | Finance & Operations |
 | `PAYROLL_OFFICER` | Sarah Namubiru | `sarah.namubiru@staffhub.ug` | `UG-PAY-0034` | Finance & Operations |

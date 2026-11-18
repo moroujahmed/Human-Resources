@@ -190,7 +190,7 @@ For every employee employed during `[period_start, period_end]` (`status IN ('ON
 | `DRAFT` | `SUBMIT_PAYROLL` | `PENDING_APPROVAL` | `PAYROLL_OFFICER` | Sets `submitted_at`. Notifies HR Manager / Approver. |
 | `PENDING_APPROVAL` | `RETURN_PAYROLL` | `DRAFT` | `HR_MANAGER` | **Mandatory `decision_reason`**. Returns to Payroll Officer for revision. |
 | `PENDING_APPROVAL` | `APPROVE_PAYROLL` | `APPROVED` | `HR_MANAGER` | **Separation of Duties:** `actor.userId !== run.prepared_by_user_id`. Sets `approved_by_user_id`, `approved_at`. Logs `PAYROLL_APPROVED`. |
-| `APPROVED` | `LOCK_AND_PUBLISH` | `LOCKED` | `HR_MANAGER` or `PAYROLL_OFFICER` | Inside transaction:<br>1. Set `status = 'LOCKED'`, `locked_at`, `locked_by_user_id`.<br>2. Decrement `staff_loans.remaining_balance_ugx` (marking `SETTLED` if `0`).<br>3. Generate PDF payslips with `verification_code`, QR code, and `document_sha256` hash; store in private S3.<br>4. Insert `payslips` rows.<br>5. Notify employees (`"Your payslip for [Month] is ready"`—no UGX figures in email). |
+| `APPROVED` | `LOCK_AND_PUBLISH` | `LOCKED` | `HR_MANAGER` or `PAYROLL_OFFICER` | **Atomic DB Transaction (< 100ms):**<br>1. Set `status = 'LOCKED'`, `locked_at`, `locked_by_user_id`.<br>2. Itemize and decrement `staff_loans.remaining_balance_ugx` recording before/after balances in `payroll_loan_deductions` ledger (marking `SETTLED` if balance reaches `0`).<br>3. Compute deterministic `document_sha256` tamper hash and `verification_code`, and insert `payslips` rows.<br>4. Log `PAYROLL_LOCKED`.<br>**Post-Commit Asynchronous Pipeline (Decoupled from DB transaction):**<br>1. Render tamper-verified PDF payslips with embedded QR code (`/verify/:verificationCode`) via `pdfkit`.<br>2. Upload PDFs to private S3/MinIO bucket and update `payslips.pdf_storage_key`.<br>3. Dispatch privacy-safe email notifications (`"Your payslip for [Month] is ready"`—zero UGX figures in email). |
 
 ### 5.4 Post-Lock Authorised Adjustments (`LOCKED` Payroll Protection)
 - **Hard Rule:** Any direct `PUT`/`PATCH` on `payroll_items` belonging to a `LOCKED` run is rejected (`423 PAYROLL_LOCKED_DIRECT_EDIT_FORBIDDEN`) AND blocked by PostgreSQL trigger `trg_payroll_items_locked_guard`.
@@ -256,7 +256,11 @@ Protected via constant-time `X-Cron-Secret: <CRON_SHARED_SECRET>` comparison and
      - Else if `target_date.weekday NOT IN employee.work_schedule.working_days_bitmap` $\rightarrow$ insert `status = 'DAY_OFF'`.
      - Else if an `APPROVED` leave request covers `target_date` $\rightarrow$ insert `status = 'ON_LEAVE'`.
      - Else $\rightarrow$ insert `status = 'ABSENT'`, `notes = 'Auto-marked absent at 23:55 EAT EOD reconciliation'`.
-  4. Log summary count to `audit_logs` (`CRON_ATTENDANCE_RECONCILED`).
+  4. **Missed Check-Out Auto-Flagging:** For any record on `target_date` with `check_in_at IS NOT NULL` and `check_out_at IS NULL`:
+     - Append note: `' [Auto-closed at 23:55 EAT: Missed check-out]'`.
+     - Cap `worked_minutes` at scheduled shift length (from `shift_start_time` to `shift_end_time`).
+     - Create an action notification for the employee: `"Missed Check-Out on [Date] — Submit attendance correction if actual departure differed."`
+  5. Log summary count to `audit_logs` (`CRON_ATTENDANCE_RECONCILED`).
 
 ### Job 2: Daily Lifecycle Transitions (`Vacancies`, `Offboarding`, `Delegations`)
 - **Schedule:** Daily at **`00:05 EAT`** (`21:05 UTC`).
@@ -266,3 +270,11 @@ Protected via constant-time `X-Cron-Secret: <CRON_SHARED_SECRET>` comparison and
   2. **Deactivate Cleared Exits Past Last Working Day:** Query `offboarding_cases` where `status = 'CLEARED'` AND `last_working_day < today_eat` $\rightarrow$ execute Section 7.3 deactivation transaction for each.
   3. **Notify HR of Overdue Uncleared Exits:** Query `offboarding_cases` where `status = 'IN_PROGRESS'` AND `last_working_day < today_eat` $\rightarrow$ notify HR Manager (`"Exit overdue with unresolved clearance blockers"`).
   4. **Expire Acting Delegations:** `UPDATE acting_delegations SET is_active = false WHERE is_active = true AND ends_at < now()`.
+
+### Job 3: Annual Leave Balances Rollover
+- **Schedule:** Annually on **`01 Jan 00:01 EAT`** (`31 Dec 21:01 UTC`).
+- **Endpoint:** `POST /api/v1/internal/jobs/rollover-leave-balances`
+- **Idempotent Logic:**
+  1. For every active employee and active leave type, compute carry-over days from prior year (`min(max(0, entitled + carried_over - used), max_carry_over_days)` where `max_carry_over_days = 5.00` for Annual Leave, `0` for Sick/Maternity/Compassionate).
+  2. Insert or update `leave_balances` for `year = new_year` (`entitled_days = leave_type.annual_entitlement_days`, `carried_over_days = carry_over`, `used_days = 0`, `pending_days = 0`).
+  3. Log `LEAVE_BALANCES_ROLLED_OVER` to `audit_logs`.
