@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "on-primary-fixed-variant": "#0b4f4e",
+          "tertiary-container": "#812801",
+          "error-container": "#ffdad6",
+          "on-secondary-container": "#764e00",
+          "inverse-surface": "#32302e",
+          "on-secondary-fixed": "#291800",
+          "on-secondary-fixed-variant": "#624000",
+          "on-error": "#ffffff",
+          "on-primary": "#ffffff",
+          "surface-dim": "#ded9d5",
+          "primary-fixed": "#b2edeb",
+          "outline": "#707978",
+          "error": "#ba1a1a",
+          "surface-bright": "#fdf8f4",
+          "surface-container-lowest": "#ffffff",
+          "on-primary-fixed": "#00201f",
+          "surface-container-high": "#ece7e3",
+          "on-primary-container": "#85bfbd",
+          "on-tertiary-container": "#ff9b77",
+          "background": "#fdf8f4",
+          "tertiary-fixed-dim": "#ffb59c",
+          "surface": "#fdf8f4",
+          "on-tertiary-fixed": "#380c00",
+          "surface-container-low": "#f8f3ef",
+          "surface-container": "#f2ede9",
+          "on-tertiary": "#ffffff",
+          "on-tertiary-fixed-variant": "#812901",
+          "on-surface-variant": "#404848",
+          "primary-container": "#0b4f4e",
+          "secondary": "#815500",
+          "inverse-on-surface": "#f5f0ec",
+          "secondary-fixed-dim": "#f9bb5f",
+          "on-surface": "#1d1b19",
+          "tertiary": "#5b1a00",
+          "inverse-primary": "#96d1cf",
+          "outline-variant": "#bfc8c7",
+          "surface-tint": "#2c6766",
+          "tertiary-fixed": "#ffdbcf",
+          "primary-fixed-dim": "#96d1cf",
+          "on-background": "#1d1b19",
+          "on-error-container": "#93000a",
+          "surface-container-highest": "#e6e2de",
+          "primary": "#003736",
+          "secondary-fixed": "#ffddb2",
+          "secondary-container": "#ffc164",
+          "on-secondary": "#ffffff",
+          "surface-variant": "#e6e2de"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.125rem",
+          "lg": "0.25rem",
+          "xl": "0.5rem",
+          "full": "0.75rem"
+        },
+        "spacing": {
+          "space-sm": "0.5rem",
+          "margin": "1rem",
+          "space-xs": "0.25rem",
+          "gutter": "1.25rem",
+          "margin-desktop": "2rem",
+          "space-md": "1rem",
+          "space-xl": "2.5rem",
+          "gutter-desktop": "1.5rem",
+          "space-lg": "1.5rem"
+        },
+        "fontFamily": {
+          "label-data": [
+            "JetBrains Mono"
+          ],
+          "label-mono": [
+            "JetBrains Mono"
+          ],
+          "display-lg-mobile": [
+            "Bricolage Grotesque"
+          ],
+          "label-sm": [
+            "Inter"
+          ],
+          "headline-lg": [
+            "Bricolage Grotesque"
+          ],
+          "headline-md": [
+            "Bricolage Grotesque"
+          ],
+          "headline-sm": [
+            "Bricolage Grotesque"
+          ],
+          "display-lg": [
+            "Bricolage Grotesque"
+          ],
+          "title-md": [
+            "Inter"
+          ],
+          "body-lg": [
+            "Inter"
+          ],
+          "body-md": [
+            "Inter"
+          ],
+          "headline-lg-mobile": [
+            "Bricolage Grotesque"
+          ],
+          "body-sm": [
+            "Inter"
+          ],
+          "title-sm": [
+            "Inter"
+          ]
+        },
+        "fontSize": {
+          "label-data": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "500"
+            }
+          ],
+          "label-mono": [
+            "12px",
+            {
+              "lineHeight": "16px",
+              "fontWeight": "500"
+            }
+          ],
+          "display-lg-mobile": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "fontWeight": "700"
+            }
+          ],
+          "label-sm": [
+            "11px",
+            {
+              "lineHeight": "14px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-lg": [
+            "32px",
+            {
+              "lineHeight": "40px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-md": [
+            "24px",
+            {
+              "lineHeight": "32px",
+              "fontWeight": "600"
+            }
+          ],
+          "headline-sm": [
+            "20px",
+            {
+              "lineHeight": "28px",
+              "fontWeight": "600"
+            }
+          ],
+          "display-lg": [
+            "44px",
+            {
+              "lineHeight": "52px",
+              "fontWeight": "700"
+            }
+          ],
+          "title-md": [
+            "16px",
+            {
+              "lineHeight": "24px",
+              "fontWeight": "600"
+            }
+          ],
+          "body-lg": [
+            "16px",
+            {
+              "lineHeight": "26px",
+              "fontWeight": "400"
+            }
+          ],
+          "body-md": [
+            "14px",
+            {
+              "lineHeight": "22px",
+              "fontWeight": "400"
+            }
+          ],
+          "headline-lg-mobile": [
+            "26px",
+            {
+              "lineHeight": "34px",
+              "fontWeight": "600"
+            }
+          ],
+          "body-sm": [
+            "13px",
+            {
+              "lineHeight": "18px",
+              "fontWeight": "400"
+            }
+          ],
+          "title-sm": [
+            "14px",
+            {
+              "lineHeight": "20px",
+              "fontWeight": "600"
+            }
+          ]
+        }
+      },
+    },
+  }</script></head><body class="bg-background font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 bottom-0 w-[260px] bg-inverse-surface z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm bg-inverse-surface"><div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center"><span class="font-headline-sm text-headline-sm text-on-primary">S</span></div><div class="flex flex-col"><span class="font-title-sm text-title-sm text-inverse-on-surface tracking-tight leading-none">StaffHub</span><span class="font-label-mono text-label-mono text-outline-variant tracking-wider uppercase leading-none mt-1">Uganda HRMS</span></div></div><div class="px-space-md pt-space-lg pb-space-xs"><span class="font-label-mono text-label-mono text-outline uppercase tracking-wider">Administrative Rail</span></div><nav class="flex flex-col gap-1 px-space-xs" data-active-classes="bg-inverse-surface text-secondary-container font-semibold pl-[13px] border-l-[3px] border-secondary-container"><a class="flex items-center gap-space-sm px-4 py-2.5 rounded-DEFAULT text-inverse-on-surface hover:bg-surface-variant hover:text-on-surface transition-colors" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></a><a class="flex items-center gap-space-sm px-4 py-2.5 rounded-DEFAULT text-inverse-on-surface hover:bg-surface-variant hover:text-on-surface transition-colors" data-path="employee-directory" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="font-body-md text-body-md">Employee Directory</span></a><a class="flex items-center gap-space-sm px-4 py-2.5 rounded-DEFAULT text-inverse-on-surface hover:bg-surface-variant hover:text-on-surface transition-colors" data-path="asset-registry" href="#"><span class="material-symbols-outlined text-[20px]">devices</span><span class="font-body-md text-body-md">Asset Registry</span></a><a class="flex items-center gap-space-sm px-4 py-2.5 rounded-DEFAULT text-inverse-on-surface hover:bg-surface-variant hover:text-on-surface transition-colors" data-path="approvals-and-compliance" href="#"><span class="material-symbols-outlined text-[20px]">verified</span><span class="font-body-md text-body-md">Approvals &amp; Compliance</span></a><a class="flex items-center gap-space-sm px-4 py-2.5 rounded-DEFAULT text-inverse-on-surface hover:bg-surface-variant hover:text-on-surface transition-colors" data-path="audit-trail-and-security" href="#"><span class="material-symbols-outlined text-[20px]">security</span><span class="font-body-md text-body-md">Audit Trail &amp; Security</span></a><a aria-current="page" class="flex items-center gap-space-sm px-4 py-2.5 rounded-DEFAULT transition-colors bg-inverse-surface text-secondary-container font-semibold pl-[13px] border-l-[3px] border-secondary-container" data-path="system-settings" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span class="font-body-md text-body-md">System Settings</span></a></nav></div><div class="p-space-md bg-inverse-surface"><div class="bg-surface-variant rounded-DEFAULT p-space-sm flex flex-col gap-1"><span class="font-label-mono text-label-mono text-outline uppercase">Jurisdiction Node</span><span class="font-label-data text-label-data text-on-surface">Kampala Central DC</span><span class="font-label-mono text-label-mono text-primary font-bold">REV 2024.11-SEC</span></div></div></aside><div class="pl-[260px] flex flex-col min-h-screen"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40"><div class="h-16 w-full px-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs"><span class="font-title-md text-title-md text-on-surface font-headline">StaffHub Enterprise</span><span class="font-label-mono text-label-mono text-outline px-space-xs py-0.5 rounded-DEFAULT bg-surface-container-high">v4.8.2</span></div><div class="h-4 w-px bg-outline-variant"></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded-DEFAULT bg-surface-container-low"><span class="material-symbols-outlined text-[16px] text-secondary">gavel</span><span class="font-label-mono text-label-mono text-secondary font-medium tracking-tight">URA &amp; NSSF COMPLIANT • UGANDA DPA 2019</span></div></div><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-xs"><span class="material-symbols-outlined text-[16px] text-outline">schedule</span><span class="font-label-data text-label-data text-on-surface-variant">Kampala • 16:50 EAT</span></div><div class="h-4 w-px bg-outline-variant"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right"><span class="font-title-sm text-title-sm text-on-surface leading-none">Raymond Mugisha</span><span class="font-label-mono text-label-mono text-outline-variant leading-none mt-1">CTO &amp; Admin</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></div></header><main class="w-full pt-16 bg-background flex-1 px-gutter-desktop py-space-lg"><div class="flex flex-col w-full space-y-space-lg">
+<!-- Top Governance Header & Meta Controls -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md pb-space-sm border-b border-outline-variant/30">
+<div class="flex flex-col gap-1 max-w-3xl">
+<div class="flex items-center gap-2">
+<span class="font-label-mono text-[11px] uppercase tracking-wider text-secondary font-semibold bg-secondary-fixed/50 px-2 py-0.5 rounded-DEFAULT">
+          Statutory Governance &amp; Access Control
+        </span>
+<span class="text-outline-variant text-[12px]">•</span>
+<span class="font-label-mono text-label-mono text-outline uppercase tracking-wider">
+          System Administrator Console (Rev 2026.4)
+        </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight mt-1">
+        System Administration Settings &amp; Policy Controls
+      </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Uganda Data Protection and Privacy Act 2019 • Employment Act Cap 219 • Mandatory Cryptographic Audit Logging Protocol
+      </p>
+</div>
+<!-- Top Action Toolbar -->
+<div class="flex items-center gap-space-sm self-start md:self-auto shrink-0">
+<button class="px-space-md py-2 bg-surface-container-lowest text-on-surface font-title-sm text-title-sm rounded-DEFAULT border border-outline-variant hover:bg-surface-container-low transition-colors shadow-sm flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px] text-outline">data_object</span>
+        Export Security Configuration (JSON)
+      </button>
+<button class="px-space-md py-2 bg-primary text-on-primary font-title-sm text-title-sm rounded-DEFAULT hover:bg-primary-container transition-colors shadow-sm flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+        + Create User Account
+      </button>
+</div>
+</div>
+<!-- Institutional Tab Navigation -->
+<div class="w-full bg-surface-container-lowest border border-outline-variant/40 rounded-DEFAULT shadow-[0_1px_4px_rgba(0,0,0,0.02)]">
+<nav aria-label="System Settings Subsystems" class="flex flex-wrap items-stretch divide-x divide-outline-variant/30 font-title-sm text-title-sm">
+<!-- Active Tab: User Accounts & Roles -->
+<a class="px-space-lg py-3.5 flex items-center gap-2.5 bg-surface-container-lowest text-primary font-semibold border-b-[3px] border-primary transition-all" href="#">
+<span class="material-symbols-outlined text-[20px] text-primary">manage_accounts</span>
+<span>User Accounts &amp; Roles</span>
+<span class="font-label-mono text-[11px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium tracking-tight">
+          7 Personas / 84 Accounts
+        </span>
+</a>
+<!-- Tab 2: Work Schedules & Grace Periods -->
+<a class="px-space-lg py-3.5 flex items-center gap-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">schedule</span>
+<span>Work Schedules &amp; Grace Periods</span>
+<span class="font-label-mono text-[11px] text-outline-variant tracking-tight hidden lg:inline">
+          (08:00 – 17:00 EAT • 15m Grace)
+        </span>
+</a>
+<!-- Tab 3: Ugandan Public Holidays -->
+<a class="px-space-lg py-3.5 flex items-center gap-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">event_available</span>
+<span>Ugandan Public Holidays</span>
+<span class="font-label-mono text-[11px] text-outline px-1.5 py-0.5 bg-surface-container-high rounded-DEFAULT">
+          13 Gazetted
+        </span>
+</a>
+<!-- Tab 4: Statutory Tax Policy -->
+<a class="px-space-lg py-3.5 flex items-center gap-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">account_balance</span>
+<span>Statutory Tax Policy (PAYE / NSSF / LST)</span>
+<span class="font-label-mono text-[11px] text-outline-variant tracking-tight hidden xl:inline">
+          URA Cap 340 &amp; Act Cap 222
+        </span>
+</a>
+</nav>
+</div>
+<!-- Active Tab Container: Staff Accounts & Role Mapping Console -->
+<section class="flex flex-col bg-surface-container-lowest border border-outline-variant/40 rounded-DEFAULT shadow-[0_1px_4px_rgba(0,0,0,0.02)] overflow-hidden">
+<!-- Filter & Quick-Action Bar -->
+<div class="p-space-md bg-surface-container-low/40 border-b border-outline-variant/40 flex flex-col lg:flex-row gap-space-sm lg:items-center justify-between">
+<div class="flex flex-wrap items-center gap-space-sm flex-1">
+<!-- Search Input -->
+<div class="relative min-w-[280px] max-w-md flex-1">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline">search</span>
+<input class="w-full pl-9 pr-3 py-1.5 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-body-sm text-body-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary" placeholder="Filter by name, work email, employee ID, or NIN..." type="text"/>
+</div>
+<!-- Role Filter Dropdown -->
+<div class="relative">
+<select class="appearance-none bg-surface-container-lowest border border-outline-variant rounded-DEFAULT px-3 py-1.5 pr-8 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary cursor-pointer">
+<option>All 7 Internal Roles</option>
+<option>System Administrator (1)</option>
+<option>HR Manager (3)</option>
+<option>Payroll Officer (2)</option>
+<option>Line Manager (14)</option>
+<option>Asset Officer (2)</option>
+<option>Recruiter (3)</option>
+<option>Employee (59)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">expand_more</span>
+</div>
+<!-- Account Status Filter Dropdown -->
+<div class="relative">
+<select class="appearance-none bg-surface-container-lowest border border-outline-variant rounded-DEFAULT px-3 py-1.5 pr-8 font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary cursor-pointer">
+<option>Account Status: All (84)</option>
+<option>Active Accounts (82)</option>
+<option>Deactivated Ex-Employee (2)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[18px] text-outline pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Audit Hash State Badge -->
+<div class="flex items-center gap-2 self-start lg:self-auto px-2.5 py-1 bg-surface-container-lowest border border-outline-variant/60 rounded-DEFAULT shrink-0">
+<span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+<span class="font-label-mono text-[11px] text-on-surface-variant">MERKLE AUDIT CHAIN: <span class="font-bold text-on-surface">SYNCHRONIZED (0x9BF2...4E18)</span></span>
+<span class="material-symbols-outlined text-[15px] text-primary cursor-pointer hover:opacity-75" title="Verify Cryptographic Hash State">verified</span>
+</div>
+</div>
+<!-- Table Roster -->
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/60 border-b border-outline-variant font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider">
+<th class="py-3 px-space-md font-medium">User / Employee ID</th>
+<th class="py-3 px-space-md font-medium">Designated Role</th>
+<th class="py-3 px-space-md font-medium">Access Scope &amp; Permissions</th>
+<th class="py-3 px-space-md font-medium">Workstation Auth</th>
+<th class="py-3 px-space-md font-medium">Account Status</th>
+<th class="py-3 px-space-md font-medium text-right">Audit Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/40 font-body-sm text-body-sm">
+<!-- Row 1: Employee Brian Kato -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Brian Kato</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-mono text-[11px] text-outline font-semibold">UG-EMP-0412</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-label-data text-label-mono text-on-surface-variant">brian.kato@staffhub.ug</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2.5 py-0.5 rounded-DEFAULT bg-surface-container-highest text-on-surface font-label-mono text-[11px] font-semibold border border-outline-variant/60">
+                Employee
+              </span>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant">
+              Personal Portal, Self Attendance Punch, Monthly Payslip View
+            </td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5 font-label-mono text-[11px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-outline">phonelink_lock</span>
+                TOTP MFA • Kampala HQ Subnet
+              </div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded-DEFAULT bg-emerald-50 text-emerald-800 border border-emerald-300 font-label-mono text-[11px] font-semibold">
+                Active
+              </span>
+</td>
+<td class="py-3 px-space-md text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+                  Force Password Reset
+                </button>
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-primary hover:bg-surface-container-low transition-colors" type="button">
+                  Edit Scope
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Line Manager Michael Kigozi -->
+<tr class="bg-surface-container-lowest/70 hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Michael Kigozi</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-mono text-[11px] text-outline font-semibold">UG-EMP-0305</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-label-data text-label-mono text-on-surface-variant">michael.kigozi@staffhub.ug</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2.5 py-0.5 rounded-DEFAULT bg-secondary-fixed text-on-secondary-fixed font-label-mono text-[11px] font-semibold border border-secondary/30">
+                Line Manager
+              </span>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant">
+              Team Attendance Verification, Leave Sign-off, Staff Requisitions
+            </td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5 font-label-mono text-[11px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-outline">key</span>
+                Hardware Key • Floor 3 Desk
+              </div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded-DEFAULT bg-emerald-50 text-emerald-800 border border-emerald-300 font-label-mono text-[11px] font-semibold">
+                Active
+              </span>
+</td>
+<td class="py-3 px-space-md text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+                  Force Password Reset
+                </button>
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-primary hover:bg-surface-container-low transition-colors" type="button">
+                  Edit Scope
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 3: HR Manager Julius Okello -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Julius Okello</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-mono text-[11px] text-outline font-semibold">UG-EMP-0188</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-label-data text-label-mono text-on-surface-variant">julius.okello@staffhub.ug</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2.5 py-0.5 rounded-DEFAULT bg-primary-fixed text-on-primary-fixed font-label-mono text-[11px] font-semibold border border-primary/30">
+                HR Manager
+              </span>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant">
+              Employee Master Directory, Offboarding Clearance, Onboarding Ingestion
+            </td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5 font-label-mono text-[11px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-outline">fingerprint</span>
+                Biometric FIDO2 • Admin Desk
+              </div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded-DEFAULT bg-emerald-50 text-emerald-800 border border-emerald-300 font-label-mono text-[11px] font-semibold">
+                Active
+              </span>
+</td>
+<td class="py-3 px-space-md text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+                  Force Password Reset
+                </button>
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-primary hover:bg-surface-container-low transition-colors" type="button">
+                  Edit Scope
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Recruiter Julius Okello (Recruiting Persona) -->
+<tr class="bg-surface-container-lowest/70 hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Julius Okello <span class="font-label-mono text-[11px] text-outline">(Recruiter Persona)</span></span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-mono text-[11px] text-outline font-semibold">UG-REC-0012</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-label-data text-label-mono text-on-surface-variant">j.okello.talent@staffhub.ug</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2.5 py-0.5 rounded-DEFAULT bg-teal-50 text-teal-800 font-label-mono text-[11px] font-semibold border border-teal-300">
+                Recruiter
+              </span>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant">
+              Public Careers Portal, Applicant Evaluation, Contract Offer Generation
+            </td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5 font-label-mono text-[11px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-outline">lock</span>
+                TOTP Authenticator App
+              </div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded-DEFAULT bg-emerald-50 text-emerald-800 border border-emerald-300 font-label-mono text-[11px] font-semibold">
+                Active
+              </span>
+</td>
+<td class="py-3 px-space-md text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+                  Force Password Reset
+                </button>
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-primary hover:bg-surface-container-low transition-colors" type="button">
+                  Edit Scope
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 5: Payroll Officer Sarah Namubiru -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Sarah Namubiru</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-mono text-[11px] text-outline font-semibold">UG-EMP-0220</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-label-data text-label-mono text-on-surface-variant">sarah.namubiru@staffhub.ug</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2.5 py-0.5 rounded-DEFAULT bg-tertiary-fixed text-on-tertiary-fixed font-label-mono text-[11px] font-semibold border border-tertiary/20">
+                Payroll Officer
+              </span>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant">
+              Monthly Payroll Finalization, Bank EFT Dispatch, Statutory URA/NSSF Filings
+            </td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5 font-label-mono text-[11px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-outline">token</span>
+                Dual-Key Token • Finance Vault
+              </div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded-DEFAULT bg-emerald-50 text-emerald-800 border border-emerald-300 font-label-mono text-[11px] font-semibold">
+                Active
+              </span>
+</td>
+<td class="py-3 px-space-md text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+                  Force Password Reset
+                </button>
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-primary hover:bg-surface-container-low transition-colors" type="button">
+                  Edit Scope
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 6: Asset Officer Joseph Mukasa -->
+<tr class="bg-surface-container-lowest/70 hover:bg-surface-container-low/30 transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Joseph Mukasa</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-mono text-[11px] text-outline font-semibold">UG-EMP-0145</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-label-data text-label-mono text-on-surface-variant">joseph.mukasa@staffhub.ug</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2.5 py-0.5 rounded-DEFAULT bg-amber-50 text-amber-900 font-label-mono text-[11px] font-semibold border border-amber-300">
+                Asset Officer
+              </span>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant">
+              Corporate Hardware Ledger, Custody Signatures, Serial Decommissioning
+            </td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5 font-label-mono text-[11px] text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-outline">devices</span>
+                Mobile Authenticator App
+              </div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded-DEFAULT bg-emerald-50 text-emerald-800 border border-emerald-300 font-label-mono text-[11px] font-semibold">
+                Active
+              </span>
+</td>
+<td class="py-3 px-space-md text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1.5">
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+                  Force Password Reset
+                </button>
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-primary hover:bg-surface-container-low transition-colors" type="button">
+                  Edit Scope
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 7: System Admin Raymond Mugisha (Root) -->
+<tr class="bg-surface-container-low/20 hover:bg-surface-container-low/50 transition-colors">
+<td class="py-3 px-space-md">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold flex items-center gap-1.5">
+                  Raymond Mugisha
+                  <span class="material-symbols-outlined text-[16px] text-secondary" style="font-variation-settings: 'FILL' 1;">stars</span>
+</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-mono text-[11px] text-primary font-semibold">UG-EMP-0001</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-label-data text-label-mono text-on-surface-variant">raymond.mugisha@staffhub.ug</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2.5 py-0.5 rounded-DEFAULT bg-inverse-surface text-inverse-on-surface font-label-mono text-[11px] font-semibold border border-inverse-surface flex items-center gap-1 w-max">
+<span class="text-secondary-fixed">★</span> System Admin
+              </span>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant">
+              Root Authority, SHA-256 Merkle Ledger Inspection, Global Policy Provisioning
+            </td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<div class="flex items-center gap-1.5 font-label-mono text-[11px] text-on-surface">
+<span class="material-symbols-outlined text-[15px] text-secondary">security</span>
+                Hardware Token • Nakasero Gate
+              </div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded-DEFAULT bg-primary/10 text-primary border border-primary/30 font-label-mono text-[11px] font-bold">
+                Active (Root)
+              </span>
+</td>
+<td class="py-3 px-space-md text-right whitespace-nowrap">
+<span class="font-label-mono text-[11px] text-outline-variant bg-surface-container px-2 py-1 rounded-DEFAULT">
+                Immutable Root Account
+              </span>
+</td>
+</tr>
+<!-- Row 8: Denis Mukasa (Deactivated Ex-Employee) -->
+<tr class="bg-surface-container-high/20 opacity-90 hover:opacity-100 transition-opacity">
+<td class="py-3 px-space-md">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface-variant line-through">Denis Mukasa</span>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-mono text-[11px] text-outline font-semibold">UG-EMP-0291</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-label-data text-label-mono text-outline">denis.mukasa@staffhub.ug</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2.5 py-0.5 rounded-DEFAULT bg-surface-container-high text-outline font-label-mono text-[11px] font-semibold border border-outline-variant/60">
+                Ex-Employee
+              </span>
+</td>
+<td class="py-3 px-space-md text-outline">
+              Retained for URA / NSSF Cap 219 Statutory Audit Requirement (7 Years Mandate)
+            </td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="font-label-mono text-[11px] text-error font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">lock_reset</span>
+                Revoked 14 Nov 2026
+              </span>
+</td>
+<td class="py-3 px-space-md whitespace-nowrap">
+<span class="px-2 py-0.5 rounded-DEFAULT bg-tertiary-container/10 text-tertiary border border-tertiary/30 font-label-mono text-[11px] font-semibold">
+                Deactivated Ex-Employee (Read-Only)
+              </span>
+</td>
+<td class="py-3 px-space-md text-right whitespace-nowrap">
+<button class="px-2 py-1 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-label-mono text-[11px] text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+                View Audit Dossier
+              </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Ledger Footer Pagination & Retain Policy Notice -->
+<div class="p-space-sm px-space-md bg-surface-container-high/30 border-t border-outline-variant/40 flex flex-col sm:flex-row items-center justify-between gap-space-sm font-label-mono text-label-mono text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span>Directory Retention Enforced: Uganda Data Protection Act Sec 18 • Records Locked Post-Offboarding</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<span>Displaying 8 of 84 provisioned accounts</span>
+<div class="inline-flex gap-1">
+<button class="px-2 py-0.5 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT text-outline" disabled="" type="button">Previous</button>
+<button class="px-2 py-0.5 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT text-on-surface hover:bg-surface-container-low" type="button">Next</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Governance & Business-Rule Modals Section -->
+<section class="flex flex-col space-y-space-md pt-space-sm">
+<div class="flex flex-col gap-0.5">
+<div class="flex items-center gap-2">
+<span class="font-label-mono text-[11px] uppercase tracking-wider text-secondary font-bold">
+          Compliance Interlock Engine
+        </span>
+<span class="text-outline-variant text-[12px]">•</span>
+<span class="font-label-mono text-[11px] text-outline uppercase tracking-wider">
+          Specification Demonstrations
+        </span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">
+        Governance Modal Specifications &amp; Business-Rule Dialogs
+      </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+        Mandatory justification dialogues enforced across StaffHub workflows with immutable reason logging and cryptographic integrity checks.
+      </p>
+</div>
+<!-- 2 Column Responsive Container for Displaying the Governance Modals Side by Side -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-space-lg items-start">
+<!-- ============================================== -->
+<!-- MODAL A: Authorised Payroll Adjustment Modal -->
+<!-- ============================================== -->
+<div class="flex flex-col bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_8px_24px_rgba(22,21,19,0.08)] p-space-lg relative overflow-hidden">
+<!-- Top Statutory Tag -->
+<div class="flex items-start justify-between gap-space-md pb-space-sm border-b border-outline-variant/40">
+<div class="flex flex-col">
+<span class="font-label-mono text-[11px] uppercase tracking-wider text-secondary font-bold">
+              Statutory Governance Protocol • Cap 219 Sec 54
+            </span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mt-0.5">
+              Authorised Payroll Adjustment
+            </h3>
+</div>
+<button aria-label="Close dialog preview" class="text-outline hover:text-on-surface p-1 rounded-DEFAULT hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="space-y-space-md mt-space-md">
+<!-- Target Record Notice -->
+<div class="p-2.5 bg-surface-container-low/70 border border-outline-variant/60 rounded-DEFAULT flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-mono text-[11px] text-outline uppercase">Locked Payroll Ledger</span>
+<span class="font-label-mono text-[11px] text-primary font-bold">PR-UG-2026-11 (Nov 2026)</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Target Employee:</span>
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Denis Mukasa (UG-EMP-0291 • Accounts Assistant)</span>
+</div>
+</div>
+<!-- Old vs Adjusted Amount Grid -->
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="p-space-sm bg-surface-container-low rounded-DEFAULT border border-outline-variant/40 flex flex-col">
+<span class="font-label-mono text-[11px] text-outline uppercase">Original Gross Pay</span>
+<span class="font-label-data text-headline-sm text-on-surface font-bold mt-1">UGX 4,200,000</span>
+<span class="font-label-mono text-[11px] text-outline-variant mt-0.5">As per signed schedule</span>
+</div>
+<div class="p-space-sm bg-primary/5 rounded-DEFAULT border border-primary/20 flex flex-col">
+<span class="font-label-mono text-[11px] text-primary font-bold uppercase">Adjusted Gross Pay</span>
+<span class="font-label-data text-headline-sm text-primary font-bold mt-1">UGX 4,850,000</span>
+<span class="font-label-mono text-[11px] text-emerald-800 font-semibold mt-0.5">+UGX 650,000 Underpayment</span>
+</div>
+</div>
+<!-- Statutory Breakdown Delta Strip -->
+<div class="py-2 px-3 bg-surface-container-high/40 rounded-DEFAULT border border-outline-variant/50 flex items-center justify-between font-label-mono text-[11px]">
+<span class="text-on-surface-variant">NSSF 5% Employee Diff: <span class="font-bold text-on-surface">+UGX 32,500</span></span>
+<span class="text-outline-variant">•</span>
+<span class="text-on-surface-variant">PAYE Tax Adjustment: <span class="font-bold text-on-surface">+UGX 195,000</span></span>
+</div>
+<!-- Mandatory Audit Justification Input -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-title-sm text-title-sm text-on-surface font-medium" for="modal-a-reason">
+                Audit Justification / Mandatory Logged Reason <span class="text-error font-bold">*</span>
+</label>
+<span class="font-label-mono text-[11px] text-outline">Cap 219 Compliance</span>
+</div>
+<textarea class="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary" id="modal-a-reason" rows="3">Adjustment authorized following Line Manager sign-off on retroactive Q3 overtime audit (Ref: AUD-2026-9810). Discrepancy verified against Nakasero clock punch logs. Concurred by Head of Finance.</textarea>
+<div class="flex items-start gap-1.5 mt-1 text-outline">
+<span class="material-symbols-outlined text-[16px] text-secondary shrink-0 mt-0.5">enhanced_encryption</span>
+<p class="font-label-mono text-[11px] leading-tight text-on-surface-variant">
+                This reason is permanently hashed into the SHA-256 Merkle Audit Stream and cannot be modified or deleted.
+              </p>
+</div>
+</div>
+</div>
+<!-- Modal Footer Actions (Single Primary Filled Rule) -->
+<div class="flex items-center justify-end gap-space-sm pt-space-md mt-space-md border-t border-outline-variant/40">
+<button class="px-space-md py-2 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-title-sm text-title-sm text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+            Cancel &amp; Revert
+          </button>
+<button class="px-space-md py-2 bg-primary text-on-primary rounded-DEFAULT font-title-sm text-title-sm hover:bg-primary-container transition-colors shadow-sm flex items-center gap-1.5" type="button">
+<span>Commit Adjustment &amp; Log to Ledger</span>
+<span class="font-label-mono">→</span>
+</button>
+</div>
+</div>
+<!-- ============================================== -->
+<!-- MODAL B: Request Attendance Correction Modal -->
+<!-- ============================================== -->
+<div class="flex flex-col bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0_8px_24px_rgba(22,21,19,0.08)] p-space-lg relative overflow-hidden">
+<!-- Top Attendance Dispute Tag -->
+<div class="flex items-start justify-between gap-space-md pb-space-sm border-b border-outline-variant/40">
+<div class="flex flex-col">
+<span class="font-label-mono text-[11px] uppercase tracking-wider text-secondary font-bold">
+              Employee Attendance Dispute • EAT (UTC+3)
+            </span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mt-0.5">
+              Request Time-Clock Correction
+            </h3>
+</div>
+<button aria-label="Close dialog preview" class="text-outline hover:text-on-surface p-1 rounded-DEFAULT hover:bg-surface-container-low transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="space-y-space-md mt-space-md">
+<!-- Target Date Pill & Context -->
+<div class="p-2.5 bg-surface-container-low/70 border border-outline-variant/60 rounded-DEFAULT flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<span class="font-label-mono text-[11px] text-outline uppercase">Duty Date &amp; Cluster</span>
+<span class="font-label-mono text-[11px] text-on-surface font-semibold">Wed, 11 Nov 2026 • Kampala Central</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Applicant / Approver:</span>
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Brian Kato (UG-EMP-0412) • LM: Michael Kigozi</span>
+</div>
+</div>
+<!-- Original vs Requested Timing Grid -->
+<div class="grid grid-cols-2 gap-space-sm">
+<!-- Recorded Timing Card -->
+<div class="p-space-sm bg-surface-container-low rounded-DEFAULT border border-outline-variant/40 flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-mono text-[11px] text-outline uppercase">Recorded Check-In</span>
+<span class="px-1.5 py-0.2 bg-tertiary-container/10 text-tertiary font-label-mono text-[10px] rounded-DEFAULT font-semibold">Late (+24m)</span>
+</div>
+<span class="font-label-data text-headline-sm text-on-surface font-bold mt-1">08:24 EAT</span>
+<span class="font-label-mono text-[11px] text-outline-variant mt-0.5">Recorded Check-Out: 17:05 EAT</span>
+</div>
+<!-- Requested Timing Card with Time Picker -->
+<div class="p-space-sm bg-primary/5 rounded-DEFAULT border border-primary/20 flex flex-col">
+<div class="flex items-center justify-between">
+<span class="font-label-mono text-[11px] text-primary font-bold uppercase">Corrected Check-In</span>
+<span class="px-1.5 py-0.2 bg-emerald-50 text-emerald-800 font-label-mono text-[10px] rounded-DEFAULT font-semibold">On-Time</span>
+</div>
+<div class="flex items-center gap-1.5 mt-1">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-DEFAULT px-2 py-0.5 font-label-data text-headline-sm text-primary font-bold focus:outline-none focus:border-primary" type="text" value="08:00 EAT"/>
+</div>
+<span class="font-label-mono text-[11px] text-on-surface-variant mt-0.5">Check-Out: 17:05 EAT (Unchanged)</span>
+</div>
+</div>
+<!-- Mandatory Explanation Input -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-title-sm text-title-sm text-on-surface font-medium" for="modal-b-explanation">
+                Mandatory Justification for Line Manager <span class="text-error font-bold">*</span>
+</label>
+<span class="font-label-mono text-[11px] text-outline">Internal Audit Logged</span>
+</div>
+<textarea class="w-full p-2.5 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-body-sm text-body-sm text-on-surface focus:outline-none focus:border-primary" id="modal-b-explanation" rows="3">Arrived at Kampala HQ at 07:55 EAT. Office web portal check-in delayed due to Jinja Road optical fiber ISP outage at Nakasero switchboard. Desk check-in verified by Security Gate Register #B-14.</textarea>
+</div>
+<!-- Evidence File Upload Attachment -->
+<div class="p-2 bg-surface-container-low border border-outline-variant/60 rounded-DEFAULT flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-primary">attach_file</span>
+<div class="flex flex-col">
+<span class="font-title-sm text-[13px] text-on-surface font-medium">Gate_Log_Scan_11Nov.pdf</span>
+<span class="font-label-mono text-[10px] text-outline">142 KB • Attached &amp; Digitally Timestamped</span>
+</div>
+</div>
+<button class="text-outline hover:text-error text-[12px] font-label-mono transition-colors" type="button">
+              Remove
+            </button>
+</div>
+</div>
+<!-- Modal Footer Actions (Single Primary Filled Rule) -->
+<div class="flex items-center justify-end gap-space-sm pt-space-md mt-space-md border-t border-outline-variant/40">
+<button class="px-space-md py-2 bg-surface-container-lowest border border-outline-variant rounded-DEFAULT font-title-sm text-title-sm text-on-surface hover:bg-surface-container-low transition-colors" type="button">
+            Discard Correction
+          </button>
+<button class="px-space-md py-2 bg-primary text-on-primary rounded-DEFAULT font-title-sm text-title-sm hover:bg-primary-container transition-colors shadow-sm flex items-center gap-1.5" type="button">
+<span>Submit Correction for Manager Review</span>
+<span class="font-label-mono">→</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</div></main><footer class="w-full bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.04)] py-space-md"><div class="w-full px-gutter-desktop flex flex-col md:flex-row items-center justify-between gap-space-sm"><div class="flex items-center gap-space-md"><span class="font-label-mono text-label-mono text-on-surface-variant">© 2024 StaffHub Technologies Ltd (Uganda). Statutory Ledger &amp; HRMS Console.</span><span class="font-label-mono text-label-mono text-outline-variant">•</span><span class="font-label-mono text-label-mono text-outline">ISO/IEC 27001 Certified System</span></div><div class="flex items-center gap-space-md"><span class="font-label-mono text-label-mono text-outline-variant">Statutory Framework: Uganda Employment Act 2006</span><span class="font-label-mono text-label-mono text-outline-variant">•</span><span class="font-label-mono text-label-mono text-outline-variant">Data Protection Office Registration: DP/0239/2021</span></div></div></footer></div></body></html>

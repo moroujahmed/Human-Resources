@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@100..900&family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..900&display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      "colors": {
+        "secondary-fixed-dim": "#f9bb5f",
+        "surface-bright": "#fdf8f4",
+        "outline-variant": "#bfc8c7",
+        "tertiary-fixed": "#ffdbcf",
+        "error-container": "#ffdad6",
+        "tertiary": "#5b1a00",
+        "on-tertiary-fixed-variant": "#812901",
+        "on-primary-container": "#85bfbd",
+        "on-surface": "#1d1b19",
+        "on-error": "#ffffff",
+        "on-secondary-fixed": "#291800",
+        "background": "#fdf8f4",
+        "on-primary": "#ffffff",
+        "surface-variant": "#e6e2de",
+        "inverse-surface": "#32302e",
+        "tertiary-container": "#812801",
+        "on-primary-fixed-variant": "#0b4f4e",
+        "surface-container-high": "#ece7e3",
+        "on-tertiary": "#ffffff",
+        "secondary": "#815500",
+        "primary": "#003736",
+        "surface": "#fdf8f4",
+        "on-primary-fixed": "#00201f",
+        "inverse-on-surface": "#f5f0ec",
+        "outline": "#707978",
+        "primary-fixed-dim": "#96d1cf",
+        "primary-fixed": "#b2edeb",
+        "surface-container-low": "#f8f3ef",
+        "on-error-container": "#93000a",
+        "on-secondary-fixed-variant": "#624000",
+        "error": "#ba1a1a",
+        "surface-container-highest": "#e6e2de",
+        "on-tertiary-container": "#ff9b77",
+        "on-secondary-container": "#764e00",
+        "surface-container": "#f2ede9",
+        "surface-tint": "#2c6766",
+        "on-secondary": "#ffffff",
+        "secondary-fixed": "#ffddb2",
+        "primary-container": "#0b4f4e",
+        "on-tertiary-fixed": "#380c00",
+        "on-surface-variant": "#404848",
+        "tertiary-fixed-dim": "#ffb59c",
+        "surface-dim": "#ded9d5",
+        "surface-container-lowest": "#ffffff",
+        "on-background": "#1d1b19",
+        "secondary-container": "#ffc164",
+        "inverse-primary": "#96d1cf"
+      },
+      "borderRadius": {
+        "DEFAULT": "0.125rem",
+        "lg": "0.25rem",
+        "xl": "0.5rem",
+        "full": "0.75rem"
+      },
+      "spacing": {
+        "gutter-desktop": "1.5rem",
+        "space-lg": "1.5rem",
+        "space-sm": "0.5rem",
+        "space-xs": "0.25rem",
+        "space-md": "1rem",
+        "margin": "1rem",
+        "space-xl": "2.5rem",
+        "margin-desktop": "2rem",
+        "gutter": "1.25rem"
+      },
+      "fontFamily": {
+        "body-md": ["Inter"],
+        "display-lg-mobile": ["Bricolage Grotesque"],
+        "headline-lg-mobile": ["Bricolage Grotesque"],
+        "headline-lg": ["Bricolage Grotesque"],
+        "display-lg": ["Bricolage Grotesque"],
+        "headline-md": ["Bricolage Grotesque"],
+        "title-md": ["Inter"],
+        "title-sm": ["Inter"],
+        "label-mono": ["JetBrains Mono"],
+        "label-data": ["JetBrains Mono"],
+        "label-sm": ["Inter"],
+        "headline-sm": ["Bricolage Grotesque"],
+        "body-sm": ["Inter"],
+        "body-lg": ["Inter"]
+      },
+      "fontSize": {
+        "body-md": ["14px", {"lineHeight": "22px", "fontWeight": "400"}],
+        "display-lg-mobile": ["32px", {"lineHeight": "40px", "fontWeight": "700"}],
+        "headline-lg-mobile": ["26px", {"lineHeight": "34px", "fontWeight": "600"}],
+        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+        "display-lg": ["44px", {"lineHeight": "52px", "fontWeight": "700"}],
+        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+        "title-md": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+        "title-sm": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+        "label-mono": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+        "label-data": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+        "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+        "body-lg": ["16px", {"lineHeight": "26px", "fontWeight": "400"}]
+      }
+    }
+  }
+}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-[#161513] text-surface-container-low z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-headline-md text-headline-md font-bold tracking-tight shadow-sm">S</div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-surface-container-lowest leading-none tracking-tight">StaffHub</span><span class="font-label-sm text-label-sm text-outline-variant tracking-wider uppercase mt-0.5">Uganda Enterprise</span></div></div><div class="px-space-md py-space-sm"><div class="px-space-sm py-space-xs bg-[#22201d] rounded-lg"><span class="font-label-mono text-label-mono text-secondary-fixed-dim uppercase tracking-wider block">Kampala Hub</span><span class="font-label-data text-label-data text-surface-container-high block">11:45 EAT • UTC+3</span></div></div><nav class="flex flex-col gap-space-xs mt-space-sm px-space-sm" data-active-classes="border-l-[3px] border-[#D49B42] bg-[#22201D] text-surface-container-lowest font-title-sm pl-[13px]"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-outline-variant hover:bg-[#22201D] hover:text-surface-container-lowest transition-colors" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg transition-colors border-l-[3px] border-[#D49B42] bg-[#22201D] text-surface-container-lowest font-title-sm pl-[13px]" data-path="leave" href="#"><span class="material-symbols-outlined text-[20px]">event_available</span><span class="font-body-md text-body-md">Leave</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-outline-variant hover:bg-[#22201D] hover:text-surface-container-lowest transition-colors" data-path="attendance-and-time" href="#"><span class="material-symbols-outlined text-[20px]">schedule</span><span class="font-body-md text-body-md">Attendance & Time</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-outline-variant hover:bg-[#22201D] hover:text-surface-container-lowest transition-colors" data-path="staff-requisitions" href="#"><span class="material-symbols-outlined text-[20px]">assignment_ind</span><span class="font-body-md text-body-md">Staff Requisitions</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-outline-variant hover:bg-[#22201D] hover:text-surface-container-lowest transition-colors" data-path="asset-registry" href="#"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span class="font-body-md text-body-md">Asset Registry</span></a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg text-outline-variant hover:bg-[#22201D] hover:text-surface-container-lowest transition-colors" data-path="directory" href="#"><span class="material-symbols-outlined text-[20px]">badge</span><span class="font-body-md text-body-md">Directory</span></a></nav></div><div class="p-space-md"><div class="bg-[#22201d] rounded-lg p-space-sm"><div class="flex items-center gap-space-xs text-secondary-fixed-dim font-label-mono text-label-mono"><span class="material-symbols-outlined text-[16px]">verified</span><span>STATUTORY ACCREDITED</span></div><span class="font-body-sm text-body-sm text-outline-variant block mt-1 leading-snug">Cap 219 Employment Act Compliant</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40"><div class="w-full h-full px-gutter-desktop flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-sm py-1 bg-surface-container rounded-lg"><span class="material-symbols-outlined text-primary text-[18px]">verified_user</span><span class="font-label-mono text-label-mono text-primary">CAP 219 COMPLIANCE: VERIFIED</span></div><div class="hidden lg:flex items-center gap-space-xs font-label-mono text-label-mono text-on-surface-variant"><span class="material-symbols-outlined text-[16px]">location_on</span><span>Kampala • 11:45 EAT</span></div></div><div class="flex items-center gap-space-md"><div class="hidden md:flex flex-col text-right"><span class="font-title-sm text-title-sm text-on-surface leading-tight">Brian Kato</span><span class="font-body-sm text-body-sm text-on-surface-variant">Line Mgr: Michael Kigozi</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="relative pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Content Canvas Area -->
+<div class="w-full px-margin-desktop py-space-lg flex flex-col gap-space-lg max-w-[1540px] mx-auto">
+<!-- PAGE HEADER & ROLE SWITCHER TAB -->
+<header class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md pb-space-xs">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-mono text-label-mono text-secondary tracking-widest uppercase">Statutory Governance</span>
+<span class="text-outline-variant font-label-mono text-label-mono">•</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase">EAT (UTC+3)</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight leading-tight">
+          Leave Management & Ugandan Statutory Calendar
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+          Cap 219 Working-Day Computation • Public Holiday Observance • Handover Governance & Roster Ledger.
+        </p>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center gap-space-sm flex-wrap self-start lg:self-auto">
+<button class="inline-flex items-center gap-2 px-space-md py-2 rounded-lg bg-surface-container-high hover:bg-surface-container text-on-surface font-title-sm text-title-sm transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">description</span>
+<span>Download Leave Ledger (PDF)</span>
+</button>
+<button class="inline-flex items-center gap-2 px-space-md py-2 rounded-lg bg-primary hover:bg-[#083E3D] text-on-primary font-title-sm text-title-sm transition-colors shadow-sm" id="openRequisitionBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>+ New Staff Requisition</span>
+</button>
+</div>
+</header>
+<!-- Top Segmented Tab Toggle -->
+<nav aria-label="Leave Views" class="flex items-center gap-1 p-1 bg-surface-container rounded-lg w-fit shadow-inner">
+<button class="px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-primary font-title-sm text-title-sm shadow-sm flex items-center gap-2" id="tabMyLeave" type="button">
+<span class="material-symbols-outlined text-[18px]">date_range</span>
+<span>My Leave & Calendar</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low font-title-sm text-title-sm transition-colors flex items-center gap-2" id="tabTeamApprovals" type="button">
+<span class="material-symbols-outlined text-[18px]">rule_folder</span>
+<span>Team Leave & Requisition Approvals</span>
+<span class="font-label-mono text-label-mono px-1.5 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed font-semibold tracking-wide">3 Pending</span>
+</button>
+</nav>
+<!-- MAIN 2-COLUMN LAYOUT -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<!-- LEFT 2/3 COLUMN (8 cols) -->
+<section class="lg:col-span-8 flex flex-col gap-space-lg">
+<!-- CARD 1: SUBMIT LEAVE REQUEST -->
+<article class="bg-surface-container-lowest rounded-lg p-space-lg shadow-sm flex flex-col gap-space-md">
+<header class="flex items-center justify-between pb-space-sm bg-gradient-to-r from-transparent via-primary/5 to-transparent -mx-space-lg px-space-lg pt-1">
+<div class="flex items-center gap-space-xs">
+<span class="w-2.5 h-2.5 rounded-full bg-primary"></span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Submit Leave Request</h2>
+</div>
+<span class="font-label-mono text-label-mono text-secondary px-2.5 py-1 rounded bg-secondary-fixed/50 uppercase tracking-wide font-medium">
+              Statutory Cap 219 Working Days Rule
+            </span>
+</header>
+<form class="flex flex-col gap-space-md" id="leaveRequestForm" onsubmit="event.preventDefault();">
+<!-- Leave Type Dropdown -->
+<div class="flex flex-col gap-1.5">
+<label class="font-title-sm text-title-sm text-on-surface" for="leaveType">
+                Leave Classification <span class="text-tertiary-container">*</span>
+</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-space-md py-2.5 pr-10 appearance-none focus:outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary cursor-pointer shadow-sm" id="leaveType">
+<option selected="" value="annual">Annual Leave (14 Days Available • Statutory Cap 219)</option>
+<option value="sick">Sick Leave (10 Days Available • Medical Certificate Required)</option>
+<option value="compassionate">Compassionate Leave (5 Days Available)</option>
+<option value="study">Study & Examination Leave (7 Days Available)</option>
+<option value="maternity_paternity">Maternity / Paternity Statutory Entitlement</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Accrued under Uganda Employment Act Cap 219: 21 working days per complete 12 months.</span>
+</div>
+<!-- Two-Column Date Pickers -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-title-sm text-title-sm text-on-surface flex items-center justify-between" for="startDate">
+<span>Start Date (Inclusive)</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant font-normal">EAT / UTC+3</span>
+</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low text-on-surface font-label-data text-label-data rounded-lg px-space-md py-2.5 pr-10 focus:outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary shadow-sm" id="startDate" type="text" value="14 Dec 2026"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-[20px]">calendar_today</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-title-sm text-title-sm text-on-surface flex items-center justify-between" for="endDate">
+<span>End Date (Inclusive)</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant font-normal">EAT / UTC+3</span>
+</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low text-on-surface font-label-data text-label-data rounded-lg px-space-md py-2.5 pr-10 focus:outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary shadow-sm" id="endDate" type="text" value="20 Dec 2026"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-[20px]">event_repeat</span>
+</div>
+</div>
+</div>
+<!-- Live Highlighted Working Days Calculation Pill -->
+<div class="p-space-md rounded-lg bg-secondary-fixed/30 flex items-start gap-space-sm shadow-sm">
+<span class="material-symbols-outlined text-secondary text-[22px] shrink-0 mt-0.5">calculate</span>
+<div class="flex flex-col gap-0.5">
+<span class="font-label-mono text-label-mono text-secondary uppercase tracking-wider font-semibold">Statutory Computation Matrix</span>
+<p class="font-label-data text-label-data text-on-surface">
+                  Selected: <strong class="font-semibold text-primary">14 Dec – 20 Dec 2026</strong> (7 Calendar Days) 
+                  <span class="text-secondary font-bold mx-1">→</span> 
+                  Deducted: <strong class="font-semibold text-primary">5 Working Days</strong>
+</p>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+                  Excludes Saturday 19 Dec & Sunday 20 Dec (Standard 40-hour non-rostered institutional weekend).
+                </span>
+</div>
+</div>
+<!-- Inline Overlap-Validation Alert Box -->
+<div class="p-space-md rounded-lg bg-tertiary-fixed/40 flex items-start gap-space-sm shadow-sm">
+<span class="material-symbols-outlined text-tertiary-container text-[22px] shrink-0 mt-0.5">error_outline</span>
+<div class="flex flex-col gap-1">
+<span class="font-label-mono text-label-mono text-tertiary-container uppercase tracking-wider font-bold">Roster Handover Collision Detected</span>
+<p class="font-body-md text-body-md text-on-surface leading-snug">
+                  Cannot submit: Selected window overlaps with approved leave for teammate <strong class="text-tertiary font-medium">Brian Kato</strong> on <strong>18 Dec 2026</strong> (Handover conflict detected in Finance Unit ledger reconciliation).
+                </p>
+<div class="flex items-center gap-space-md mt-1">
+<span class="font-body-sm text-body-sm text-tertiary-container underline cursor-pointer hover:opacity-80">View Finance Unit December Roster</span>
+<span class="text-outline-variant font-label-mono text-label-mono">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Requires Unit Head override waiver</span>
+</div>
+</div>
+</div>
+<!-- Reliever / Handover Personnel -->
+<div class="flex flex-col gap-1.5">
+<label class="font-title-sm text-title-sm text-on-surface" for="reliever">
+                Reliever / Handover Personnel Designation <span class="text-tertiary-container">*</span>
+</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-space-md py-2.5 pr-10 appearance-none focus:outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary cursor-pointer shadow-sm" id="reliever">
+<option selected="" value="UG-EMP-0291">Denis Mukasa (UG-EMP-0291 • Accounts Assistant) — Handover Protocol Required</option>
+<option value="UG-EMP-0140">Amina Nabakooza (UG-EMP-0140 • Senior Financial Analyst)</option>
+<option value="UG-EMP-0312">Grace Atuhaire (UG-EMP-0312 • Payroll Specialist)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-on-surface-variant pointer-events-none text-[20px]">person_check</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Designated officer receives automated docket responsibility transfer upon approval.</span>
+</div>
+<!-- Mandatory Reason textarea -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-title-sm text-title-sm text-on-surface" for="justification">
+                  Mandatory Justification / Handover Details <span class="text-tertiary-container">*</span>
+</label>
+<span class="font-label-mono text-label-mono text-on-surface-variant">Cap 219 Sec 54</span>
+</div>
+<textarea class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg p-space-md focus:outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary shadow-sm leading-relaxed" id="justification" placeholder="Specify institutional handover and coverage arrangements as mandated by Cap 219 Section 54..." rows="3">Handing over Q4 reconciliations and VAT ledger filings to Denis Mukasa during this period. Emergency phone contacts available via Kampala desk line extension.</textarea>
+</div>
+<!-- Action Footer -->
+<div class="flex items-center justify-between pt-space-sm flex-wrap gap-space-sm">
+<div class="flex items-center gap-2 text-on-surface-variant font-label-mono text-label-mono">
+<span class="material-symbols-outlined text-[16px] text-primary">policy</span>
+<span>Audit trail logged to URA/NSSF statutory archive</span>
+</div>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-title-sm text-title-sm transition-colors" type="button">
+                  Save Draft
+                </button>
+<button class="px-space-md py-2.5 rounded-lg bg-primary hover:bg-[#083E3D] text-on-primary font-title-sm text-title-sm shadow-md transition-all flex items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">send</span>
+<span>Submit Leave Application for Line Manager Approval</span>
+</button>
+</div>
+</div>
+</form>
+</article>
+<!-- CARD 2: PERSONAL LEAVE LEDGER & HISTORY -->
+<article class="bg-surface-container-lowest rounded-lg p-space-lg shadow-sm flex flex-col gap-space-md">
+<header class="flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm">
+<div class="flex flex-col">
+<h2 class="font-headline-md text-headline-md text-on-surface">Leave History & Audit Status</h2>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Official record of applications for Fiscal Year 2026</span>
+</div>
+<!-- Filters -->
+<div class="flex items-center gap-1 bg-surface-container p-1 rounded-lg">
+<button class="px-3 py-1 text-label-sm font-label-sm rounded-lg bg-surface-container-lowest text-primary font-semibold shadow-sm">All</button>
+<button class="px-3 py-1 text-label-sm font-label-sm rounded-lg text-on-surface-variant hover:text-on-surface">Approved</button>
+<button class="px-3 py-1 text-label-sm font-label-sm rounded-lg text-on-surface-variant hover:text-on-surface">In Review</button>
+<button class="px-3 py-1 text-label-sm font-label-sm rounded-lg text-on-surface-variant hover:text-on-surface">Taken</button>
+</div>
+</header>
+<!-- Table Container -->
+<div class="w-full overflow-x-auto rounded-lg bg-surface-container-low">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high text-on-surface-variant font-label-mono text-label-mono uppercase tracking-wider">
+<th class="py-3 px-space-md font-medium">Request ID</th>
+<th class="py-3 px-space-md font-medium">Leave Type</th>
+<th class="py-3 px-space-md font-medium">Dates (EAT)</th>
+<th class="py-3 px-space-md font-medium text-right">Deducted</th>
+<th class="py-3 px-space-md font-medium">Reliever</th>
+<th class="py-3 px-space-md font-medium">Status</th>
+<th class="py-3 px-space-md font-medium text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container font-body-sm text-body-sm text-on-surface">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="py-3 px-space-md font-label-mono text-label-mono font-medium text-primary">#LV-2026-089</td>
+<td class="py-3 px-space-md font-medium text-on-surface">Annual Leave</td>
+<td class="py-3 px-space-md font-label-data text-label-data">15 Aug – 22 Aug 2026</td>
+<td class="py-3 px-space-md text-right font-label-mono text-label-mono font-semibold text-primary">6 Days</td>
+<td class="py-3 px-space-md">
+<span class="text-on-surface">Denis Mukasa</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant block">UG-EMP-0291</span>
+</td>
+<td class="py-3 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-label-sm font-label-sm bg-primary-fixed text-on-primary-fixed-variant font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                      Approved
+                    </span>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="font-title-sm text-title-sm text-primary hover:underline">View Docket</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="py-3 px-space-md font-label-mono text-label-mono font-medium text-primary">#LV-2026-044</td>
+<td class="py-3 px-space-md">
+<span class="font-medium text-on-surface">Sick Leave</span>
+<span class="font-label-mono text-label-mono text-secondary block text-[11px]">Med-Form Certified</span>
+</td>
+<td class="py-3 px-space-md font-label-data text-label-data">12 May – 14 May 2026</td>
+<td class="py-3 px-space-md text-right font-label-mono text-label-mono font-semibold text-primary">3 Days</td>
+<td class="py-3 px-space-md">
+<span class="text-on-surface">Amina Nabakooza</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant block">UG-EMP-0140</span>
+</td>
+<td class="py-3 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-label-sm font-label-sm bg-surface-container-high text-on-surface-variant font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                      Completed
+                    </span>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="font-title-sm text-title-sm text-primary hover:underline">View Docket</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="py-3 px-space-md font-label-mono text-label-mono font-medium text-primary">#LV-2026-112</td>
+<td class="py-3 px-space-md font-medium text-on-surface">Annual Leave</td>
+<td class="py-3 px-space-md font-label-data text-label-data">14 Dec – 20 Dec 2026</td>
+<td class="py-3 px-space-md text-right font-label-mono text-label-mono font-semibold text-primary">5 Days</td>
+<td class="py-3 px-space-md">
+<span class="text-on-surface">Denis Mukasa</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant block">UG-EMP-0291</span>
+</td>
+<td class="py-3 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-label-sm font-label-sm bg-secondary-fixed text-on-secondary-fixed font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                      In Review
+                    </span>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="font-title-sm text-title-sm text-tertiary hover:underline">Withdraw</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</article>
+</section>
+<!-- RIGHT 1/3 COLUMN (4 cols) -->
+<aside class="lg:col-span-4 flex flex-col gap-space-lg">
+<!-- CARD 1: STATUTORY LEAVE BALANCES BREAKDOWN -->
+<article class="bg-surface-container-lowest rounded-lg p-space-lg shadow-sm flex flex-col gap-space-md relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-secondary"></div>
+<header class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-secondary uppercase tracking-wider font-semibold">Entitlement Ledger</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">2026 Statutory Balances</h2>
+</div>
+<span class="font-label-mono text-label-mono bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Fiscal Q4 2026</span>
+</header>
+<!-- Annual Leave Focus -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-end justify-between">
+<div>
+<span class="font-title-sm text-title-sm text-on-surface block">Annual Leave</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Cap 219 Mandatory Accrual</span>
+</div>
+<div class="text-right">
+<span class="font-headline-md text-headline-md text-primary font-bold">14</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant"> / 21 Days</span>
+</div>
+</div>
+<!-- Custom Progress Bar -->
+<div class="w-full h-2.5 rounded-full bg-surface-container-high overflow-hidden flex">
+<div class="bg-primary h-full rounded-full" style="width: 66.6%;"></div>
+</div>
+<div class="flex items-center justify-between font-label-mono text-label-mono text-on-surface-variant">
+<span>7 Taken</span>
+<span class="text-primary font-semibold">14 Days Remaining</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest font-body-sm text-body-sm text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-secondary">info</span>
+<span>Carries max 5 days into 2027 under Cap 219.</span>
+</div>
+</div>
+<!-- Secondary Balances Grid -->
+<div class="grid grid-cols-1 gap-space-sm">
+<!-- Sick Leave -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface">Sick Leave</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">Med cert rule > 2 days</span>
+</div>
+<div class="text-right">
+<span class="font-headline-sm text-headline-sm text-primary font-semibold">10</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant"> / 14d</span>
+</div>
+</div>
+<!-- Compassionate Leave -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface">Compassionate Leave</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">Family bereavement & crisis</span>
+</div>
+<div class="text-right">
+<span class="font-headline-sm text-headline-sm text-primary font-semibold">5</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant"> / 5d</span>
+</div>
+</div>
+<!-- Study & Exam Leave -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface">Study & Examination</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">Professional accreditations</span>
+</div>
+<div class="text-right">
+<span class="font-headline-sm text-headline-sm text-primary font-semibold">7</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant"> / 10d</span>
+</div>
+</div>
+</div>
+</article>
+<!-- CARD 2: UGANDAN WORKING-DAY & HOLIDAY CALENDAR -->
+<article class="bg-surface-container-lowest rounded-lg p-space-lg shadow-sm flex flex-col gap-space-md">
+<header class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-secondary uppercase tracking-wider font-semibold">Institutional Calendar</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">December 2026</h2>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Previous Month" class="p-1 rounded hover:bg-surface-container text-on-surface">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button aria-label="Next Month" class="p-1 rounded hover:bg-surface-container text-on-surface">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</header>
+<!-- Calendar 7-Day Grid -->
+<div class="flex flex-col gap-1">
+<div class="grid grid-cols-7 text-center font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider pb-1">
+<span>Mo</span>
+<span>Tu</span>
+<span>We</span>
+<span>Th</span>
+<span>Fr</span>
+<span class="text-outline">Sa</span>
+<span class="text-outline">Su</span>
+</div>
+<!-- Calendar Days (Dec 2026 starts on Tue Dec 1) -->
+<div class="grid grid-cols-7 gap-1 font-label-mono text-label-mono text-center">
+<!-- Nov trailing day -->
+<span class="p-2 text-outline-variant opacity-40">30</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">1</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">2</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">3</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">4</span>
+<!-- Weekends dimmed -->
+<span class="p-2 bg-surface-container-high/50 text-outline-variant rounded line-through">5</span>
+<span class="p-2 bg-surface-container-high/50 text-outline-variant rounded line-through">6</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">7</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">8</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">9</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">10</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">11</span>
+<span class="p-2 bg-surface-container-high/50 text-outline-variant rounded line-through">12</span>
+<span class="p-2 bg-surface-container-high/50 text-outline-variant rounded line-through">13</span>
+<!-- Active Overlap Request Window 14-18 Dec -->
+<div class="relative p-2 bg-primary/10 rounded cursor-pointer group">
+<span class="font-bold text-primary">14</span>
+<span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<div class="relative p-2 bg-primary/10 rounded cursor-pointer">
+<span class="font-bold text-primary">15</span>
+<span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<div class="relative p-2 bg-primary/10 rounded cursor-pointer">
+<span class="font-bold text-primary">16</span>
+<span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<div class="relative p-2 bg-primary/10 rounded cursor-pointer">
+<span class="font-bold text-primary">17</span>
+<span class="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-primary"></span>
+</div>
+<!-- Conflict Day 18 Dec with Brian Kato -->
+<div class="relative p-2 bg-tertiary-fixed text-on-tertiary-fixed-variant font-bold rounded cursor-pointer" title="Overlap Conflict: Brian Kato approved leave">
+<span>18</span>
+<span class="material-symbols-outlined text-[10px] absolute -top-1 -right-1 text-tertiary font-bold">warning</span>
+</div>
+<span class="p-2 bg-surface-container-high/50 text-outline-variant rounded line-through">19</span>
+<span class="p-2 bg-surface-container-high/50 text-outline-variant rounded line-through">20</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">21</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">22</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">23</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">24</span>
+<!-- Public Holiday 25 Dec (Christmas) -->
+<div class="p-2 bg-secondary-fixed text-on-secondary-fixed font-bold rounded cursor-pointer" title="Christmas Day (Statutory Public Holiday)">
+<span>25</span>
+</div>
+<!-- Public Holiday 26 Dec (Boxing Day) -->
+<div class="p-2 bg-secondary-fixed text-on-secondary-fixed font-bold rounded cursor-pointer" title="Boxing Day (Statutory Public Holiday)">
+<span>26</span>
+</div>
+<span class="p-2 bg-surface-container-high/50 text-outline-variant rounded line-through">27</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">28</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">29</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">30</span>
+<span class="p-2 hover:bg-surface-container rounded cursor-pointer">31</span>
+<span class="p-2 text-outline-variant opacity-40">1</span>
+<span class="p-2 text-outline-variant opacity-40">2</span>
+<span class="p-2 text-outline-variant opacity-40">3</span>
+</div>
+</div>
+<!-- Calendar Legend -->
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-2">
+<span class="font-label-mono text-label-mono text-on-surface-variant font-semibold uppercase">Calendar Key</span>
+<div class="grid grid-cols-2 gap-2 font-body-sm text-body-sm">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded bg-primary/20 flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+</span>
+<span>Active Window</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded bg-tertiary-fixed flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-container"></span>
+</span>
+<span>Team Overlap Alert</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded bg-secondary-fixed"></span>
+<span>Statutory Holiday</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded bg-surface-container-high line-through text-[8px] flex items-center justify-center text-outline">X</span>
+<span>Weekend (Non-Deduct)</span>
+</div>
+</div>
+</div>
+</article>
+<!-- CARD 3: LINE MANAGER QUICK APPROVALS PREVIEW -->
+<article class="bg-surface-container-lowest rounded-lg p-space-lg shadow-sm flex flex-col gap-space-md">
+<header class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-secondary uppercase tracking-wider font-semibold">Supervisor Action</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Pending Team Approvals</h2>
+</div>
+<span class="w-6 h-6 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-label-mono text-label-mono font-bold">1</span>
+</header>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+            Pending authorization for <strong>Michael Kigozi</strong> (Line Manager • Finance Unit).
+          </p>
+<!-- Pending Item 1 -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-sm">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-title-sm text-title-sm text-on-surface block">Denis Mukasa</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">UG-EMP-0291 • Accounts Asst.</span>
+</div>
+<span class="font-label-mono text-label-mono px-2 py-0.5 rounded bg-surface-container text-on-surface font-semibold">Casual Leave</span>
+</div>
+<div class="font-label-data text-label-data text-on-surface">
+<span>Window: <strong>28 Dec – 30 Dec 2026</strong></span>
+<span class="text-on-surface-variant block">3 Working Days Deducted</span>
+</div>
+<div class="flex items-center gap-space-sm pt-1">
+<button class="flex-1 py-1.5 px-3 rounded-lg bg-primary text-on-primary font-title-sm text-title-sm hover:bg-[#083E3D] transition-colors flex items-center justify-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">check</span>
+<span>Approve</span>
+</button>
+<button class="flex-1 py-1.5 px-3 rounded-lg bg-surface-container text-tertiary-container hover:bg-tertiary-fixed font-title-sm text-title-sm transition-colors flex items-center justify-center gap-1" type="button">
+<span class="material-symbols-outlined text-[16px]">close</span>
+<span>Reject</span>
+</button>
+</div>
+</div>
+</article>
+</aside>
+</div>
+</div>
+<!-- LINE MANAGER HEADCOUNT REQUISITION DRAWER (MODAL OVERLAY) -->
+<div class="fixed inset-0 z-50 bg-[#161513]/40 backdrop-blur-sm hidden items-center justify-center p-4" id="requisitionModal">
+<div class="bg-surface-container-lowest rounded-lg shadow-xl w-full max-w-2xl max-h-[921px] overflow-y-auto flex flex-col">
+<!-- Drawer Header -->
+<div class="p-space-lg bg-surface-container flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-mono text-label-mono text-secondary uppercase tracking-widest font-semibold">Statutory Headcount Governance</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Line Manager Requisition: Request New Headcount</h2>
+</div>
+<button aria-label="Close modal" class="p-1 rounded-lg hover:bg-surface-container-high text-on-surface" id="closeRequisitionBtn" type="button">
+<span class="material-symbols-outlined text-[24px]">close</span>
+</button>
+</div>
+<!-- Drawer Content -->
+<form class="p-space-lg flex flex-col gap-space-md" onsubmit="event.preventDefault();">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1">
+<label class="font-title-sm text-title-sm text-on-surface">Target Position Title</label>
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-space-md py-2.5 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm" type="text" value="Junior Financial Auditor"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-title-sm text-title-sm text-on-surface">Employment Grade Band</label>
+<input class="w-full bg-surface-container-low text-on-surface font-label-data text-label-data rounded-lg px-space-md py-2.5 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm" type="text" value="UG-L4 Standard Scale"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1">
+<label class="font-title-sm text-title-sm text-on-surface">Assigned Directorate</label>
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-space-md py-2.5 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm" type="text" value="Finance & Accounts Division"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-title-sm text-title-sm text-on-surface">Budgeted Headcount Allocation</label>
+<input class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg px-space-md py-2.5 text-primary font-medium focus:outline-none focus:ring-1 focus:ring-primary shadow-sm" type="text" value="Yes (Approved in FY2026/27 Staffing Plan)"/>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-title-sm text-title-sm text-on-surface">Requisition Justification & Urgency Mandate</label>
+<textarea class="w-full bg-surface-container-low text-on-surface font-body-md text-body-md rounded-lg p-space-md focus:outline-none focus:ring-1 focus:ring-primary shadow-sm" rows="3">Replacement for Denis Mukasa exit. Required for Q1 statutory URA filing compliance and daily VAT ledger reconciliations to prevent institutional penalties under Tax Procedures Code Act.</textarea>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<span>Routing: Line Manager Michael Kigozi → Head of HR → Managing Director</span>
+<span class="font-label-mono text-label-mono text-secondary">SL: 48h SLA</span>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-sm">
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-title-sm text-title-sm transition-colors" id="cancelRequisitionBtn" type="button">
+            Cancel
+          </button>
+<button class="px-space-md py-2.5 rounded-lg bg-primary hover:bg-[#083E3D] text-on-primary font-title-sm text-title-sm shadow-md transition-all flex items-center gap-2" id="submitRequisitionBtn" type="button">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Submit Requisition to HR Lead</span>
+</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Inline Micro-Interactions Script -->
+<script>
+    (function initLeaveApp() {
+      const modal = document.getElementById('requisitionModal');
+      const openBtn = document.getElementById('openRequisitionBtn');
+      const closeBtn = document.getElementById('closeRequisitionBtn');
+      const cancelBtn = document.getElementById('cancelRequisitionBtn');
+      const submitBtn = document.getElementById('submitRequisitionBtn');
+
+      function openModal() {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeModal() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      if (openBtn) openBtn.addEventListener('click', openModal);
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+      if (submitBtn) {
+        submitBtn.addEventListener('click', () => {
+          alert('Staff Requisition submitted successfully for Head of HR docket review.');
+          closeModal();
+        });
+      }
+
+      // Close modal on background click
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+      }
+
+      // Tab switcher interaction
+      const tabMyLeave = document.getElementById('tabMyLeave');
+      const tabTeamApprovals = document.getElementById('tabTeamApprovals');
+
+      if (tabMyLeave && tabTeamApprovals) {
+        tabMyLeave.addEventListener('click', () => {
+          tabMyLeave.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+          tabMyLeave.classList.remove('text-on-surface-variant');
+          tabTeamApprovals.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+          tabTeamApprovals.classList.add('text-on-surface-variant');
+        });
+
+        tabTeamApprovals.addEventListener('click', () => {
+          tabTeamApprovals.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+          tabTeamApprovals.classList.remove('text-on-surface-variant');
+          tabMyLeave.classList.remove('bg-surface-container-lowest', 'text-primary', 'shadow-sm');
+          tabMyLeave.classList.add('text-on-surface-variant');
+        });
+      }
+    })();
+  </script>
+</div></main></div></body></html>

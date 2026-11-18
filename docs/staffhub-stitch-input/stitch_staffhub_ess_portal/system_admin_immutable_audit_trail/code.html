@@ -1,0 +1,568 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"inverse-surface":"#32302e","primary-fixed-dim":"#96d1cf","surface-container-high":"#ece7e3","surface-container-lowest":"#ffffff","surface-variant":"#e6e2de","primary-container":"#0b4f4e","on-tertiary-container":"#ff9b77","tertiary":"#5b1a00","on-secondary-fixed":"#291800","secondary-fixed":"#ffddb2","on-surface":"#1d1b19","outline":"#707978","primary":"#003736","outline-variant":"#bfc8c7","surface-bright":"#fdf8f4","on-secondary-container":"#764e00","on-primary-container":"#85bfbd","inverse-on-surface":"#f5f0ec","secondary":"#815500","error-container":"#ffdad6","surface-container":"#f2ede9","error":"#ba1a1a","on-primary-fixed-variant":"#0b4f4e","tertiary-fixed-dim":"#ffb59c","on-error":"#ffffff","on-secondary":"#ffffff","primary-fixed":"#b2edeb","tertiary-fixed":"#ffdbcf","background":"#fdf8f4","on-tertiary-fixed":"#380c00","secondary-fixed-dim":"#f9bb5f","on-primary-fixed":"#00201f","surface":"#fdf8f4","on-error-container":"#93000a","on-surface-variant":"#404848","on-tertiary-fixed-variant":"#812901","on-secondary-fixed-variant":"#624000","inverse-primary":"#96d1cf","tertiary-container":"#812801","secondary-container":"#ffc164","on-tertiary":"#ffffff","surface-dim":"#ded9d5","surface-tint":"#2c6766","surface-container-highest":"#e6e2de","surface-container-low":"#f8f3ef","on-background":"#1d1b19","on-primary":"#ffffff"},"borderRadius":{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},"spacing":{"gutter-desktop":"1.5rem","space-xl":"2.5rem","space-xs":"0.25rem","margin-desktop":"2rem","space-sm":"0.5rem","margin":"1rem","space-lg":"1.5rem","space-md":"1rem","gutter":"1.25rem"},"fontFamily":{"headline-lg":["Bricolage Grotesque"],"display-lg-mobile":["Bricolage Grotesque"],"label-data":["JetBrains Mono"],"headline-sm":["Bricolage Grotesque"],"title-md":["Inter"],"body-md":["Inter"],"title-sm":["Inter"],"body-sm":["Inter"],"display-lg":["Bricolage Grotesque"],"body-lg":["Inter"],"label-sm":["Inter"],"label-mono":["JetBrains Mono"],"headline-lg-mobile":["Bricolage Grotesque"],"headline-md":["Bricolage Grotesque"]},"fontSize":{"headline-lg":["32px",{"lineHeight":"40px","fontWeight":"600"}],"display-lg-mobile":["32px",{"lineHeight":"40px","fontWeight":"700"}],"label-data":["14px",{"lineHeight":"20px","fontWeight":"500"}],"headline-sm":["20px",{"lineHeight":"28px","fontWeight":"600"}],"title-md":["16px",{"lineHeight":"24px","fontWeight":"600"}],"body-md":["14px",{"lineHeight":"22px","fontWeight":"400"}],"title-sm":["14px",{"lineHeight":"20px","fontWeight":"600"}],"body-sm":["13px",{"lineHeight":"18px","fontWeight":"400"}],"display-lg":["44px",{"lineHeight":"52px","fontWeight":"700"}],"body-lg":["16px",{"lineHeight":"26px","fontWeight":"400"}],"label-sm":["11px",{"lineHeight":"14px","fontWeight":"600"}],"label-mono":["12px",{"lineHeight":"16px","fontWeight":"500"}],"headline-lg-mobile":["26px",{"lineHeight":"34px","fontWeight":"600"}],"headline-md":["24px",{"lineHeight":"32px","fontWeight":"600"}]}}}};</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-[260px] bg-[#161513] z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center gap-space-sm bg-[#11100f]"><div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-primary-fixed text-[20px]">account_balance</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-surface-container-lowest leading-none tracking-tight">StaffHub</span><span class="font-label-mono text-[10px] text-[#8e8a82] uppercase tracking-wider mt-0.5">HRMS Enterprise</span></div></div><div class="px-space-md py-space-sm"><div class="px-space-sm py-space-xs font-label-mono text-[10px] text-[#706c64] uppercase tracking-widest font-semibold">Institutional Core</div></div><nav class="flex flex-col px-space-sm gap-1" data-active-classes="bg-[#22201d] text-surface-bright font-title-sm border-l-[3px] border-secondary-container"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-[#a8a39d] hover:bg-[#22201d] hover:text-surface-bright transition-colors font-body-md text-body-md" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[18px]">grid_view</span><span>Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-[#a8a39d] hover:bg-[#22201d] hover:text-surface-bright transition-colors font-body-md text-body-md" data-path="employee-directory" href="#"><span class="material-symbols-outlined text-[18px]">badge</span><span>Employee Directory</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-[#a8a39d] hover:bg-[#22201d] hover:text-surface-bright transition-colors font-body-md text-body-md" data-path="asset-registry" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span><span>Asset Registry</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-[#a8a39d] hover:bg-[#22201d] hover:text-surface-bright transition-colors font-body-md text-body-md" data-path="approvals-and-compliance" href="#"><span class="material-symbols-outlined text-[18px]">verified</span><span>Approvals &amp; Compliance</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-[#a8a39d] hover:bg-[#22201d] hover:text-surface-bright transition-colors font-body-md text-body-md" data-path="audit-trail-and-security" href="#"><span class="material-symbols-outlined text-[18px]">shield</span><span>Audit Trail &amp; Security</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-[#a8a39d] hover:bg-[#22201d] hover:text-surface-bright transition-colors font-body-md text-body-md" data-path="system-settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span>System Settings</span></a></nav></div><div class="p-space-md bg-[#11100f] mx-space-sm mb-space-md rounded-xl flex items-center justify-between"><div class="flex flex-col"><span class="font-label-mono text-[11px] text-[#a8a39d]">UGX Ledger Sync</span><span class="font-label-mono text-[10px] text-primary-fixed-dim">URA / NSSF Connected</span></div><span class="w-2 h-2 rounded-full bg-[#2e5932]"></span></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface-container-lowest text-on-surface z-40 flex items-center justify-between px-space-lg border-b border-surface-container-high shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs font-title-sm text-title-sm text-outline"><span class="text-outline">StaffHub</span><span class="material-symbols-outlined text-[14px]">chevron_right</span><span class="text-on-surface font-semibold">Institutional Ledger</span></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-xs px-space-md py-1 bg-surface-container rounded-lg"><span class="material-symbols-outlined text-[16px] text-secondary">schedule</span><span class="font-label-mono text-label-mono text-on-surface font-medium">Kampala • 15:30 EAT</span></div><div class="flex items-center gap-space-xs px-space-md py-1 bg-surface-container-low rounded-lg text-primary-container"><span class="material-symbols-outlined text-[16px]">gavel</span><span class="font-label-mono text-[11px] tracking-wide uppercase font-semibold">URA &amp; NSSF Compliant</span></div><div class="flex items-center gap-space-sm pl-space-sm border-l border-surface-container-high"><div class="flex flex-col text-right"><span class="font-title-sm text-[13px] text-on-surface font-semibold leading-tight">Raymond Mugisha</span><span class="font-label-mono text-[10px] text-outline">System Administrator • Nakasero HQ Subnet</span></div><div class="w-8 h-8 rounded-full bg-primary-container text-surface-container-lowest flex items-center justify-center"><span class="material-symbols-outlined text-primary-fixed text-[18px]">person</span></div></div></div></header><main class="relative pt-16 bg-surface min-h-screen"><div class="flex flex-col w-full max-w-[1540px] mx-auto px-margin-desktop py-space-lg gap-space-lg">
+<!-- Forensic Audit Top Dossier Header -->
+<section class="flex flex-col gap-space-md">
+<div class="flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs max-w-4xl">
+<div class="flex items-center gap-space-xs font-label-mono text-label-mono text-outline uppercase tracking-wider">
+<span class="text-primary font-bold">Uganda Cap 219</span>
+<span>/</span>
+<span>Section 18 Security Forensics</span>
+<span>/</span>
+<span class="text-secondary font-bold">Ledger Block #882-EAT</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+          System Administration &amp; Immutable Audit Trail
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Statutory Security &amp; Forensics Ledger • Uganda Data Protection and Privacy Act (2019) &amp; Cap 219 Compliance
+        </p>
+</div>
+<!-- Action CTAs -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="flex items-center gap-space-xs px-space-md py-2.5 bg-surface-container-lowest border border-[#2e2a25] hover:bg-surface-container-low text-on-surface rounded-lg transition-colors font-title-sm text-title-sm whitespace-nowrap" id="verifySigBtn"><span class="material-symbols-outlined text-[18px] text-secondary">verified_user</span><span>Verify Cryptographic Signature</span></button>
+<button class="flex items-center gap-space-xs px-space-md py-2.5 bg-primary-container hover:bg-primary text-surface-container-lowest rounded-lg transition-colors font-title-sm text-title-sm shadow-md whitespace-nowrap" id="exportBundleBtn">
+<span class="material-symbols-outlined text-[18px] text-primary-fixed">download</span>
+<span>Export Signed Audit Bundle (JSON/PDF)</span>
+</button>
+</div>
+</div>
+<!-- Live Ledger Telemetry Strip -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm p-space-sm px-space-md bg-surface-container-high rounded-xl">
+<div class="flex flex-wrap items-center gap-space-md">
+<div class="flex items-center gap-space-xs font-label-mono text-label-mono text-on-surface">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="text-outline">Hash Chain:</span>
+<span class="font-bold text-primary-container">SHA-256 Merkle Linked</span>
+</div>
+<div class="flex items-center gap-space-xs font-label-mono text-label-mono text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-secondary">lock</span>
+<span class="text-outline">Ledger Mode:</span>
+<span class="font-bold text-on-surface">IMMUTABLE (Append-Only)</span>
+</div>
+<div class="flex items-center gap-space-xs font-label-mono text-label-mono text-on-surface">
+<span class="material-symbols-outlined text-[16px] text-primary">pin_drop</span>
+<span class="text-outline">Primary Authority:</span>
+<span class="font-bold text-primary">Raymond Mugisha (CTO &amp; Admin)</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm font-label-mono text-label-mono">
+<span class="px-2 py-0.5 bg-surface-container rounded text-outline">Network: Nakasero Fiber Gate</span>
+<span class="px-2 py-0.5 bg-surface-container-lowest text-primary font-bold rounded shadow-sm">Kampala • 16:50 EAT</span>
+</div>
+</div>
+</section>
+<!-- Summary Integrity KPI Cards (JetBrains Mono tabular figures) -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Card 1 -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-xl shadow-sm relative overflow-hidden">
+<div class="h-1 w-full bg-primary-container absolute top-0 left-0"></div>
+<div class="flex items-start justify-between">
+<span class="font-label-mono text-label-mono text-outline uppercase tracking-wider">Total Recorded Events</span>
+<span class="material-symbols-outlined text-primary text-[20px]">database</span>
+</div>
+<div class="my-space-sm">
+<div class="font-label-data text-[28px] font-bold text-on-surface tracking-tight">48,912 Logs</div>
+<p class="font-body-sm text-body-sm text-outline mt-1">100% Append-only integrity</p>
+</div>
+<div class="flex items-center gap-1.5 pt-space-xs bg-surface-container-low px-space-sm py-1 rounded">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="font-label-mono text-[11px] text-primary-container font-semibold">0 Tamper Alerts Detected</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-xl shadow-sm relative overflow-hidden">
+<div class="h-1 w-full bg-secondary-container absolute top-0 left-0"></div>
+<div class="flex items-start justify-between">
+<span class="font-label-mono text-label-mono text-outline uppercase tracking-wider">Critical Statutory Events</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">security_update_warning</span>
+</div>
+<div class="my-space-sm">
+<div class="font-label-data text-[28px] font-bold text-on-surface tracking-tight">1,240 Events</div>
+<p class="font-body-sm text-body-sm text-outline mt-1">Cap 219, bank EFT, &amp; payroll seals</p>
+</div>
+<div class="flex items-center gap-1.5 pt-space-xs bg-surface-container-low px-space-sm py-1 rounded">
+<span class="material-symbols-outlined text-[13px] text-secondary">verified</span>
+<span class="font-label-mono text-[11px] text-secondary font-semibold">All Signed by Approvers</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-xl shadow-sm relative overflow-hidden">
+<div class="h-1 w-full bg-primary-fixed-dim absolute top-0 left-0"></div>
+<div class="flex items-start justify-between">
+<span class="font-label-mono text-label-mono text-outline uppercase tracking-wider">Privileged Sessions</span>
+<span class="material-symbols-outlined text-primary-container text-[20px]">shield_person</span>
+</div>
+<div class="my-space-sm">
+<div class="font-label-data text-[28px] font-bold text-on-surface tracking-tight">4 Admins</div>
+<p class="font-body-sm text-body-sm text-outline mt-1">Kampala HQ Nakasero IP Subnet</p>
+</div>
+<div class="flex items-center gap-1.5 pt-space-xs bg-surface-container-low px-space-sm py-1 rounded">
+<span class="material-symbols-outlined text-[13px] text-primary">lan</span>
+<span class="font-label-mono text-[11px] text-primary font-semibold">Whitelisted Ranges: 196.43.102.x</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="flex flex-col justify-between p-space-md bg-surface-container-lowest rounded-xl shadow-sm relative overflow-hidden">
+<div class="h-1 w-full bg-tertiary-container absolute top-0 left-0"></div>
+<div class="flex items-start justify-between">
+<span class="font-label-mono text-label-mono text-outline uppercase tracking-wider">URA / NSSF Cycle Status</span>
+<span class="material-symbols-outlined text-tertiary-container text-[20px]">account_balance</span>
+</div>
+<div class="my-space-sm">
+<div class="font-label-data text-[28px] font-bold text-on-surface tracking-tight">Q4 2026 Ready</div>
+<p class="font-body-sm text-body-sm text-outline mt-1">Zero pending statutory discrepancies</p>
+</div>
+<div class="flex items-center gap-1.5 pt-space-xs bg-surface-container-low px-space-sm py-1 rounded">
+<span class="material-symbols-outlined text-[13px] text-primary-container">rule</span>
+<span class="font-label-mono text-[11px] text-primary-container font-semibold">TIN &amp; NSSF Pre-Validated</span>
+</div>
+</div>
+</section>
+<!-- Forensic Audit Trail Filter Console -->
+<section class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-wrap items-center justify-between gap-space-sm pb-space-xs">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+<span class="font-title-sm text-title-sm text-on-surface">Forensic Discovery &amp; Ledger Query</span>
+</div>
+<span class="font-label-mono text-label-mono text-outline">Real-Time Read Replica Connected</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Date Range Selector -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-mono text-[11px] text-outline uppercase font-semibold">Date Range Window (EAT)</label>
+<div class="flex items-center justify-between bg-surface-container-low px-3 py-2 rounded-lg text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-outline">calendar_month</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">10 Nov 2026 - 17 Nov 2026</span>
+</div>
+<span class="font-label-mono text-[10px] bg-surface-container px-1.5 py-0.5 rounded text-outline">7D</span>
+</div>
+</div>
+<!-- Event Category Filter -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-mono text-[11px] text-outline uppercase font-semibold">Event Classification</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low px-3 py-2 pr-8 rounded-lg appearance-none font-body-sm text-body-sm text-on-surface focus:outline-none" id="categoryFilter">
+<option value="all">All Categories (Statutory &amp; Internal)</option>
+<option value="bank">Bank &amp; Remuneration Changes</option>
+<option value="payroll">Payroll Runs &amp; Statutory Locks</option>
+<option value="exit">Personnel Exits &amp; Clearance Blockers</option>
+<option value="contract">Offer Initialization &amp; Contracts</option>
+<option value="attendance">Attendance Punch Correction</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-outline absolute right-2.5 top-2.5 pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Actor Filter -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-mono text-[11px] text-outline uppercase font-semibold">Authorizing Actor</label>
+<div class="relative">
+<select class="w-full bg-surface-container-low px-3 py-2 pr-8 rounded-lg appearance-none font-body-sm text-body-sm text-on-surface focus:outline-none" id="actorFilter">
+<option value="all">All Registered Officers</option>
+<option value="okello">Julius Okello (Talent / HR Lead)</option>
+<option value="namubiru">Sarah Namubiru (Payroll Specialist)</option>
+<option value="mukasa_j">Joseph Mukasa (Security &amp; Infra)</option>
+<option value="kigozi">Michael Kigozi (Line Manager)</option>
+<option value="daemon">System Automated Daemon</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-outline absolute right-2.5 top-2.5 pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Keyword / ID Query Input -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-mono text-[11px] text-outline uppercase font-semibold">Ledger Hash / Employee ID</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined text-[16px] text-outline absolute left-3">search</span>
+<input class="w-full bg-surface-container-low pl-9 pr-3 py-2 rounded-lg font-label-mono text-[12px] text-on-surface focus:outline-none placeholder:text-outline" id="ledgerSearch" placeholder="UG-EMP-0291, Stanbic, Centenary..." type="text">
+</div>
+</div>
+</div>
+</section>
+<!-- Immutable Ledger Table Container -->
+<section class="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden flex flex-col">
+<div class="px-space-md py-space-sm bg-surface-container-high flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-mono text-label-mono text-on-surface font-bold tracking-wider uppercase">Chain of Custody Stream</span>
+<span class="font-label-mono text-[11px] bg-surface-container px-2 py-0.5 rounded text-outline">Page 1 of 978</span>
+</div>
+<div class="flex items-center gap-space-md font-label-mono text-[11px] text-outline">
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+          SHA-256 Validated
+        </span>
+<span>Cryptographic Epoch: 2026.Q4-UG</span>
+</div>
+</div>
+<!-- Table Responsive Scroller -->
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left border-collapse min-w-[1380px]" id="auditLogTable">
+<thead>
+<tr class="bg-surface-container text-outline font-label-mono text-[11px] uppercase tracking-wider"><th class="py-3 px-4 font-semibold w-[200px] whitespace-nowrap">Chronological Timestamp (EAT) &amp; Log ID</th><th class="py-3 px-4 font-semibold w-[220px] whitespace-nowrap">Actor (User &amp; Office)</th><th class="py-3 px-4 font-semibold w-[180px] whitespace-nowrap">Target Record</th><th class="py-3 px-4 font-semibold w-[220px] whitespace-nowrap">Action / Event Classification</th><th class="py-3 px-4 font-semibold w-[360px] whitespace-nowrap">Old-to-New Differential (Diff)</th><th class="py-3 px-4 font-semibold min-w-[280px] whitespace-nowrap">Mandatory Logged Reason &amp; Ref</th><th class="py-3 px-4 font-semibold w-[160px] text-right whitespace-nowrap">Crypto Checksum</th></tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high font-body-sm text-body-sm text-on-surface">
+<!-- Row 1: Bank amendment audit -->
+<tr class="hover:bg-surface-container-low transition-colors audit-row" data-actor="okello" data-category="bank">
+<td class="py-3.5 px-4 align-top">
+<div class="font-label-mono text-label-mono font-bold text-on-surface">16 Nov 2026, 10:14:22 EAT</div>
+<div class="font-label-mono text-[11px] text-primary font-semibold mt-0.5">#AUD-2026-9941</div>
+<div class="font-label-mono text-[10px] text-outline">EAT • Block #882194</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm text-on-surface font-semibold">Julius Okello</div>
+<div class="font-label-mono text-[11px] text-outline">HR Talent Lead</div>
+<div class="font-label-mono text-[11px] text-primary-container mt-1">196.43.102.14</div>
+<div class="font-label-mono text-[10px] text-outline">Plot 14 Lumumba Ave</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm font-semibold text-on-surface">Denis Mukasa</div>
+<div class="font-label-mono text-[11px] text-outline">UG-EMP-0291</div>
+<div class="font-label-mono text-[10px] text-outline">Accounts Assistant</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-label-mono font-bold bg-secondary-fixed text-on-secondary-fixed whitespace-nowrap">BANK AMENDMENT REVIEW</span>
+<div class="font-label-mono text-[11px] text-outline mt-1.5">AML • Pre-Disbursement</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="flex flex-col gap-1 font-label-mono text-[11px]">
+<div class="bg-error-container/40 text-on-surface p-1.5 rounded">
+<span class="text-error font-bold">- OLD:</span> Stanbic Bank Uganda Ltd
+                  <div class="text-[10px] text-outline">Acc: 9030018492019</div>
+</div>
+<div class="bg-surface-container-high text-on-surface p-1.5 rounded">
+<span class="text-primary-container font-bold">+ NEW:</span> Centenary Bank (CenteBank)
+                  <div class="text-[10px] text-primary-container font-semibold">Acc: 310084729104</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<p class="text-on-surface leading-snug">
+                Phone confirmation completed with employee on 16 Nov 2026 at 10:14 EAT; employee verified written request and stamp from Centenary Bank Kampala Branch.
+              </p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-2 py-0.5 bg-surface-container rounded font-label-mono text-[11px] text-secondary font-semibold">Ref: AML-SEC-402</span>
+<span class="material-symbols-outlined text-[14px] text-primary-container" title="Audio verification signed">call_quality</span>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top text-right">
+<div class="font-label-mono text-[11px] text-primary-container font-bold">SHA: 4f82a9...d0e1</div>
+<span class="inline-flex items-center gap-1 font-label-mono text-[10px] text-primary-container bg-surface-container px-1.5 py-0.5 rounded mt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                VALIDATED
+              </span>
+</td>
+</tr>
+<!-- Row 2: Payroll locking -->
+<tr class="hover:bg-surface-container-low transition-colors audit-row" data-actor="namubiru" data-category="payroll">
+<td class="py-3.5 px-4 align-top">
+<div class="font-label-mono text-label-mono font-bold text-on-surface">15 Nov 2026, 16:45:00 EAT</div>
+<div class="font-label-mono text-[11px] text-primary font-semibold mt-0.5">#AUD-2026-9938</div>
+<div class="font-label-mono text-[10px] text-outline">EAT • Block #882190</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm text-on-surface font-semibold">Sarah Namubiru</div>
+<div class="font-label-mono text-[11px] text-outline">Payroll Specialist</div>
+<div class="font-label-mono text-[11px] text-primary-container mt-1">196.43.102.18</div>
+<div class="font-label-mono text-[10px] text-outline">Nakasero Tower 2</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm font-semibold text-on-surface">November 2026 Cycle</div>
+<div class="font-label-mono text-[11px] text-primary-container font-semibold">#PR-UG-2026-11</div>
+<div class="font-label-mono text-[10px] text-outline">Statutory Run • 84 Staff</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-label-mono font-bold bg-primary-container text-surface-container-lowest whitespace-nowrap">LEDGER LOCK &amp; FREEZE</span>
+<div class="font-label-mono text-[11px] text-outline mt-1.5">Bank EFT Dispatch Seal</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="flex flex-col gap-1 font-label-mono text-[11px]">
+<div class="bg-surface-container p-1.5 rounded text-outline">
+<span class="font-bold text-outline">OLD:</span> [State: Approved • Editable: Under Review]
+                </div>
+<div class="bg-surface-container-high text-on-surface p-1.5 rounded">
+<span class="text-primary font-bold">+ NEW:</span> [State: Locked &amp; Sealed]
+                  <div class="text-[10px] text-on-surface font-bold mt-0.5 text-right font-label-mono">Gross: UGX 184,650,000</div>
+<div class="text-[10px] text-primary-container font-bold text-right font-label-mono">Net Disburse: UGX 114,072,050</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<p class="text-on-surface leading-snug">
+                Final pre-disbursement sign-off received from Finance Director Michael Kigozi; bank EFT batch generated for Stanbic/ABSA/Centenary.
+              </p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-2 py-0.5 bg-surface-container rounded font-label-mono text-[11px] text-primary font-semibold">Ref: PR-GOV-88</span>
+<span class="material-symbols-outlined text-[14px] text-primary" title="Double authorized">lock</span>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top text-right">
+<div class="font-label-mono text-[11px] text-primary-container font-bold">SHA: 9b12c4...e788</div>
+<span class="inline-flex items-center gap-1 font-label-mono text-[10px] text-primary-container bg-surface-container px-1.5 py-0.5 rounded mt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                VALIDATED
+              </span>
+</td>
+</tr>
+<!-- Row 3: Exit blocker logged -->
+<tr class="hover:bg-surface-container-low transition-colors audit-row" data-actor="mukasa_j" data-category="exit">
+<td class="py-3.5 px-4 align-top">
+<div class="font-label-mono text-label-mono font-bold text-on-surface">14 Nov 2026, 17:00:15 EAT</div>
+<div class="font-label-mono text-[11px] text-primary font-semibold mt-0.5">#AUD-2026-9912</div>
+<div class="font-label-mono text-[10px] text-outline">EAT • Block #882144</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm text-on-surface font-semibold">Joseph Mukasa</div>
+<div class="font-label-mono text-[11px] text-outline">Senior Infra &amp; Security</div>
+<div class="font-label-mono text-[11px] text-primary-container mt-1">196.43.102.25</div>
+<div class="font-label-mono text-[10px] text-outline">Data Center Kampala</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm font-semibold text-on-surface">Denis Mukasa</div>
+<div class="font-label-mono text-[11px] text-outline">UG-EMP-0291</div>
+<div class="font-label-mono text-[10px] text-outline">Exit Clearance Flow</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-label-mono font-bold bg-tertiary-container text-surface-container-lowest whitespace-nowrap">CLEARANCE BLOCKER CREATED</span>
+<div class="font-label-mono text-[11px] text-error font-semibold mt-1.5">Asset Recovery Hold</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="flex flex-col gap-1 font-label-mono text-[11px]">
+<div class="bg-surface-container p-1.5 rounded text-outline">
+<span class="font-bold">OLD:</span> Asset Clearance: Pending Return
+                </div>
+<div class="bg-error-container/30 text-error p-1.5 rounded font-bold">
+<span>+ NEW: CRITICAL BLOCKER</span>
+<div class="text-[10px] text-on-surface font-normal mt-0.5">Unreturned ThinkPad T14 #AST-064 &amp; Dock #AST-092</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<p class="text-on-surface leading-snug">
+                Hardware unreturned on scheduled handover inspection; system account deactivation automatically locked pursuant to StaffHub Cap 219 exit protocol.
+              </p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-2 py-0.5 bg-surface-container rounded font-label-mono text-[11px] text-error font-semibold">Ref: AST-SEC-19</span>
+<span class="material-symbols-outlined text-[14px] text-error" title="Statutory exit freeze">block</span>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top text-right">
+<div class="font-label-mono text-[11px] text-primary-container font-bold">SHA: c7810e...8312</div>
+<span class="inline-flex items-center gap-1 font-label-mono text-[10px] text-primary-container bg-surface-container px-1.5 py-0.5 rounded mt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                VALIDATED
+              </span>
+</td>
+</tr>
+<!-- Row 4: Candidate conversion -->
+<tr class="hover:bg-surface-container-low transition-colors audit-row" data-actor="okello" data-category="contract">
+<td class="py-3.5 px-4 align-top">
+<div class="font-label-mono text-label-mono font-bold text-on-surface">14 Nov 2026, 11:20:04 EAT</div>
+<div class="font-label-mono text-[11px] text-primary font-semibold mt-0.5">#AUD-2026-9890</div>
+<div class="font-label-mono text-[10px] text-outline">EAT • Block #882088</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm text-on-surface font-semibold">Julius Okello</div>
+<div class="font-label-mono text-[11px] text-outline">HR Lead / Registrar</div>
+<div class="font-label-mono text-[11px] text-primary-container mt-1">196.43.102.14</div>
+<div class="font-label-mono text-[10px] text-outline">Lumumba Admin Desk</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm font-semibold text-on-surface">Amina Florence Nabakooza</div>
+<div class="font-label-mono text-[11px] text-primary font-semibold">#VAC-2026-042</div>
+<div class="font-label-mono text-[10px] text-outline">New Appointment</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-label-mono font-bold bg-surface-container-high text-on-surface whitespace-nowrap">CONTRACT CONVERSION</span>
+<div class="font-label-mono text-[11px] text-outline mt-1.5">Statutory Initialization</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="flex flex-col gap-1 font-label-mono text-[11px]">
+<div class="bg-surface-container p-1.5 rounded text-outline">
+<span class="font-bold">OLD:</span> Candidate: Offer Sent • Stage 5
+                </div>
+<div class="bg-surface-container-high text-on-surface p-1.5 rounded">
+<span class="text-primary-container font-bold">+ NEW:</span> Provisioned UG-EMP-0518
+                  <div class="text-[10px] text-on-surface font-semibold text-right font-label-mono">Gross: UGX 7,500,000 / mo</div>
+<div class="text-[10px] text-outline">Effective Date: 01 Jan 2027</div>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<p class="text-on-surface leading-snug">
+                Countersigned formal appointment contract received and statutory NIN CM90021482K verified via URA e-Tax portal.
+              </p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-2 py-0.5 bg-surface-container rounded font-label-mono text-[11px] text-primary font-semibold">Ref: REC-CAP219-44</span>
+<span class="material-symbols-outlined text-[14px] text-secondary" title="URA TIN verified">badge</span>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top text-right">
+<div class="font-label-mono text-[11px] text-primary-container font-bold">SHA: a115b8...f902</div>
+<span class="inline-flex items-center gap-1 font-label-mono text-[10px] text-primary-container bg-surface-container px-1.5 py-0.5 rounded mt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                VALIDATED
+              </span>
+</td>
+</tr>
+<!-- Row 5: Punch override -->
+<tr class="hover:bg-surface-container-low transition-colors audit-row" data-actor="kigozi" data-category="attendance">
+<td class="py-3.5 px-4 align-top">
+<div class="font-label-mono text-label-mono font-bold text-on-surface">11 Nov 2026, 09:12:45 EAT</div>
+<div class="font-label-mono text-[11px] text-primary font-semibold mt-0.5">#AUD-2026-9844</div>
+<div class="font-label-mono text-[10px] text-outline">EAT • Block #881950</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm text-on-surface font-semibold">Michael Kigozi</div>
+<div class="font-label-mono text-[11px] text-outline">Line Manager • Finance</div>
+<div class="font-label-mono text-[11px] text-primary-container mt-1">196.43.102.30</div>
+<div class="font-label-mono text-[10px] text-outline">Floor 3 Regional Office</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="font-title-sm text-title-sm font-semibold text-on-surface">Denis Mukasa</div>
+<div class="font-label-mono text-[11px] text-outline">UG-EMP-0291</div>
+<div class="font-label-mono text-[10px] text-outline">Time-clock Roster Log</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-label-mono font-bold bg-surface-container text-on-surface whitespace-nowrap">PUNCH CORRECTION SIGN-OFF</span>
+<div class="font-label-mono text-[11px] text-outline mt-1.5">Line Manager Override</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<div class="flex flex-col gap-1 font-label-mono text-[11px]">
+<div class="bg-surface-container p-1.5 rounded text-outline">
+<span class="font-bold">OLD:</span> Clock-In: 08:24 EAT • Late Grace Window
+                </div>
+<div class="bg-surface-container-high text-on-surface p-1.5 rounded">
+<span class="text-secondary font-bold">+ NEW:</span> Clock-In: 08:00 EAT • Validated Prompt
+                </div>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top">
+<p class="text-on-surface leading-snug"><span class="font-bold text-outline text-[11px] font-label-mono uppercase tracking-wide block mb-0.5">Mandatory Logged Reason:</span>Supervisor authorized prompt sign-off due to early morning official client transit; field bag collection logged.</p>
+<div class="mt-2 flex items-center gap-2">
+<span class="px-2 py-0.5 bg-surface-container rounded font-label-mono text-[11px] text-outline font-semibold">Ref: ATT-MGR-08</span>
+<span class="material-symbols-outlined text-[14px] text-outline" title="Field diversion note logged">commute</span>
+</div>
+</td>
+<td class="py-3.5 px-4 align-top text-right">
+<div class="font-label-mono text-[11px] text-primary-container font-bold">SHA: dd309a...1176</div>
+<span class="inline-flex items-center gap-1 font-label-mono text-[10px] text-primary-container bg-surface-container px-1.5 py-0.5 rounded mt-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                VALIDATED
+              </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Footer Bar -->
+<div class="px-space-md py-space-sm bg-surface-container-low flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-xs font-label-mono text-label-mono text-outline">
+<span>Showing</span>
+<span class="text-on-surface font-bold">1 - 5</span>
+<span>of</span>
+<span class="text-on-surface font-bold">48,912</span>
+<span>audited ledger records</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-md py-1 bg-surface-container rounded text-outline font-label-mono text-[12px] cursor-not-allowed opacity-60 whitespace-nowrap">
+          Previous Epoch
+        </button>
+<button class="px-space-md py-1 bg-surface-container-high hover:bg-surface-variant text-on-surface rounded font-label-mono text-[12px] transition-colors whitespace-nowrap">
+          Next Epoch →
+        </button>
+</div>
+</div>
+</section>
+<!-- Cryptographic Chained Assurance Card -->
+<section class="p-space-lg bg-surface-container-lowest rounded-xl shadow-sm flex flex-col md:flex-row gap-space-lg items-start md:items-center justify-between relative overflow-hidden">
+<div class="h-full w-2 bg-primary-container absolute left-0 top-0"></div>
+<div class="flex items-start gap-space-md max-w-4xl pl-space-xs">
+<div class="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container text-[26px]">gavel</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="font-title-sm text-title-sm font-bold text-on-surface uppercase tracking-wide">
+            Immutable Append-Only Guarantee
+          </span>
+<span class="px-2 py-0.5 bg-surface-container text-primary-container font-label-mono text-[10px] rounded uppercase font-bold">
+            Statutory Certificate
+          </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Audit trail entries cannot be updated, edited, or deleted by any administrative account. Modifications to personnel or financial ledgers trigger cryptographically linked entries with mandatory justification clauses under the Uganda Data Protection and Privacy Act (2019) and Employment Act Cap 219.
+        </p>
+</div>
+</div>
+<!-- Forensic Key Info -->
+<div class="flex flex-col gap-1 shrink-0 p-space-md bg-surface-container-low rounded-xl">
+<span class="font-label-mono text-[11px] text-outline uppercase tracking-wider">Root Verification Hash</span>
+<span class="font-label-mono text-label-mono text-primary font-bold">0x88A2_9F14_B82C_1190</span>
+<span class="font-label-mono text-[10px] text-outline">Stored in Nakasero Hardware Security Module</span>
+</div>
+</section>
+</div>
+<script>
+  // Simple forensic filter reactivity
+  const searchInput = document.getElementById('ledgerSearch');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const actorFilter = document.getElementById('actorFilter');
+  const rows = document.querySelectorAll('.audit-row');
+
+  function filterLedger() {
+    const q = searchInput.value.toLowerCase().trim();
+    const cat = categoryFilter.value;
+    const act = actorFilter.value;
+
+    rows.forEach(row => {
+      const text = row.innerText.toLowerCase();
+      const rowCat = row.getAttribute('data-category');
+      const rowAct = row.getAttribute('data-actor');
+
+      const matchesQuery = q === '' || text.includes(q);
+      const matchesCategory = cat === 'all' || rowCat === cat;
+      const matchesActor = act === 'all' || rowAct === act;
+
+      if (matchesQuery && matchesCategory && matchesActor) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  searchInput.addEventListener('input', filterLedger);
+  categoryFilter.addEventListener('change', filterLedger);
+  actorFilter.addEventListener('change', filterLedger);
+
+  // Micro-interaction for Cryptographic Verification
+  const verifyBtn = document.getElementById('verifySigBtn');
+  verifyBtn.addEventListener('click', () => {
+    verifyBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-primary-fixed-dim">sync</span><span>Verifying SHA-256 Merkle Chain...</span>';
+    setTimeout(() => {
+      verifyBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-primary">check_circle</span><span>Ledger Signature Valid (Epoch 2026.Q4)</span>';
+      setTimeout(() => {
+        verifyBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-secondary">verified_user</span><span>Verify Cryptographic Signature</span>';
+      }, 4000);
+    }, 900);
+  });
+
+  // Micro-interaction for Export
+  const exportBtn = document.getElementById('exportBundleBtn');
+  exportBtn.addEventListener('click', () => {
+    exportBtn.classList.add('opacity-80');
+    exportBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-pulse">file_download</span><span>Packaging Cryptographic Bundle...</span>';
+    setTimeout(() => {
+      exportBtn.classList.remove('opacity-80');
+      exportBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-primary-fixed">download_done</span><span>Bundle Signed &amp; Dispatched (48.9MB)</span>';
+      setTimeout(() => {
+        exportBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-primary-fixed">download</span><span>Export Signed Audit Bundle (JSON/PDF)</span>';
+      }, 3500);
+    }, 1200);
+  });
+</script></main></div>
+
+
+
+</body></html>

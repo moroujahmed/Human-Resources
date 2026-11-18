@@ -1,0 +1,291 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"><link href="https://fonts.googleapis.com" rel="preconnect"><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-tertiary": "#ffffff", "surface-bright": "#fdf8f4", "on-primary-fixed-variant": "#0b4f4e", "background": "#fdf8f4", "secondary-fixed-dim": "#f9bb5f", "primary-container": "#0b4f4e", "on-error": "#ffffff", "on-background": "#1d1b19", "surface-dim": "#ded9d5", "surface-container-highest": "#e6e2de", "outline-variant": "#bfc8c7", "on-secondary": "#ffffff", "secondary-fixed": "#ffddb2", "inverse-primary": "#96d1cf", "on-secondary-container": "#764e00", "tertiary-container": "#812801", "on-error-container": "#93000a", "surface-tint": "#2c6766", "surface-container": "#f2ede9", "on-surface": "#1d1b19", "on-primary-fixed": "#00201f", "surface-container-low": "#f8f3ef", "on-secondary-fixed-variant": "#624000", "error": "#ba1a1a", "on-secondary-fixed": "#291800", "tertiary-fixed": "#ffdbcf", "error-container": "#ffdad6", "secondary": "#815500", "on-tertiary-container": "#ff9b77", "surface-variant": "#e6e2de", "inverse-on-surface": "#f5f0ec", "on-tertiary-fixed": "#380c00", "outline": "#707978", "tertiary": "#5b1a00", "inverse-surface": "#32302e", "surface-container-lowest": "#ffffff", "secondary-container": "#ffc164", "primary-fixed-dim": "#96d1cf", "primary": "#003736", "on-primary-container": "#85bfbd", "primary-fixed": "#b2edeb", "on-primary": "#ffffff", "surface-container-high": "#ece7e3", "on-tertiary-fixed-variant": "#812901", "on-surface-variant": "#404848", "tertiary-fixed-dim": "#ffb59c", "surface": "#fdf8f4" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "margin": "1rem", "space-lg": "1.5rem", "space-sm": "0.5rem", "space-xs": "0.25rem", "space-md": "1rem", "margin-desktop": "2rem", "gutter-desktop": "1.5rem", "space-xl": "2.5rem", "gutter": "1.25rem" }, "fontFamily": { "title-md": ["Inter"], "label-sm": ["Inter"], "title-sm": ["Inter"], "body-sm": ["Inter"], "label-data": ["JetBrains Mono"], "display-lg-mobile": ["Bricolage Grotesque"], "display-lg": ["Bricolage Grotesque"], "body-lg": ["Inter"], "headline-sm": ["Bricolage Grotesque"], "headline-lg-mobile": ["Bricolage Grotesque"], "label-mono": ["JetBrains Mono"], "headline-lg": ["Bricolage Grotesque"], "headline-md": ["Bricolage Grotesque"], "body-md": ["Inter"] }, "fontSize": { "title-md": ["16px", { "lineHeight": "24px", "fontWeight": "600" }], "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "600" }], "title-sm": ["14px", { "lineHeight": "20px", "fontWeight": "600" }], "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }], "label-data": ["14px", { "lineHeight": "20px", "fontWeight": "500" }], "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }], "display-lg": ["44px", { "lineHeight": "52px", "fontWeight": "700" }], "body-lg": ["16px", { "lineHeight": "26px", "fontWeight": "400" }], "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }], "headline-lg-mobile": ["26px", { "lineHeight": "34px", "fontWeight": "600" }], "label-mono": ["12px", { "lineHeight": "16px", "fontWeight": "500" }], "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }], "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "22px", "fontWeight": "400" }] } } } };</script><style>@layer base{html,body{width:100%;margin:0;padding:0;min-height:100vh;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface text-on-surface antialiased flex flex-col min-h-screen selection:bg-secondary-fixed selection:text-on-secondary-fixed"><header class="fixed top-0 w-full z-50 pt-safe bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-margin flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0"><span class="font-headline-sm font-bold text-on-primary text-[18px] leading-none">S</span></div><div class="flex flex-col truncate"><span class="font-title-sm text-title-sm text-on-surface tracking-tight truncate leading-tight">StaffHub</span><span class="font-label-mono text-label-mono text-on-surface-variant truncate uppercase tracking-wider">Kampala • 08:04 EAT</span></div></div><div class="flex items-center gap-space-sm shrink-0"><button aria-label="Notifications" class="relative w-11 h-11 flex items-center justify-center rounded-lg text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2 right-2 w-4 h-4 bg-tertiary text-on-tertiary font-label-mono text-[10px] leading-none rounded flex items-center justify-center ring-2 ring-surface-container-lowest font-bold">1</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface"><div class="flex flex-col w-full px-margin py-space-sm space-y-space-md">
+<!-- Personnel Identity Summary -->
+<section class="flex items-center justify-between bg-surface-container-lowest p-space-md rounded-xl shadow-sm">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center shrink-0 text-primary font-headline-sm text-headline-sm">
+        BK
+      </div>
+<div class="flex flex-col min-w-0">
+<h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight truncate leading-tight">Brian Kato</h1>
+<div class="flex items-center gap-1.5 text-on-surface-variant font-label-mono text-label-mono">
+<span class="truncate">Senior Accountant</span>
+<span class="text-outline-variant">•</span>
+<span class="shrink-0">UG-EMP-0412</span>
+</div>
+</div>
+</div>
+<div class="text-right shrink-0">
+<div class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider">Tuesday</div>
+<div class="font-title-sm text-title-sm text-on-surface font-semibold">17 Nov 2026</div>
+</div>
+</section>
+<!-- Top Shift / Check-In Action Card -->
+<section class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm space-y-space-md">
+<div class="flex items-start justify-between gap-space-xs">
+<div>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider block mb-0.5">Assigned Shift</span>
+<span class="font-title-md text-title-md text-on-surface tracking-tight">08:00 – 17:00 EAT</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant block mt-0.5">15-minute standard grace window</span>
+</div>
+<span class="px-2.5 py-1 rounded bg-secondary-container/30 text-on-secondary-container font-label-mono text-[11px] font-semibold tracking-wide uppercase shrink-0" id="shift-status-pill">
+        Not Checked In
+      </span>
+</div>
+<!-- Shift Elapsed Notice Strip -->
+<div class="flex items-center gap-space-xs px-3 py-2 bg-surface-container-low rounded-lg text-on-surface-variant font-body-sm text-body-sm" id="grace-info-strip">
+<span class="material-symbols-outlined text-[18px] text-secondary shrink-0">history</span>
+<span class="leading-tight">Shift began <strong>4m ago</strong> • Grace valid until <strong>08:15 EAT</strong></span>
+</div>
+<!-- Full-Width Nile Petrol Action CTA -->
+<button class="w-full h-12 bg-primary hover:bg-primary-container active:scale-[0.99] text-on-primary font-title-sm text-title-sm rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm" id="checkin-btn" type="button">
+<span class="material-symbols-outlined text-[20px]">login</span>
+<span id="checkin-label">Check In Now (08:04 EAT)</span>
+</button>
+</section>
+<!-- Summary Cards Vertical Stack -->
+<section class="flex flex-col space-y-space-sm">
+<div class="flex items-center justify-between px-0.5">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Administrative Overview</h2>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase">HQ Kampala</span>
+</div>
+<!-- Card 1: Pending Asset Action -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-tertiary"></div>
+<div class="flex items-start justify-between pl-1">
+<div class="space-y-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-mono text-[10px] font-bold uppercase">Pending Action (1)</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant">IT Registry</span>
+</div>
+<p class="font-title-sm text-title-sm text-on-surface font-semibold pt-1">Acknowledge Equipment #AST-088</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">ThinkPad T14 Gen 4 assigned by IT Infrastructure team.</p>
+</div>
+</div>
+<div class="mt-3 pt-2 pl-1 flex justify-end">
+<a class="inline-flex items-center gap-1 font-title-sm text-title-sm text-tertiary hover:underline font-semibold" href="#">
+<span>Sign Handover</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 2: Annual Statutory Leave -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm space-y-space-sm">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider">Statutory Balance</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mt-0.5">14 Working Days Left</h3>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">event_note</span>
+</div>
+</div>
+<!-- Meter Bar -->
+<div class="w-full bg-surface-container rounded-full h-2 overflow-hidden flex">
+<div class="bg-primary h-full" style="width: 22%" title="Taken: 4 days"></div>
+<div class="bg-primary/20 h-full flex-1" title="Remaining: 14 days"></div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-mono text-label-mono text-on-surface-variant">
+<span>Accrued: <strong class="text-on-surface font-semibold">18d</strong></span>
+<span>•</span>
+<span>Taken: <strong class="text-on-surface font-semibold">4d</strong></span>
+</div>
+<a class="inline-flex items-center gap-1 font-title-sm text-title-sm text-primary hover:underline font-semibold" href="#">
+<span>Request Leave</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 3: Masked Latest Payslip -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm space-y-space-sm">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider">Disbursement • Oct 2026</span>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-label-data text-headline-sm text-on-surface font-bold tracking-tight" id="payslip-amount" data-amount="UGX 3,372,500">
+              UGX ••••••••
+            </span>
+<button aria-label="Toggle net pay visibility" class="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface flex items-center justify-center transition-colors" id="toggle-payslip-btn" type="button" onclick="var el=document.getElementById('payslip-amount'),ic=document.getElementById('toggle-payslip-icon');if(el.textContent.includes('•')){el.textContent='UGX 3,372,500';ic.textContent='visibility_off';}else{el.textContent='UGX ••••••••';ic.textContent='visibility';}event.stopImmediatePropagation();">
+<span class="material-symbols-outlined text-[18px]" id="toggle-payslip-icon">visibility</span>
+</button>
+</div>
+</div>
+<div class="text-right">
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-mono text-[10px] font-semibold uppercase">
+            URA &amp; NSSF Settled
+          </span>
+</div>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm pt-1">
+<span>Remitted to Stanbic Bank Ltd</span>
+<a class="inline-flex items-center gap-1 font-title-sm text-title-sm text-primary hover:underline font-semibold" href="#">
+<span>View Slip</span>
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+</a>
+</div>
+</div>
+</section>
+<!-- 7-Day Attendance Log -->
+<section class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm space-y-space-sm">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Recent Attendance</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Kampala Central Shift Ledger</p>
+</div>
+<button class="text-primary font-title-sm text-title-sm hover:underline font-semibold" type="button">
+        Audit Log
+      </button>
+</div>
+<!-- Attendance Row Stack -->
+<div class="space-y-space-xs pt-1">
+<!-- Row 1: Mon 16 Nov -->
+<div class="p-3 bg-surface-container-low rounded-lg flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Mon, 16 Nov</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-mono text-[10px] font-semibold uppercase">Regular</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-primary font-label-mono text-[11px] font-semibold uppercase tracking-wide">
+            On-Time
+          </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-2 font-label-mono text-label-mono text-on-surface">
+<span>IN: <strong>07:56</strong></span>
+<span>•</span>
+<span>OUT: <strong>17:08</strong></span>
+</div>
+<button class="font-label-mono text-[11px] text-primary hover:underline uppercase tracking-wide font-semibold" type="button">
+            Correction
+          </button>
+</div>
+</div>
+<!-- Row 2: Fri 13 Nov -->
+<div class="p-3 bg-surface-container-low rounded-lg flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Fri, 13 Nov</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-mono text-[10px] font-semibold uppercase">Regular</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-secondary-container/40 text-on-secondary-container font-label-mono text-[11px] font-semibold uppercase tracking-wide">
+            Grace (08:09)
+          </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-2 font-label-mono text-label-mono text-on-surface">
+<span>IN: <strong>08:09</strong></span>
+<span>•</span>
+<span>OUT: <strong>17:20</strong></span>
+</div>
+<button class="font-label-mono text-[11px] text-primary hover:underline uppercase tracking-wide font-semibold" type="button">
+            Correction
+          </button>
+</div>
+</div>
+<!-- Row 3: Thu 12 Nov -->
+<div class="p-3 bg-surface-container-low rounded-lg flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Thu, 12 Nov</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-mono text-[10px] font-semibold uppercase">Regular</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-primary font-label-mono text-[11px] font-semibold uppercase tracking-wide">
+            On-Time
+          </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-2 font-label-mono text-label-mono text-on-surface">
+<span>IN: <strong>07:51</strong></span>
+<span>•</span>
+<span>OUT: <strong>17:02</strong></span>
+</div>
+<button class="font-label-mono text-[11px] text-primary hover:underline uppercase tracking-wide font-semibold" type="button">
+            Correction
+          </button>
+</div>
+</div>
+<!-- Row 4: Wed 11 Nov (Escalation / Late Flag) -->
+<div class="p-3 bg-surface-container-low rounded-lg flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold">Wed, 11 Nov</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-mono text-[10px] font-semibold uppercase">Traffic Delay</span>
+</div>
+<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container font-label-mono text-[11px] font-semibold uppercase tracking-wide">
+            Late (08:24)
+          </span>
+</div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<div class="flex items-center gap-2 font-label-mono text-label-mono text-on-surface">
+<span>IN: <strong>08:24</strong></span>
+<span>•</span>
+<span>OUT: <strong>17:45</strong></span>
+</div>
+<button class="font-label-mono text-[11px] text-tertiary hover:underline uppercase tracking-wide font-semibold" type="button">
+            Correction Sent
+          </button>
+</div>
+</div>
+</div>
+<!-- Correction Footnote Guidance -->
+<div class="pt-2 px-1 text-center">
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+        Corrections require line-manager concurrence within 48h per HR Manual.
+      </p>
+</div>
+</section>
+</div>
+<script>
+  (function() {
+    // Payslip Toggle Interaction
+    const payslipAmount = document.getElementById('payslip-amount');
+    const togglePayslipBtn = document.getElementById('toggle-payslip-btn');
+    const togglePayslipIcon = document.getElementById('toggle-payslip-icon');
+    let isRevealed = false;
+
+    if (togglePayslipBtn && payslipAmount) {
+      togglePayslipBtn.addEventListener('click', function() {
+        isRevealed = !isRevealed;
+        if (isRevealed) {
+          payslipAmount.textContent = 'UGX 4,850,000';
+          togglePayslipIcon.textContent = 'visibility_off';
+        } else {
+          payslipAmount.textContent = 'UGX ••••••••';
+          togglePayslipIcon.textContent = 'visibility';
+        }
+      });
+    }
+
+    // Check-In Action
+    const checkinBtn = document.getElementById('checkin-btn');
+    const checkinLabel = document.getElementById('checkin-label');
+    const shiftStatusPill = document.getElementById('shift-status-pill');
+    const graceInfoStrip = document.getElementById('grace-info-strip');
+
+    if (checkinBtn && checkinLabel && shiftStatusPill) {
+      checkinBtn.addEventListener('click', function() {
+        // Update to checked in state
+        checkinBtn.disabled = true;
+        checkinBtn.classList.remove('bg-primary', 'hover:bg-primary-container');
+        checkinBtn.classList.add('bg-surface-container-high', 'text-on-surface-variant', 'cursor-not-allowed');
+        
+        checkinLabel.textContent = 'Checked In (08:04 EAT)';
+        
+        shiftStatusPill.className = 'px-2.5 py-1 rounded bg-surface-container-highest text-primary font-label-mono text-[11px] font-semibold tracking-wide uppercase shrink-0';
+        shiftStatusPill.textContent = 'On Duty • 08:04 EAT';
+
+        if (graceInfoStrip) {
+          graceInfoStrip.innerHTML = '<span class="material-symbols-outlined text-[18px] text-primary shrink-0">check_circle</span><span class="leading-tight">Arrival registered within grace period. Enjoy your workday, Brian.</span>';
+        }
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-inverse-surface/95 backdrop-blur-xl text-inverse-on-surface shadow-[0_-2px_12px_rgba(22,21,19,0.12)]" data-active-classes="text-secondary-fixed-dim relative after:content-[''] after:absolute after:bottom-1 after:w-5 after:h-0.5 after:bg-secondary-fixed-dim after:rounded-full"><div class="flex justify-around items-center h-20 px-space-xs"><a aria-current="page" class="flex flex-col items-center justify-center gap-space-xs min-w-[56px] min-h-[44px] px-space-xs py-1 transition-colors text-secondary-fixed-dim relative after:content-[''] after:absolute after:bottom-1 after:w-5 after:h-0.5 after:bg-secondary-fixed-dim after:rounded-full" data-path="home" href="#"><span class="material-symbols-outlined text-[22px]">dashboard</span><span class="font-label-sm text-label-sm tracking-tight">Home</span></a><a class="flex flex-col items-center justify-center gap-space-xs min-w-[56px] min-h-[44px] px-space-xs py-1 text-outline-variant hover:text-inverse-on-surface transition-colors" data-path="attendance" href="#"><span class="material-symbols-outlined text-[22px]">schedule</span><span class="font-label-sm text-label-sm tracking-tight">Attendance</span></a><a class="flex flex-col items-center justify-center gap-space-xs min-w-[56px] min-h-[44px] px-space-xs py-1 text-outline-variant hover:text-inverse-on-surface transition-colors" data-path="leave" href="#"><span class="material-symbols-outlined text-[22px]">event_available</span><span class="font-label-sm text-label-sm tracking-tight">Leave</span></a><a class="flex flex-col items-center justify-center gap-space-xs min-w-[56px] min-h-[44px] px-space-xs py-1 text-outline-variant hover:text-inverse-on-surface transition-colors" data-path="payslips" href="#"><span class="material-symbols-outlined text-[22px]">receipt_long</span><span class="font-label-sm text-label-sm tracking-tight">Payslips</span></a><a class="flex flex-col items-center justify-center gap-space-xs min-w-[56px] min-h-[44px] px-space-xs py-1 text-outline-variant hover:text-inverse-on-surface transition-colors" data-path="profile" href="#"><span class="material-symbols-outlined text-[22px]">badge</span><span class="font-label-sm text-label-sm tracking-tight">Profile</span></a></div></nav>
+
+</body></html>
