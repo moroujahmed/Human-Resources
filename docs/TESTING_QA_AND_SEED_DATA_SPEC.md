@@ -2,7 +2,7 @@
 
 ## 1. Automated Testing Strategy & Coverage Goals
 
-Target coverage: every business rule, statutory calculation, privacy boundary, and state transition MUST have automated tests executed on every GitHub Actions CI push. The Phase 1 bootstrap currently runs shared/API/web smoke tests and Prisma migration validation only; the acceptance cases below are not represented as implemented until their domain features and tests are added.
+Target coverage: every business rule, statutory calculation, privacy boundary, and state transition MUST have automated tests executed on every GitHub Actions CI push. The Phase 1 bootstrap currently runs shared/API/web smoke tests, identity database constraint checks, Prisma migration validation, and Compose startup checks; the acceptance cases below are not represented as implemented until their domain features and tests are added.
 
 ### 1.1 Test Layers
 1. **Unit Tests (`*.spec.ts` via Jest / Vitest):** Pure domain logic (zero database required, `< 5s` execution).

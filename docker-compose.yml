@@ -1,12 +1,12 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -16,8 +16,9 @@ services:
       retries: 12
 
   minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    build:
+      context: .
+      dockerfile: apps/storage/Dockerfile
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
@@ -28,21 +29,30 @@ services:
       - miniodata:/data
 
   minio-init:
-    image: minio/mc:latest
+    image: amazon/aws-cli:2.33.0@sha256:c43a4fc95ca09f53ff6bd56016f4dc91fb9b5f3b457a8934f997fc399ccc079e
     depends_on:
       minio:
         condition: service_started
-    entrypoint: ["/bin/sh", "-c"]
+    entrypoint: ["/bin/sh", "-ec"]
     command: >-
-      until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"; do sleep 2; done;
-      mc mb --ignore-existing local/staffhub-private
+      attempt=0;
+      until aws --endpoint-url http://minio:9000 s3api list-buckets >/dev/null 2>&1; do
+        attempt=$$((attempt + 1));
+        if [ "$$attempt" -ge 60 ]; then echo "MinIO did not become ready within 120 seconds" >&2; exit 1; fi;
+        sleep 2;
+      done;
+      if ! aws --endpoint-url http://minio:9000 s3api head-bucket --bucket staffhub-private >/dev/null 2>&1; then
+        aws --endpoint-url http://minio:9000 s3api create-bucket --bucket staffhub-private;
+      fi
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_EC2_METADATA_DISABLED: "true"
     restart: "no"
 
   mailpit:
-    image: axllent/mailpit:latest
+    image: axllent/mailpit:v1.34.0@sha256:23a2ef85bc50853ab3093645d1d64679afd8887e89da5e48a88940c172591a4e
     ports:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"

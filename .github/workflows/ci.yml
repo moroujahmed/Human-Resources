@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:16-alpine@sha256:f2f98726820d0342055351c6e9d36e705f5bfffb3dd53ff556325114b08afb6d
         env:
           POSTGRES_DB: staffhub_ci
           POSTGRES_USER: staffhub
@@ -27,6 +27,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://staffhub:staffhub_ci_only@localhost:5432/staffhub_ci?schema=public
       NODE_ENV: test
+      POSTGRES_HOST_PORT: 5433
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,8 +38,29 @@ jobs:
       - run: npm run db:generate
       - run: npm run db:validate
       - run: npm run db:migrate
+      - name: Verify database constraints on PostgreSQL 16
+        env:
+          PGPASSWORD: staffhub_ci_only
+        run: psql -h localhost -U staffhub -d staffhub_ci -v ON_ERROR_STOP=1 -f scripts/check-db-constraints.sql
       - run: docker compose --env-file .env.docker.example config --quiet
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Start Docker Compose stack
+        run: docker compose --env-file .env.docker.example up --build --detach
+      - name: Verify Docker Compose health endpoints
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:4000/api/v1/health \
+              && curl --fail --silent http://127.0.0.1:3000/; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose --env-file .env.docker.example ps
+          docker compose --env-file .env.docker.example logs
+          exit 1
+      - name: Stop Docker Compose stack
+        if: always()
+        run: docker compose --env-file .env.docker.example down --volumes --remove-orphans

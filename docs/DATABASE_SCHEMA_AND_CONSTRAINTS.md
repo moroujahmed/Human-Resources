@@ -175,7 +175,7 @@ CREATE TYPE clearance_status AS ENUM (
 | Column | Type | Constraints / Default | Notes |
 | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | User account ID |
-| `email` | `VARCHAR(255)` | `NOT NULL` | Case-insensitive unique via functional index |
+| `email` | `VARCHAR(320)` | `NOT NULL` | Case-insensitive unique via functional index |
 | `password_hash` | `TEXT` | `NOT NULL` | `Argon2id` hash |
 | `role` | `user_role` | `NOT NULL` | Primary assigned role |
 | `is_active` | `BOOLEAN` | `NOT NULL DEFAULT true` | Set `false` upon exit deactivation |

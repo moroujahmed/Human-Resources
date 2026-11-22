@@ -6,20 +6,24 @@ Containerizing StaffHub makes the local environment reproducible. The Compose pr
 
 | Service Name | Image / Build | Internal Port | Exposed Host Port | Responsibility |
 | :--- | :--- | :---: | :---: | :--- |
-| **`postgres`** | `postgres:16-alpine` | `5432` | `127.0.0.1:5432` | Primary relational database (persistent named volume `pgdata`). Healthchecked via `pg_isready`. |
-| **`minio`** | `minio/minio:latest` | `9000` / `9001` | `127.0.0.1:9000` / `127.0.0.1:9001` | Local S3-compatible private object storage for future file workflows (Console UI on `:9001`). Includes automatic bucket-creation init step (`staffhub-private`). |
-| **`minio-init`** | `minio/mc:latest` | — | — | One-shot idempotent creation of the private `staffhub-private` bucket after MinIO starts. |
-| **`mailpit`** | `axllent/mailpit:latest` | `1025` / `8025` | `127.0.0.1:1025` / `127.0.0.1:8025` | Local SMTP catch-all server + browser inbox (`http://localhost:8025`). |
-| **`api`** | `./apps/api/Dockerfile` | `4000` | `127.0.0.1:4000` | NestJS scaffold. Compose command applies the checked-in initial migration before starting. Domain seed data is not implemented yet; no seed runs automatically. |
+| **`postgres`** | Pinned PostgreSQL 16 image digest | `5432` | `127.0.0.1:5432` by default | Primary relational database (persistent named volume `pgdata`). Healthchecked via `pg_isready`. |
+| **`minio`** | Build from pinned MinIO source commit | `9000` / `9001` | `127.0.0.1:9000` / `127.0.0.1:9001` | Development-only S3-compatible storage for future file workflows (Console UI on `:9001`). |
+| **`minio-init`** | Pinned AWS CLI image digest | — | — | One-shot bucket creation for `staffhub-private` after MinIO becomes ready. |
+| **`mailpit`** | Pinned Mailpit image digest | `1025` / `8025` | `127.0.0.1:1025` / `127.0.0.1:8025` | Local SMTP catch-all server + browser inbox (`http://localhost:8025`). |
+| **`api`** | `./apps/api/Dockerfile` | `4000` | `127.0.0.1:4000` | NestJS scaffold. Compose command applies the checked-in identity migrations before starting. Domain seed data is not implemented yet; no seed runs automatically. |
 | **`web`** | `./apps/web/Dockerfile` | `3000` | `127.0.0.1:3000` | Next.js scaffold served at `http://localhost:3000`. |
 
-### 1.1 One-Click Offline Startup Scripts (`scripts/`)
+The MinIO Community repository is source-only and no longer maintained upstream. The local image is built from a pinned 2025 source commit solely for scaffold development; do not use it for production or real HR data. Review its AGPL-3.0 obligations and select a supported, licensed object-storage option before distributing the system.
+
+### 1.1 Local Startup Scripts (`scripts/`)
 - **`scripts/start-staffhub.bat` (Windows)** and **`scripts/start-staffhub.sh` (macOS / Linux)**:
   1. Checks that Docker Desktop is running (prints clear human instruction if stopped).
   2. Copies `.env.docker.example` to `.env.docker` if missing (pre-configured with local-only values for `postgres`, `minio`, and `mailpit`; `DEMO_MODE` remains false). This stays separate from the host-development `.env`.
   3. Runs `docker compose --env-file .env.docker up --build -d`.
-  4. Polls `http://localhost:4000/api/v1/health` until `200 OK` (the initial migration has been applied; the scaffold does not seed demo data).
+  4. Polls `http://localhost:4000/api/v1/health` until `200 OK` (the identity migrations have been applied; the scaffold does not seed demo data).
   5. Prints exact URLs and opens `http://localhost:3000` in the default browser.
+
+The first startup requires internet access to pull the pinned images and build MinIO from its pinned source. Later starts can work offline after all images are available locally.
 
 ---
 
@@ -29,8 +33,8 @@ Containerizing StaffHub makes the local environment reproducible. The Compose pr
 Runs on every `push` and `pull_request`:
 1. Spins up ephemeral `postgres:16` service container.
 2. Runs `npm ci`.
-3. Generates and validates the Prisma client/schema, then applies the initial migration.
-4. Validates the Compose manifest with `docker compose config`.
+3. Generates and validates the Prisma client/schema, then applies the identity migrations.
+4. Validates the Compose manifest, builds all container images, starts the complete stack, and checks the API and web health endpoints.
 5. Runs ESLint and TypeScript checks across the workspaces.
 6. Runs the current shared/API/web smoke tests. Expand these with the specified business, integration, and security suites as each domain module is implemented.
 7. Builds the shared package, NestJS API, and Next.js app.
@@ -103,7 +107,7 @@ Since **you** are building the system and **your friend** is presenting it, neve
 In case presentation venue Wi-Fi fails:
 1. Install **Docker Desktop** on your friend's laptop at least **2 days before** the presentation.
 2. Zip the clean repository (**excluding** `node_modules`, `.next`, `dist`, and personal `.env` / `.env.docker` files—keeping `.env.docker.example`, `docker-compose.yml`, and `scripts/start-staffhub.*`).
-3. Test extracting and double-clicking `start-staffhub.bat` (or `.sh`) on the actual laptop beforehand. The Phase 1 scaffold starts without seeded users or demo records; do not promise a synthetic demo login until its isolated seed and auth flow are implemented.
+3. While online, build and cache every required image on the presentation laptop, including the MinIO source build. Then test the startup script in airplane mode; an offline start is not guaranteed until this succeeds. The Phase 1 scaffold has no seeded users or demo records.
 
 ### Tier 3 (Emergency Fail-Safe): Recorded Walkthrough Video
 1. Record a crisp 3-minute `1080p` screen capture walking through the complete storyline below so even a projector/laptop failure cannot derail the presentation.
