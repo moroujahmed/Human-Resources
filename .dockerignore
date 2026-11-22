@@ -1,0 +1,11 @@
+.git
+.github
+docs
+README.md
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/coverage
+.env
+.env.*

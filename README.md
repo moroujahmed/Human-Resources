@@ -4,19 +4,29 @@ StaffHub is a proposed web-based HRMS for Uganda, using UGX and the `Africa/Kamp
 
 ## Project status
 
-This repository currently contains product, architecture, API, database, workflow, testing, deployment, and UI-reference documentation. It does **not** yet contain the application, database migrations, package manifests, CI workflows, or executable tests. The project is therefore a specification baseline, not a runnable application.
+Phase 0 specifications and the formal audit are in [`docs/PHASE_0_COMPLETION_AUDIT.md`](docs/PHASE_0_COMPLETION_AUDIT.md). Phase 1 adds a runnable monorepo scaffold: Next.js web app, NestJS API with exact-origin CORS and Helmet headers, shared Zod contracts, an initial Prisma identity/session schema, Docker Compose services, CI, and smoke tests. See the [Phase 1 completion audit](docs/PHASE_1_COMPLETION_AUDIT.md) for validation evidence and remaining limits.
 
-## Start implementation
+This is **not a complete HRMS**. Recruitment, attendance, leave, payroll, assets, performance, offboarding, authentication, demo seeding, and their domain migrations are not implemented. The current tests validate only the scaffold and initial migration.
+
+## Development setup
 
 The selected implementation conventions are:
 
 - npm workspaces with a committed `package-lock.json`
-- Node.js 22 LTS
+- Node.js 22.22.3 or later in the 22.x LTS line
 - TypeScript with strict type checking
 - Next.js / React frontend and NestJS modular-monolith API
 - PostgreSQL with Prisma migrations
 - Canonical shared Zod schemas in `packages/shared`
 - Local Docker development with PostgreSQL, MinIO, and Mailpit
+
+1. Install Node.js 22.22.3 or later in the 22.x LTS line and npm 10 or later.
+2. Run `npm ci`.
+3. Copy `.env.example` to `.env` for host development. Values in the example are placeholders/local-only; generate independent secrets before implementing authentication.
+4. Run `npm run dev` to start the web app and API in watch mode. The direct health-only API does not connect to the database; the Docker Compose startup applies the initial migration and requires PostgreSQL.
+5. To start PostgreSQL, MinIO, and Mailpit with the apps, run `scripts/start-staffhub.bat` on Windows or `scripts/start-staffhub.sh` on macOS/Linux. The script creates a separate local `.env.docker`, runs the initial migration, and opens the web app. No demo accounts or seed records are created.
+
+Useful checks: `npm test`, `npm run lint`, `npm run typecheck`, `npm run db:validate`, and `npm run build`. Applying migrations with `npm run db:migrate` requires a reachable PostgreSQL instance and a valid `DATABASE_URL`.
 
 Read the [project charter and tech stack](docs/PROJECT_CHARTER_AND_TECH_STACK.md) first, then the [database schema](docs/DATABASE_SCHEMA_AND_CONSTRAINTS.md), [API contract](docs/API_CONTRACT_AND_SECURITY_SPEC.md), [workflow specification](docs/WORKFLOW_STATE_MACHINES_AND_CRONS.md), and [testing and seed specification](docs/TESTING_QA_AND_SEED_DATA_SPEC.md).
 
@@ -27,5 +37,5 @@ Read the [project charter and tech stack](docs/PROJECT_CHARTER_AND_TECH_STACK.md
 - Keep demo mode and synthetic seed data isolated from production. Never commit credentials or secrets.
 - Treat files under `docs/staffhub-stitch-input/` as historical visual references only. Their HTML/PNG content is not canonical behavior or production-ready UI.
 - Hosting providers, service quotas, availability, and pricing are deployment choices that must be revalidated.
-
-No application setup or run command is available until the implementation bootstrap is added.
+- The initial Prisma migration covers only user, employee, and refresh-token foundations. It does not implement the complete documented data model.
+- The configured CI checks are scaffold smoke tests and schema/migration validation. Add domain and security tests alongside each implemented workflow; see the acceptance matrix in the testing specification.

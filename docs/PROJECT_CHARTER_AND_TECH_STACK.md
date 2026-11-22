@@ -99,18 +99,20 @@ Every programming language, runtime, framework, database, library, and infrastru
 
 ---
 
-## 4. Monorepo Directory Structure
+## 4. Target Monorepo Directory Structure
 
-Use **npm workspaces** with a committed `package-lock.json`; pin the supported Node.js major version to **22 LTS** using the repository's version file and CI configuration. This keeps local, CI, and deployment dependency resolution consistent.
+Use **npm workspaces** with a committed `package-lock.json`; use Node.js 22 LTS via the repository's version file and CI configuration. Phase 1 currently requires Node 22.22.3 or later in the 22.x line. This keeps local, CI, and deployment dependency resolution consistent.
+
+The tree below is the intended full-product layout, not a claim that every listed module or file exists. Phase 1 implements only the bootstrap files and health endpoint; domain modules, seed data, and scheduled jobs remain future work.
 
 ```text
 staffhub/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                     # Lint, typecheck, Prisma validate, unit & integration tests
-│       └── scheduled-jobs.yml         # Cron triggers for 23:55 EAT attendance & 00:05 EAT offboarding
+│       ├── ci.yml                     # Scaffold lint, typecheck, migration, smoke tests, and builds
+│       └── scheduled-jobs.yml         # Future only; add after handlers and safety tests exist
 ├── apps/
-│   ├── web/                           # Next.js 15 App Router + React 19 + Tailwind CSS
+│   ├── web/                           # Next.js 16 App Router + React 19 + Tailwind CSS
 │   │   ├── src/
 │   │   │   ├── app/                   # Routes: (public)/careers, (auth)/login, (dashboard)/*
 │   │   │   ├── components/

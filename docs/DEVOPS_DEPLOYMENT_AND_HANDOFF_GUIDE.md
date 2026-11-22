@@ -1,23 +1,24 @@
 # 09 — StaffHub DevOps, Deployment & Presenter Handoff Guide
 
-## 1. Local & Offline Container Architecture (`docker-compose.yml`)
+## 1. Local Container Architecture (`docker-compose.yml`)
 
-Containerizing StaffHub solves the *"it worked on my laptop, not on my friend's laptop"* problem cleanly. Whether running during local development or offline presentation, the full stack runs via **5 coordinated services**:
+Containerizing StaffHub makes the local environment reproducible. The Compose project runs five long-lived services plus the one-shot `minio-init` setup job:
 
 | Service Name | Image / Build | Internal Port | Exposed Host Port | Responsibility |
 | :--- | :--- | :---: | :---: | :--- |
-| **`postgres`** | `postgres:16-alpine` | `5432` | `5432` | Primary relational database (persistent named volume `pgdata`). Healthchecked via `pg_isready`. |
-| **`minio`** | `minio/minio:latest` | `9000` / `9001` | `9000` / `9001` | Local S3-compatible private object storage for CVs, bank letters, and PDF payslips (Console UI on `:9001`). Includes automatic bucket-creation init step (`staffhub-private`). |
-| **`mailpit`** | `axllent/mailpit:latest` | `1025` / `8025` | `1025` / `8025` | Local SMTP catch-all server + browser inbox (`http://localhost:8025`) to visually inspect offer emails and password resets offline. |
-| **`api`** | `./apps/api/Dockerfile` | `4000` | `4000` | NestJS backend. Entrypoint automatically runs `npx prisma migrate deploy`, executes idempotent `npx prisma db seed` (when `AUTO_SEED=true`), and starts API server. |
-| **`web`** | `./apps/web/Dockerfile` | `3000` | `3000` | Next.js production/dev web app served at `http://localhost:3000`. |
+| **`postgres`** | `postgres:16-alpine` | `5432` | `127.0.0.1:5432` | Primary relational database (persistent named volume `pgdata`). Healthchecked via `pg_isready`. |
+| **`minio`** | `minio/minio:latest` | `9000` / `9001` | `127.0.0.1:9000` / `127.0.0.1:9001` | Local S3-compatible private object storage for future file workflows (Console UI on `:9001`). Includes automatic bucket-creation init step (`staffhub-private`). |
+| **`minio-init`** | `minio/mc:latest` | — | — | One-shot idempotent creation of the private `staffhub-private` bucket after MinIO starts. |
+| **`mailpit`** | `axllent/mailpit:latest` | `1025` / `8025` | `127.0.0.1:1025` / `127.0.0.1:8025` | Local SMTP catch-all server + browser inbox (`http://localhost:8025`). |
+| **`api`** | `./apps/api/Dockerfile` | `4000` | `127.0.0.1:4000` | NestJS scaffold. Compose command applies the checked-in initial migration before starting. Domain seed data is not implemented yet; no seed runs automatically. |
+| **`web`** | `./apps/web/Dockerfile` | `3000` | `127.0.0.1:3000` | Next.js scaffold served at `http://localhost:3000`. |
 
 ### 1.1 One-Click Offline Startup Scripts (`scripts/`)
 - **`scripts/start-staffhub.bat` (Windows)** and **`scripts/start-staffhub.sh` (macOS / Linux)**:
   1. Checks that Docker Desktop is running (prints clear human instruction if stopped).
-  2. Copies `.env.docker.example` to `.env` if missing (pre-configured for local `postgres`, `minio`, and `mailpit`; demo mode is enabled only with the isolated synthetic-data database).
-  3. Runs `docker compose up --build -d`.
-  4. Polls `http://localhost:4000/api/v1/health` until `200 OK` (database migrated + seeded).
+  2. Copies `.env.docker.example` to `.env.docker` if missing (pre-configured with local-only values for `postgres`, `minio`, and `mailpit`; `DEMO_MODE` remains false). This stays separate from the host-development `.env`.
+  3. Runs `docker compose --env-file .env.docker up --build -d`.
+  4. Polls `http://localhost:4000/api/v1/health` until `200 OK` (the initial migration has been applied; the scaffold does not seed demo data).
   5. Prints exact URLs and opens `http://localhost:3000` in the default browser.
 
 ---
@@ -25,17 +26,17 @@ Containerizing StaffHub solves the *"it worked on my laptop, not on my friend's 
 ## 2. GitHub Actions CI & Automated Cron Specifications (`.github/workflows/`)
 
 ### 2.1 Continuous Integration (`ci.yml`)
-Runs on every `push` and `pull_request` to `main`:
+Runs on every `push` and `pull_request`:
 1. Spins up ephemeral `postgres:16` service container.
 2. Runs `npm ci`.
-3. Executes `tsc --noEmit` across `packages/shared`, `apps/api`, and `apps/web`.
-4. Executes `eslint` across all workspaces.
-5. Validates Prisma schema (`npx prisma validate`) and applies migrations (`npx prisma migrate deploy`).
-6. Runs Unit & Integration/Security Test Suites (`apps/api` Jest + Supertest, `apps/web` Vitest).
-7. Runs `next build` and `nest build` to verify zero production build errors.
+3. Generates and validates the Prisma client/schema, then applies the initial migration.
+4. Validates the Compose manifest with `docker compose config`.
+5. Runs ESLint and TypeScript checks across the workspaces.
+6. Runs the current shared/API/web smoke tests. Expand these with the specified business, integration, and security suites as each domain module is implemented.
+7. Builds the shared package, NestJS API, and Next.js app.
 
-### 2.2 Scheduled Background Jobs (`scheduled-jobs.yml`)
-Use a scheduler that meets required latency and availability; hosted schedules and free quotas are provider-dependent and must be verified:
+### 2.2 Future Scheduled Background Jobs
+The following schedules are requirements for a later phase; do not enable a scheduler until each API job handler and its idempotency/security tests have been implemented. Use a scheduler that meets required latency and availability; hosted schedules and quotas are provider-dependent and must be verified:
 - **Job A — End-of-Day Attendance Reconciliation:**
   - Cron: `'55 20 * * *'` (`20:55 UTC` = **`23:55 EAT`** `Africa/Kampala`).
   - Action: `curl -f -X POST "$API_BASE_URL/api/v1/internal/jobs/reconcile-attendance" -H "X-Cron-Secret: $CRON_SHARED_SECRET"`.
@@ -71,8 +72,8 @@ Provider setup below is illustrative; availability, pricing, service limits, and
 1. Register the actual frontend origins and local test origin; configure the public `Site Key` and private backend `Secret Key` separately.
 
 ### Step 5: NestJS Backend
-1. Connect GitHub repository, set build command (`npm ci && npm run build --workspace=apps/api && npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma`).
-2. Start command: `node dist/main`.
+1. Connect the GitHub repository. Build with `npm ci`, `npm run db:generate`, `npm run build --workspace=@staffhub/shared`, and `npm run build --workspace=@staffhub/api`; apply migrations as a release step with `npm run db:migrate`.
+2. Start command: `npm run start:prod --workspace=@staffhub/api`.
 3. Configure `NODE_ENV=production`, `TZ=Africa/Kampala`, `DEMO_MODE=false`, exact `CORS_ORIGIN`, and independently generated secrets for `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CSRF_HMAC_SECRET`, `PII_ENCRYPTION_KEY`, and `CRON_SHARED_SECRET`. Prefer app/API HTTPS origins under the same registrable domain and `SameSite=Lax; Secure`; cross-site refresh cookies require `SameSite=None; Secure`, exact-Origin plus CSRF checks, and supported-browser verification for third-party-cookie restrictions.
 4. Do not enable the demo-login endpoint or seed demo accounts/data in production. Production startup must fail if demo mode or a demo clock is enabled.
 
@@ -101,15 +102,17 @@ Since **you** are building the system and **your friend** is presenting it, neve
 ### Tier 2 (Offline Backup): Dockerized ZIP Package
 In case presentation venue Wi-Fi fails:
 1. Install **Docker Desktop** on your friend's laptop at least **2 days before** the presentation.
-2. Zip the clean repository (**excluding** `node_modules`, `.next`, `dist`, and personal `.env`—keeping `.env.docker.example`, `docker-compose.yml`, and `scripts/start-staffhub.*`).
-3. Test extracting and double-clicking `start-staffhub.bat` (or `.sh`) on his actual laptop beforehand, confirming `http://localhost:3000` loads with seeded data and Mailpit works at `http://localhost:8025` completely offline (disconnect Wi-Fi to prove it!).
+2. Zip the clean repository (**excluding** `node_modules`, `.next`, `dist`, and personal `.env` / `.env.docker` files—keeping `.env.docker.example`, `docker-compose.yml`, and `scripts/start-staffhub.*`).
+3. Test extracting and double-clicking `start-staffhub.bat` (or `.sh`) on the actual laptop beforehand. The Phase 1 scaffold starts without seeded users or demo records; do not promise a synthetic demo login until its isolated seed and auth flow are implemented.
 
 ### Tier 3 (Emergency Fail-Safe): Recorded Walkthrough Video
 1. Record a crisp 3-minute `1080p` screen capture walking through the complete storyline below so even a projector/laptop failure cannot derail the presentation.
 
 ---
 
-## 5. Presenter's 5-Minute Live Demo Script (Aligned to StaffHub Guide Section 5)
+## 5. Future Presenter Demo Flow (Aligned to StaffHub Guide Section 5)
+
+The following is a target workflow, not a capability of the Phase 1 scaffold. Authentication, seeded demo users, and the domain modules must be implemented and verified before presenting these steps as live functionality.
 
 1. **Public Careers (`/careers` — No Account):** Browse `#VAC-2026-045`, explain `Africa/Kampala` closing cutoff, and test duplicate email blocking with synthetic addresses.
 2. **Recruiter & HR Conversion (`/recruitment`):** Sign in (or switch) to `HR Manager` (**Julius Okello**), open `#VAC-2026-042`, click Accepted Candidate **Amina Nabakooza**, and trigger **1-Click `Convert to Employee`** (zero re-typing, creates 4-role onboarding checklist).
