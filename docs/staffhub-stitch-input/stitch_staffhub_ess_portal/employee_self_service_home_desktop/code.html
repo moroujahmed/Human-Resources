@@ -33,12 +33,12 @@
               (15m grace window until 08:15)
             </span>
 </div>
-<p class="font-body-md text-body-md text-on-surface-variant">You are 4 minutes into your scheduled shift. Grace period active. Office network subnet gateway verified (Office IP 192.168.40.82).</p>
+<p class="font-body-md text-body-md text-on-surface-variant">You are 4 minutes into your scheduled shift. Grace period active. Attendance uses the authenticated server timestamp only; no location or network tracking is used.</p>
 <div class="flex items-center gap-2 pt-1 text-on-surface-variant font-label-mono text-label-mono">
 <span class="material-symbols-outlined text-[16px] text-primary">wifi</span>
-<span>Network: <span class="text-on-surface font-semibold">Office Wi-Fi (Nakasero Headquarters)</span></span>
+<span>Location tracking: <span class="text-on-surface font-semibold">Not collected</span></span>
 <span class="text-outline-variant">•</span>
-<span class="text-on-surface-variant">IP: 192.168.40.82 (Subnet A)</span>
+<span class="text-on-surface-variant">Location tracking: not used</span>
 </div>
 </div>
 <!-- Primary Action Box -->
@@ -117,21 +117,21 @@
 <div class="flex items-center justify-between">
 <span class="font-label-mono text-label-sm uppercase tracking-wider text-on-surface-variant">Disbursement Ledger</span>
 <span class="inline-flex items-center px-2 py-0.5 rounded-DEFAULT bg-surface-container-high text-on-surface font-label-mono text-label-sm">
-              Disbursed 28 Oct
+              Demo only — no payment
             </span>
 </div>
 <div class="mt-2">
 <span class="font-body-sm text-body-sm text-on-surface-variant">October 2026 Remuneration</span>
 <div class="flex items-center justify-between mt-1">
 <span class="font-label-data text-headline-sm text-on-surface font-bold tracking-tight" id="salary-display">UGX •••••••</span>
-<button class="font-label-mono text-label-sm text-primary hover:text-primary-container font-semibold px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high transition-colors" id="salary-toggle-btn" onclick="const d=document.getElementById('salary-display'); const b=this; if(d.textContent.includes('•')){ d.textContent='UGX 3,372,500'; b.textContent='Hide Net Pay'; } else { d.textContent='UGX •••••••'; b.textContent='Show Net Pay'; }">
+<button class="font-label-mono text-label-sm text-primary hover:text-primary-container font-semibold px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high transition-colors" id="salary-toggle-btn" onclick="const d=document.getElementById('salary-display'); const b=this; if(d.textContent.includes('•')){ d.textContent='UGX 3,239,250'; b.textContent='Hide Net Pay'; } else { d.textContent='UGX •••••••'; b.textContent='Show Net Pay'; }">
                 Show Net Pay
               </button>
 </div>
 </div>
 <div class="mt-1">
 <p class="font-label-mono text-label-sm text-on-surface-variant leading-relaxed">
-              NSSF: 5% Employee (UGX 242,500) • PAYE Tier IV URA Compliant
+              Test fixture only: NSSF 5% (UGX 242,500); PAYE policy not approved for operational use
             </p>
 </div>
 </div>
@@ -150,7 +150,7 @@
 <div class="px-space-lg py-space-md bg-surface-container flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 <div class="flex flex-col">
 <h3 class="font-headline-sm text-headline-sm text-on-surface">Recent Attendance</h3>
-<span class="font-body-sm text-body-sm text-on-surface-variant">Audited logs for the past 7 working cycles • Web Browser Check-In (Office Network Verified)</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Audited logs for the past 7 working cycles • authenticated browser check-in, no location data</span>
 </div>
 <div class="flex items-center gap-space-sm w-full sm:w-auto">
 <div class="relative flex-1 sm:flex-initial">
@@ -422,7 +422,7 @@
           </span>
 </div>
 <div>
-<span>Employment Act Cap 219 compliant • NSSF Section 7</span>
+<span>Illustrative employee self-service • legal review required</span>
 </div>
 </div>
 </section>
@@ -438,7 +438,7 @@
     function toggleSalary() {
       isSalaryRevealed = !isSalaryRevealed;
       if (isSalaryRevealed) {
-        salaryDisplay.textContent = 'UGX 4,850,000';
+        salaryDisplay.textContent = 'UGX 3,239,250';
         salaryToggleBtn.textContent = 'Hide Net Pay';
       } else {
         salaryDisplay.textContent = 'UGX •••••••';

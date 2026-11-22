@@ -1,4 +1,4 @@
-# 09 — StaffHub DevOps, $0 Deployment & Presenter Handoff Guide
+# 09 — StaffHub DevOps, Deployment & Presenter Handoff Guide
 
 ## 1. Local & Offline Container Architecture (`docker-compose.yml`)
 
@@ -15,7 +15,7 @@ Containerizing StaffHub solves the *"it worked on my laptop, not on my friend's 
 ### 1.1 One-Click Offline Startup Scripts (`scripts/`)
 - **`scripts/start-staffhub.bat` (Windows)** and **`scripts/start-staffhub.sh` (macOS / Linux)**:
   1. Checks that Docker Desktop is running (prints clear human instruction if stopped).
-  2. Copies `.env.docker.example` to `.env` if missing (pre-configured for local `postgres`, `minio`, and `mailpit` with `DEMO_MODE=true`).
+  2. Copies `.env.docker.example` to `.env` if missing (pre-configured for local `postgres`, `minio`, and `mailpit`; demo mode is enabled only with the isolated synthetic-data database).
   3. Runs `docker compose up --build -d`.
   4. Polls `http://localhost:4000/api/v1/health` until `200 OK` (database migrated + seeded).
   5. Prints exact URLs and opens `http://localhost:3000` in the default browser.
@@ -35,49 +35,57 @@ Runs on every `push` and `pull_request` to `main`:
 7. Runs `next build` and `nest build` to verify zero production build errors.
 
 ### 2.2 Scheduled Background Jobs (`scheduled-jobs.yml`)
-Replaces paid 24/7 Redis worker dynos at **$0 cost**:
+Use a scheduler that meets required latency and availability; hosted schedules and free quotas are provider-dependent and must be verified:
 - **Job A — End-of-Day Attendance Reconciliation:**
   - Cron: `'55 20 * * *'` (`20:55 UTC` = **`23:55 EAT`** `Africa/Kampala`).
   - Action: `curl -f -X POST "$API_BASE_URL/api/v1/internal/jobs/reconcile-attendance" -H "X-Cron-Secret: $CRON_SHARED_SECRET"`.
 - **Job B — Daily Lifecycle Transitions (Vacancies, Exits, Delegations):**
   - Cron: `'5 21 * * *'` (`21:05 UTC` = **`00:05 EAT`** `Africa/Kampala`).
   - Action: `curl -f -X POST "$API_BASE_URL/api/v1/internal/jobs/process-daily-transitions" -H "X-Cron-Secret: $CRON_SHARED_SECRET"`.
-- *(Include `workflow_dispatch` on both so you can trigger them manually during testing or demos.)*
+- **Job C — Annual Leave Balance Rollover:**
+  - Cron: `'1 21 31 12 *'` (`21:01 UTC` on 31 Dec = **`00:01 EAT`** on 1 Jan).
+  - Action: call `/api/v1/internal/jobs/rollover-leave-balances`.
+- **Job D — Async Outbox:**
+  - Cron: `'*/5 * * * *'`; call `/api/v1/internal/jobs/process-async-outbox` to claim and process durable work. Use an always-on worker instead where five-minute latency is not acceptable.
+- Include `workflow_dispatch` for test environments only. Never expose cron secrets in logs; use secret-manager variables and fail the workflow on non-2xx responses.
 
 ---
 
-## 3. $0 Cloud Production / Live Demo Deployment Playbook
+## 3. Cloud Production / Isolated Demo Deployment Playbook
 
-Deploy in this exact order—requiring **zero credit cards**:
+Provider setup below is illustrative; availability, pricing, service limits, and terms change. Confirm them before selecting or deploying a provider. Production and demo deployments must use separate databases and secrets.
 
-### Step 1: PostgreSQL Database on **Neon** ($0 Free Tier)
-1. Create project `staffhub-prod` in Neon (select nearest region, e.g., `eu-central-1` / Frankfurt for lowest latency to East Africa).
-2. Copy **Pooled Connection String** $\rightarrow$ `DATABASE_URL` and **Direct Connection String** $\rightarrow$ `DIRECT_URL`.
-3. Enable `pgcrypto` and `btree_gist` extensions in Neon SQL Editor (or inside initial Prisma migration).
+### Step 1: Managed PostgreSQL
+1. Select a provider and region after reviewing residency, backup/restore, connection limits, availability, and total cost.
+2. Configure `DATABASE_URL` and `DIRECT_URL` with least-privilege credentials.
+3. Enable required PostgreSQL extensions through versioned migrations and verify them in CI.
 
-### Step 2: Private File Storage on **Cloudflare R2** (10 GB Free) or **Supabase Storage** (1 GB Free)
+### Step 2: Private File Storage
 1. Create a **private** bucket named `staffhub-private` (do NOT enable public bucket access).
 2. Generate S3-compatible API Access Key & Secret Key + Endpoint URL.
 
-### Step 3: Transactional Email on **Brevo** (300/day Free) or **Resend** (100/day Free)
-1. Create free account, generate SMTP credentials (or API key), and configure `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM`.
+### Step 3: Transactional Email
+1. Select a provider, configure sender-domain authentication, and set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, and `EMAIL_FROM` from the secret manager.
 
-### Step 4: Bot Protection on **Cloudflare Turnstile** ($0 Free)
-1. Register domain (including Vercel URL + `localhost` for testing) and copy `Site Key` (Frontend) + `Secret Key` (Backend).
+### Step 4: Bot Protection
+1. Register the actual frontend origins and local test origin; configure the public `Site Key` and private backend `Secret Key` separately.
 
-### Step 5: NestJS Backend on **Render** ($0 Free Web Service)
+### Step 5: NestJS Backend
 1. Connect GitHub repository, set build command (`npm ci && npm run build --workspace=apps/api && npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma`).
 2. Start command: `node dist/main`.
-3. Configure all Backend Environment Variables (`NODE_ENV=production`, `TZ=Africa/Kampala`, `DEMO_MODE=true` for live presentation / `false` for strict production, `CORS_ORIGIN=https://<your-vercel-domain>.vercel.app`, generated 64-hex secrets for `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `PII_ENCRYPTION_KEY`, `CRON_SHARED_SECRET`).
-4. Note Render Free Tier behavior: Sleeps after 15 minutes of inactivity (~30–60s cold wake-up on first call); frontend `<ServerWakeupBanner />` handles this cleanly.
+3. Configure `NODE_ENV=production`, `TZ=Africa/Kampala`, `DEMO_MODE=false`, exact `CORS_ORIGIN`, and independently generated secrets for `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `CSRF_HMAC_SECRET`, `PII_ENCRYPTION_KEY`, and `CRON_SHARED_SECRET`. Prefer app/API HTTPS origins under the same registrable domain and `SameSite=Lax; Secure`; cross-site refresh cookies require `SameSite=None; Secure`, exact-Origin plus CSRF checks, and supported-browser verification for third-party-cookie restrictions.
+4. Do not enable the demo-login endpoint or seed demo accounts/data in production. Production startup must fail if demo mode or a demo clock is enabled.
 
-### Step 6: Next.js Frontend on **Vercel** ($0 Hobby Tier)
+### Step 6: Next.js Frontend
 1. Connect GitHub repository, set Root Directory `apps/web`.
-2. Set `NEXT_PUBLIC_API_URL=https://<your-render-service>.onrender.com/api/v1`, `NEXT_PUBLIC_APP_TIMEZONE=Africa/Kampala`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_DEMO_MODE`.
+2. Set `NEXT_PUBLIC_API_URL=https://<your-api-domain>/api/v1`, `NEXT_PUBLIC_APP_TIMEZONE=Africa/Kampala`, and `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. Do not use a public frontend flag to enable privileged demo behavior.
 3. Deploy and verify `/login` and `/careers` over HTTPS.
 
-### Step 7: Wire GitHub Repository Secrets
-Add `API_BASE_URL` and `CRON_SHARED_SECRET` to **GitHub Actions Secrets** so the `23:55 EAT` and `00:05 EAT` cron workflows execute automatically.
+### Step 7: Wire Scheduler Secrets
+Add `API_BASE_URL` and `CRON_SHARED_SECRET` to the scheduler's secret manager so attendance, lifecycle, rollover, and outbox jobs execute. Use unique secrets per environment, and verify current scheduler quotas and delivery guarantees.
+
+### Step 8: Production Readiness Gate
+Before any real HR or payroll data is processed, complete privacy/retention review, verify statutory payroll rules against official current sources, approve the effective-dated policy through the separate reviewer workflow, and test backup restore and incident response. The repository's provisional tax figures and mockups are not operational authority.
 
 ---
 
@@ -85,10 +93,10 @@ Add `API_BASE_URL` and `CRON_SHARED_SECRET` to **GitHub Actions Secrets** so the
 
 Since **you** are building the system and **your friend** is presenting it, never rely on sending a raw un-containerized ZIP folder. Follow this **3-Tier Handoff Protocol**:
 
-### Tier 1 (Primary Demo Method): Live Cloud URL
-1. Send your friend the live Vercel URL (`https://...vercel.app`), `/careers` link, and the seeded demo credentials table.
-2. **Mandatory 5-Minute Pre-Demo Warm-Up:** Your friend opens the live URL **5 minutes before** their presentation slot (and clicks one login/careers link) so Render’s backend and Neon’s database wake up completely before evaluators watch.
-3. Verify `DEMO_MODE=true` is active for effortless role switching on `/login` during the demo.
+### Tier 1 (Primary Demo Method): Isolated Demo Environment
+1. Share only a demo deployment backed by a separate synthetic-data database and unique demo credentials delivered out of band.
+2. Verify its clock, role permissions, private storage, and scheduler behavior before presenting. Provider wake-up/cold-start guarantees vary.
+3. Never enable demo login or role switching in production; sign in using the appropriate synthetic account.
 
 ### Tier 2 (Offline Backup): Dockerized ZIP Package
 In case presentation venue Wi-Fi fails:
@@ -103,10 +111,10 @@ In case presentation venue Wi-Fi fails:
 
 ## 5. Presenter's 5-Minute Live Demo Script (Aligned to StaffHub Guide Section 5)
 
-1. **Public Careers (`/careers` — No Account):** Browse `#VAC-2026-045`, explain `Africa/Kampala` closing cutoff, test duplicate email block (`amina.nabakooza@outbox.co.ug` on `#VAC-2026-042`).
+1. **Public Careers (`/careers` — No Account):** Browse `#VAC-2026-045`, explain `Africa/Kampala` closing cutoff, and test duplicate email blocking with synthetic addresses.
 2. **Recruiter & HR Conversion (`/recruitment`):** Sign in (or switch) to `HR Manager` (**Julius Okello**), open `#VAC-2026-042`, click Accepted Candidate **Amina Nabakooza**, and trigger **1-Click `Convert to Employee`** (zero re-typing, creates 4-role onboarding checklist).
-3. **Employee Daily Ops (`/home` & `/leave`):** Switch to `Employee` (**Brian Kato**). Show live `EAT` clock (zero biometrics/GPS!), click **`Check In Now`**, acknowledge assigned MacBook `#AST-088`, reveal masked Net Pay (`UGX 3,239,250`), and preview Leave Working-Day calculation excluding weekends & Ugandan public holidays.
+3. **Employee Daily Ops (`/home` & `/leave`):** Sign in as the synthetic Employee (**Brian Kato**). Show the fixed demo clock (zero biometrics/GPS), check in on the configured demo workday, acknowledge assigned MacBook `#AST-088`, reveal a masked illustrative payslip, and preview the Leave Working-Day calculation excluding weekends and Ugandan public holidays.
 4. **Line Manager Privacy (`/manager`):** Switch to `Line Manager` (**Michael Kigozi**). Approve a team leave/correction request, and point out explicitly that **salary, bank account, and NIN columns are completely hidden**.
-5. **Payroll & QR Verification (`/payroll`):** Switch to `Payroll Officer` (**Sarah Namubiru**). Open Locked October Payroll (`PR-UG-2026-10`), demonstrate that direct editing is blocked (`Authorised Adjustment` required with mandatory reason), preview Brian Kato's PDF payslip, and open its QR Verification link (`/verify/...`).
+5. **Payroll & QR Verification (`/payroll`):** Sign in as the synthetic Payroll Officer (**Sarah Namubiru**). Open the test-only illustrative October payroll, demonstrate that direct editing is blocked (`Authorised Adjustment` requires a reason), and preview its clearly labeled demo PDF and verification flow.
 6. **Asset Blocker & Offboarding (`/assets` & `/hr/offboarding`):** Switch to `HR Manager` and show exiting employee **Denis Mukasa** blocked from account deactivation by unreturned `#AST-064`; switch to `Asset Officer` (**Joseph Mukasa**), record return of `#AST-064`, then show HR's clearance progress unlock cleanly!
 7. **System Admin & Audit Trail (`/audit`):** Switch to `System Admin` (**Raymond Mugisha**) and show every approval, rejection reason, bank change, and asset return permanently logged in `Africa/Kampala` time.

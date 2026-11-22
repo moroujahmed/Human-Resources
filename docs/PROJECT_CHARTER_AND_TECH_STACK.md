@@ -10,12 +10,12 @@
 - **Lifecycle Scope:** Unifies 8 interconnected organizational processes into a single source of truth:
   1. Recruitment & Public Job Applications (no applicant login required)
   2. Hiring & Multi-Role Onboarding Checklists
-  3. Employee Records & HR-Approved Sensitive Profile Changes
+  3. Employee Records, Performance Reviews & HR-Approved Sensitive Profile Changes
   4. Web-Based Daily Attendance (Check-In/Check-Out & Correction Requests)
   5. Leave Management (Working-Day & Ugandan Holiday Calculations)
   6. Monthly Payroll (UGX, Statutory PAYE/NSSF/LST Deductions, Approvals, Locking, Adjustments, Payslips)
   7. Company Asset Inventory, Single-Assignee Custody & Employee Acknowledgement
-  8. Offboarding Clearance, Hard Blockers & Soft Account Deactivation
+  8. Offboarding Clearance, Asset/Loan Blockers & Independent Account Deactivation
 
 ---
 
@@ -25,14 +25,14 @@ StaffHub MUST be implemented as a **Modular Monolith** (single Next.js frontend 
 
 ### Why Modular Monolith (and Why Unified TypeScript Over Dual Go + Node.js)
 1. **Atomic Cross-Domain Transactions:** Converting an accepted job applicant into an employee, deducting approved leave balances while updating attendance records, and locking payroll depend on strict ACID database transactions across modules. A monolith guarantees atomic commits and rollbacks without distributed saga complexity.
-2. **Single-Language Type Safety:** Standardizing the backend on **TypeScript + Node.js (NestJS)** rather than running an additional **Go** service eliminates duplicate runtime memory usage on `$0` free-tier hosting containers and allows exact sharing of Zod validation schemas, enums, and formatting constants between frontend and backend via `packages/shared`.
+2. **Single-Language Type Safety:** Standardizing the backend on **TypeScript + Node.js (NestJS)** rather than running an additional **Go** service avoids a second runtime and allows exact sharing of Zod validation schemas, enums, and formatting constants between frontend and backend via `packages/shared`.
 3. **Clean Internal Module Boundaries:** Even inside one NestJS deployment, domain modules (`auth`, `audit`, `recruitment`, `employees`, `attendance`, `leave`, `payroll`, `assets`, `offboarding`, `admin`, `notifications`, `storage`, `jobs`) communicate only through exported NestJS services—never by bypassing another module's business rules.
 
 ---
 
 ## 3. Complete Technology Stack Manifest
 
-Every programming language, runtime, framework, database, library, and infrastructure tool required to build, test, containerize, and deploy StaffHub at **$0 cost**:
+Every programming language, runtime, framework, database, library, and infrastructure tool required to build, test, containerize, and deploy StaffHub. Hosting costs, free-tier quotas, and provider terms must be rechecked before deployment and are not product requirements.
 
 ### 3.1 Programming Languages & Markup
 | Language / Format | Version / Standard | Role in System |
@@ -49,11 +49,11 @@ Every programming language, runtime, framework, database, library, and infrastru
 | **Next.js (App Router)** | `15.x` — Routing, SSR/CSR hybrid rendering, environment configuration, and static asset optimization. |
 | **React** | `19.x` — Component UI library. |
 | **Tailwind CSS + PostCSS + Autoprefixer** | Utility-first styling configured strictly to `DESIGN.md` Savannah Editorial tokens (`#F5F3EE`, `#FFFFFF`, `#ECE8DF`, `#161513`, `#0B4F4E`, `#B85028`, `#D49B42`). |
-| **Google Fonts (`next/font/google`)** | Loads `Bricolage Grotesque` (headings), `Inter` (body/UI), and `JetBrains Mono` (tabular currency, IDs, EAT clocks). |
+| **Fonts** | Bundle the approved `Bricolage Grotesque`, `Inter`, and `JetBrains Mono` assets locally so production and offline demos do not require a Google Fonts request at runtime or build time. |
 | **TanStack Query (`@tanstack/react-query`)** | Server-state caching, automatic cache invalidation on approvals/mutations, optimistic UX feedback, and clean loading/error states (including Render cold-start wake-up indicator). |
 | **TanStack Table (`@tanstack/react-table`)** | Sortable, filterable, paginated high-density tables (Payroll Run, Asset Registry, Audit Trail, Direct Reports). |
 | **React Hook Form + `@hookform/resolvers`** | Performant controlled forms with schema validation shared from `packages/shared`. |
-| **Zod** | Client-side validation mirroring server DTO validation (instant inline errors for duplicate email, overlapping dates, mandatory rejection reasons). |
+| **Zod** | Canonical shared request/response validation schemas in `packages/shared`; client forms and the API validate against the same strict schemas. |
 | **Luxon (`luxon`)** | Strictly enforces `Africa/Kampala` (`UTC+3`) time zone formatting, live EAT clock display, and date math previews. |
 | **Decimal.js (`decimal.js`)** | Exact decimal previews in forms (zero JavaScript floating-point math). |
 | **Lucide React (`lucide-react`)** | Crisp architectural vector icons (zero broken external image dependencies; brand logo uses inline SVG `S` monogram). |
@@ -63,12 +63,12 @@ Every programming language, runtime, framework, database, library, and infrastru
 | Technology / Package | Purpose & Exact Responsibility |
 | :--- | :--- |
 | **Node.js** | `22 LTS` (minimum `20 LTS`) — Server runtime. |
-| **NestJS (`@nestjs/core`, `@nestjs/common`, `@nestjs/platform-express`)** | Modular Monolith REST framework providing Dependency Injection, Guards (`JwtAuthGuard`, `RolesGuard`), Pipes (`ValidationPipe`), Interceptors (`AuditInterceptor`), and Exception Filters. |
+| **NestJS (`@nestjs/core`, `@nestjs/common`, `@nestjs/platform-express`)** | Modular Monolith REST framework providing Dependency Injection, Guards (`JwtAuthGuard`, `RolesGuard`), a Zod-backed validation pipe, Interceptors (`AuditInterceptor`), and Exception Filters. |
 | **Prisma ORM (`prisma`, `@prisma/client`)** | Type-safe database client, declarative schema, versioned SQL migrations (`prisma migrate`), and `$transaction` support for atomic state transitions. |
 | **Argon2 (`argon2`)** | Industry-standard `Argon2id` password hashing (memory-hard resistance against GPU brute-force attacks). |
 | **Node.js Built-in `node:crypto`** | `AES-256-GCM` authenticated encryption/decryption for sensitive PII (Bank Account Numbers, National IDs / NIN) + `SHA-256` hashing for refresh tokens, idempotency keys, and payslip tamper-verification hashes. |
-| **`@nestjs/jwt` + `cookie-parser`** | Short-lived JWT Access Tokens (`15m`) + rotating `HttpOnly`, `Secure`, `SameSite=Lax` Refresh Token cookies stored hashed in PostgreSQL. |
-| **`class-validator` + `class-transformer`** | Strict DTO input validation with global `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })` to block Mass Assignment attacks. |
+| **`@nestjs/jwt` + `cookie-parser`** | Short-lived JWT Access Tokens (`15m`) + rotating, hashed refresh tokens in `HttpOnly`, `Secure` cookies. Cookie SameSite and CSRF behavior are specified in the API contract for local and cross-site deployments. |
+| **Zod-backed NestJS validation pipe** | Validates every API request with the strict shared schema; unknown properties are rejected to prevent mass assignment. Do not define parallel, divergent DTO validation rules. |
 | **`helmet`** | Sets strict HTTP security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, CSP). |
 | **`@nestjs/throttler`** | Endpoint rate limiting (strict limits on `/auth/login`, `/auth/refresh`, and public `/careers/vacancies/:id/apply`). |
 | **`multer` + `file-type`** | Multipart CV file upload handling + **real binary magic-byte inspection** (accepting only valid PDF/DOCX signatures up to 5 MB; rejecting spoofed `.exe`/`.html` extensions). |
@@ -80,14 +80,14 @@ Every programming language, runtime, framework, database, library, and infrastru
 | **`luxon` + `decimal.js`** | Authoritative `Africa/Kampala` date boundaries, working-day/holiday exclusions, grace-period comparisons, and exact `NUMERIC` payroll/PAYE/NSSF/LST arithmetic. |
 
 ### 3.4 Database, Local Services & DevOps Stack
-| Component | Local Development / Docker | $0 Cloud Hosting Production / Demo |
+| Component | Local Development / Docker | Cloud Deployment Options |
 | :--- | :--- | :--- |
-| **Database** | **PostgreSQL 16** (Docker container) | **Neon** Free Tier (PostgreSQL 16, 1 GB storage, 100 CU-hours/mo, scales to zero, never expires, no card) |
-| **Object Storage** | **MinIO** (Docker S3-compatible container) | **Cloudflare R2** (10 GB free, zero egress) or **Supabase Storage** (1 GB free) |
-| **Email Testing / Delivery** | **Mailpit** (Docker SMTP + web UI on `:8025`) | **Brevo** (300 emails/day free) or **Resend** (100 emails/day free) |
-| **Frontend Hosting** | `localhost:3000` (Next.js) | **Vercel** Hobby Tier (no card, global CDN, free HTTPS) |
-| **Backend Hosting** | `localhost:4000` (NestJS API) | **Render** Free Web Service (750 hrs/mo, no card; sleeps after 15 min idle) |
-| **CI/CD & Cron Jobs** | Local `npm test` + Docker Compose | **GitHub Actions** (CI lint/typecheck/tests + scheduled cron triggers at `23:55 EAT` & `00:05 EAT`) |
+| **Database** | **PostgreSQL 16** (Docker container) | PostgreSQL-compatible managed provider selected after reviewing current availability, backup, residency, and cost terms |
+| **Object Storage** | **MinIO** (Docker S3-compatible container) | Private S3-compatible storage provider selected after reviewing security, retention, residency, and cost terms |
+| **Email Testing / Delivery** | **Mailpit** (Docker SMTP + web UI on `:8025`) | Transactional email provider selected after reviewing deliverability, privacy, and cost terms |
+| **Frontend Hosting** | `localhost:3000` (Next.js) | HTTPS frontend host selected after reviewing current quotas, availability, and cost terms |
+| **Backend Hosting** | `localhost:4000` (NestJS API) | HTTPS backend host selected after reviewing current quotas, availability, and cost terms |
+| **CI/CD & Cron Jobs** | Local `npm test` + Docker Compose | GitHub Actions or another scheduler for CI, attendance, lifecycle, rollover, and async-outbox jobs; verify current provider limits before relying on schedules. |
 
 ### 3.5 Testing & Quality Tooling
 | Tool | Role |
@@ -101,7 +101,7 @@ Every programming language, runtime, framework, database, library, and infrastru
 
 ## 4. Monorepo Directory Structure
 
-Use a clean npm/pnpm workspace monorepo so Antigravity can build and verify frontend, backend, and shared types together:
+Use **npm workspaces** with a committed `package-lock.json`; pin the supported Node.js major version to **22 LTS** using the repository's version file and CI configuration. This keeps local, CI, and deployment dependency resolution consistent.
 
 ```text
 staffhub/
@@ -142,7 +142,7 @@ staffhub/
 │       │   │   ├── admin/             # User/role creation, holidays, shifts, statutory tax policies
 │       │   │   ├── notifications/     # In-app "Pending My Action" inbox + privacy-safe email alerts
 │       │   │   ├── storage/           # S3/MinIO/R2 private uploads & pre-signed URLs
-│       │   │   └── jobs/              # Internal secret-protected cron endpoints (reconciliation/exits)
+│   │   │   └── jobs/              # Internal secret-protected cron/outbox handlers (reconciliation/exits)
 │       │   ├── app.module.ts
 │       │   └── main.ts
 │       ├── test/                      # Integration & RBAC/IDOR test suites
@@ -154,7 +154,7 @@ staffhub/
 │           ├── enums.ts
 │           ├── roles.ts
 │           └── schemas/
-├── design-reference/                  # Exported Stitch AI HTML/PNG files + original DESIGN.md
+├── docs/staffhub-stitch-input/        # Historical Stitch HTML/PNG references; not production UI
 ├── docs/                              # These 10 Master Blueprint Markdown files (00 through 09)
 ├── scripts/
 │   ├── start-staffhub.sh              # One-command Linux/macOS Docker startup

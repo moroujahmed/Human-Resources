@@ -150,8 +150,7 @@ CREATE TYPE offboarding_exit_type AS ENUM (
 
 CREATE TYPE offboarding_status AS ENUM (
   'IN_PROGRESS',
-  'CLEARED',
-  'DEACTIVATED'
+  'CLEARED'
 );
 
 CREATE TYPE clearance_track_type AS ENUM (
@@ -182,6 +181,7 @@ CREATE TYPE clearance_status AS ENUM (
 | `is_active` | `BOOLEAN` | `NOT NULL DEFAULT true` | Set `false` upon exit deactivation |
 | `must_change_password` | `BOOLEAN` | `NOT NULL DEFAULT true` | Enforced on first sign-in or admin reset |
 | `failed_login_attempts` | `INTEGER` | `NOT NULL DEFAULT 0 CHECK (failed_login_attempts >= 0)` | Brute-force lockout counter |
+| `authz_version` | `INTEGER` | `NOT NULL DEFAULT 1 CHECK (authz_version > 0)` | Incremented when role, active state, or authorization scope changes; invalidates old JWTs |
 | `locked_until` | `TIMESTAMPTZ` | `NULL` | Temporary lockout expiration |
 | `last_login_at` | `TIMESTAMPTZ` | `NULL` | |
 | `deactivated_at` | `TIMESTAMPTZ` | `NULL` | Populated on exit deactivation |
@@ -203,6 +203,7 @@ CREATE TYPE clearance_status AS ENUM (
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
 
 - **Indexes:** `CREATE INDEX idx_refresh_tokens_user_active ON refresh_tokens (user_id) WHERE revoked_at IS NULL;`
+- The CSRF token is intentionally not persisted: the API derives it from the raw refresh-cookie value using the independent `CSRF_HMAC_SECRET`, as specified in the API contract.
 
 ### 3.3 `password_reset_tokens`
 | Column | Type | Constraints / Default | Notes |
@@ -269,18 +270,40 @@ CREATE TYPE clearance_status AS ENUM (
 | Column | Type | Constraints / Default | Notes |
 | :--- | :--- | :--- | :--- |
 | `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | |
-| `policy_name` | `VARCHAR(120)` | `NOT NULL` | e.g., `Uganda FY 2026/27 Statutory Policy` |
-| `effective_from` | `DATE` | `NOT NULL` | e.g., `2026-07-01` |
+| `policy_name` | `VARCHAR(120)` | `NOT NULL` | Human-readable policy name; unapproved examples must be marked `DRAFT` |
+| `effective_from` | `DATE` | `NOT NULL` | Effective date verified against the policy source |
 | `effective_to` | `DATE` | `NULL` | `NULL` = currently active |
-| `nssf_employee_rate` | `NUMERIC(5,4)` | `NOT NULL DEFAULT 0.0500` | `5%` |
-| `nssf_employer_rate` | `NUMERIC(5,4)` | `NOT NULL DEFAULT 0.1000` | `10%` |
+| `nssf_employee_rate` | `NUMERIC(5,4)` | `NOT NULL` | No default; set only from the reviewed policy |
+| `nssf_employer_rate` | `NUMERIC(5,4)` | `NOT NULL` | No default; set only from the reviewed policy |
 | `paye_resident_brackets` | `JSONB` | `NOT NULL` | Array of `{minUgx, maxUgx, baseTaxUgx, rate}` |
 | `paye_non_resident_brackets` | `JSONB` | `NOT NULL` | Non-resident monthly bands |
-| `lst_tiers` | `JSONB` | `NOT NULL` | Annual LST bands up to `100,000 UGX` |
-| `lst_collection_months` | `SMALLINT[]` | `NOT NULL DEFAULT '{7,8,9,10}'` | Jul–Oct (4 equal instalments) |
+| `lst_tiers` | `JSONB` | `NOT NULL` | Annual LST bands from the reviewed policy |
+| `lst_collection_months` | `SMALLINT[]` | `NOT NULL` | No default; set from the reviewed policy |
 | `is_active` | `BOOLEAN` | `NOT NULL DEFAULT true` | |
+| `review_status` | `VARCHAR(20)` | `NOT NULL DEFAULT 'DRAFT' CHECK (review_status IN ('DRAFT', 'APPROVED', 'RETIRED'))` | Payroll must use only an approved policy |
+| `legal_source_reference` | `TEXT` | `NULL` | Official legislation/circular reference, required before approval |
+| `approved_by_user_id` | `UUID` | `NULL REFERENCES users(id) ON DELETE RESTRICT` | Required before operational use |
+| `approved_at` | `TIMESTAMPTZ` | `NULL` | |
 | `created_by_user_id` | `UUID` | `NOT NULL REFERENCES users(id) ON DELETE RESTRICT` | |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
+
+- **Approval constraints:** An `APPROVED` policy must have a non-empty `legal_source_reference`, `approved_by_user_id`, and `approved_at`; the approver must differ from `created_by_user_id`.
+```sql
+ALTER TABLE statutory_tax_policies
+  ADD CONSTRAINT chk_approved_tax_policy_complete CHECK (
+    review_status <> 'APPROVED'
+    OR (
+      length(trim(legal_source_reference)) > 0
+      AND approved_by_user_id IS NOT NULL
+      AND approved_at IS NOT NULL
+      AND approved_by_user_id <> created_by_user_id
+    )
+  ),
+  ADD CONSTRAINT excl_approved_tax_policy_effective_period EXCLUDE USING gist (
+    daterange(effective_from, COALESCE(effective_to, 'infinity'::date), '[]') WITH &&
+  ) WHERE (review_status = 'APPROVED');
+```
+- Payroll still fails closed if no approved policy covers the period end date.
 
 ---
 
@@ -539,6 +562,9 @@ ALTER TABLE job_offers
 | `check_in_at` | `TIMESTAMPTZ` | `NULL` | UTC timestamp of browser check-in |
 | `check_out_at` | `TIMESTAMPTZ` | `NULL` | UTC timestamp of browser check-out |
 | `worked_minutes` | `INTEGER` | `NULL CHECK (worked_minutes IS NULL OR worked_minutes >= 0)` | Calculated on check-out or correction |
+| `leave_days` | `NUMERIC(3,2)` | `NOT NULL DEFAULT 0 CHECK (leave_days IN (0, 0.5, 1))` | Approved leave allocation for this date |
+| `leave_type_id` | `UUID` | `NULL REFERENCES leave_types(id) ON DELETE RESTRICT` | Populated when `leave_days > 0` |
+| `leave_request_id` | `UUID` | `NULL` | Populated when `leave_days > 0`; FK added after `leave_requests` is created |
 | `status` | `attendance_status` | `NOT NULL` | `PRESENT_ON_TIME`, `PRESENT_GRACE`, `LATE`, `ABSENT`, `ON_LEAVE`, `HOLIDAY`, `DAY_OFF` |
 | `is_manual_correction` | `BOOLEAN` | `NOT NULL DEFAULT false` | True if modified by approved correction |
 | `notes` | `TEXT` | `NULL` | e.g., EOD reconciliation or approved leave reference |
@@ -547,6 +573,8 @@ ALTER TABLE job_offers
 
 - **Constraints & Indexes:**
   - `UNIQUE (employee_id, work_date)` — **Enforces at most 1 attendance record per employee per working day.**
+  - `CHECK ((leave_days = 0 AND leave_type_id IS NULL AND leave_request_id IS NULL) OR (leave_days > 0 AND leave_type_id IS NOT NULL AND leave_request_id IS NOT NULL))`
+  - Full-day leave uses `status = 'ON_LEAVE'`; half-day leave records `leave_days = 0.5` while preserving actual attendance status/timestamps, or `ABSENT` for the unworked portion when no attendance exists.
   - `CHECK (check_out_at IS NULL OR check_in_at IS NOT NULL)` — **Enforces Check-Out ONLY after Check-In.**
   - `CHECK (check_out_at IS NULL OR check_out_at >= check_in_at)` — Prevents invalid negative work time.
   - `CREATE INDEX idx_attendance_work_date ON attendance_records (work_date DESC, status);`
@@ -588,10 +616,11 @@ ALTER TABLE job_offers
 | `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | |
 | `code` | `VARCHAR(30)` | `NOT NULL UNIQUE` | `ANNUAL`, `SICK`, `COMPASSIONATE`, `MATERNITY`, `PATERNITY`, `STUDY`, `UNPAID` |
 | `name` | `VARCHAR(100)` | `NOT NULL` | |
-| `annual_entitlement_days` | `NUMERIC(5,2)` | `NOT NULL DEFAULT 21.00 CHECK (annual_entitlement_days >= 0)` | `0` = uncapped/unpaid |
+| `annual_entitlement_days` | `NUMERIC(5,2)` | `NOT NULL CHECK (annual_entitlement_days >= 0)` | Must be explicitly configured from the approved organizational leave policy; no unverified statutory default. `0` = no balance cap; paid status is controlled independently by `is_paid`. |
 | `is_paid` | `BOOLEAN` | `NOT NULL DEFAULT true` | Feeds payroll unpaid-day deduction logic |
 | `requires_hr_approval` | `BOOLEAN` | `NOT NULL DEFAULT false` | True for special leaves requiring HR stage |
 | `hr_approval_threshold_days` | `NUMERIC(5,2)` | `NULL` | e.g., `5.00` (requests `> 5` days route to HR after Manager) |
+| `max_carry_over_days` | `NUMERIC(5,2)` | `NOT NULL DEFAULT 0 CHECK (max_carry_over_days >= 0)` | Organization-approved annual rollover cap |
 | `is_active` | `BOOLEAN` | `NOT NULL DEFAULT true` | |
 
 ### 10.2 `leave_balances`
@@ -610,7 +639,7 @@ ALTER TABLE job_offers
 
 - **Constraints:**
   - `UNIQUE (employee_id, leave_type_id, year)`
-  - `CHECK (entitled_days = 0 OR (used_days + pending_days <= entitled_days + carried_over_days))` — **Enforces sufficient available balance for capped leave types while safely supporting uncapped/unpaid leave.**
+  - `CHECK (entitled_days = 0 OR (used_days + pending_days <= entitled_days + carried_over_days))` — **Enforces sufficient available balance for capped leave types while supporting uncapped leave.** `entitled_days = 0` means uncapped, not unpaid; `leave_types.is_paid` controls payroll treatment.
 
 ### 10.3 `leave_requests`
 | Column | Type | Constraints / Default | Notes |
@@ -637,12 +666,35 @@ ALTER TABLE job_offers
 - **CRITICAL POSTGRESQL EXCLUSION CONSTRAINT (Prevents Overlapping Pending or Approved Leave):**
 ```sql
 ALTER TABLE leave_requests
+  ADD CONSTRAINT chk_leave_half_day_single_date
+  CHECK (half_day_period = 'FULL' OR start_date = end_date);
+
+ALTER TABLE leave_requests
   ADD CONSTRAINT excl_leave_no_overlap
   EXCLUDE USING gist (
     employee_id WITH =,
     daterange(start_date, end_date, '[]') WITH &&
   )
   WHERE (status IN ('PENDING_MANAGER', 'PENDING_HR', 'APPROVED'));
+```
+
+- A half-day request MUST cover one scheduled work date and count as `0.50` working days; multi-day requests use `FULL`.
+- The date-range exclusion constraint intentionally permits at most one active request per employee per date, including complementary half-day periods. An employee needing both halves must request `FULL` for that date before review; two separate half-day requests on the same date are not supported.
+- `working_days` is the request total. Requests spanning calendar years are allocated by year in `leave_request_year_allocations`; each allocation reserves/releases/uses the matching `leave_balances` row. For leave types with no entitlement cap, no capped balance check is applied.
+
+### 10.4 `leave_request_year_allocations`
+| Column | Type | Constraints / Default | Notes |
+| :--- | :--- | :--- | :--- |
+| `leave_request_id` | `UUID` | `NOT NULL REFERENCES leave_requests(id) ON DELETE RESTRICT` | |
+| `year` | `INTEGER` | `NOT NULL` | Calendar leave year |
+| `working_days` | `NUMERIC(5,2)` | `NOT NULL CHECK (working_days > 0)` | Includes `0.50` for an eligible half day |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
+
+- **Constraints:** `PRIMARY KEY (leave_request_id, year)`; the sum of allocations must equal `leave_requests.working_days`.
+```sql
+ALTER TABLE attendance_records
+  ADD CONSTRAINT fk_attendance_leave_request
+  FOREIGN KEY (leave_request_id) REFERENCES leave_requests(id) ON DELETE RESTRICT;
 ```
 
 ---
@@ -762,9 +814,32 @@ ALTER TABLE leave_requests
 | `payroll_item_id` | `UUID` | `NOT NULL UNIQUE REFERENCES payroll_items(id) ON DELETE RESTRICT` | |
 | `payslip_number` | `VARCHAR(40)` | `NOT NULL UNIQUE` | e.g., `PAY-202611-0412` |
 | `verification_code` | `VARCHAR(32)` | `NOT NULL UNIQUE` | Embedded in QR Code URL |
-| `document_sha256` | `CHAR(64)` | `NOT NULL` | Tamper-evidence hash |
-| `pdf_storage_key` | `TEXT` | `NOT NULL` | Private S3 key |
-| `published_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
+| `document_sha256` | `CHAR(64)` | `NULL` | Calculated from the completed PDF before publication |
+| `pdf_storage_key` | `TEXT` | `NULL` | Private S3 key; remains null until generation and upload succeed |
+| `generation_status` | `VARCHAR(20)` | `NOT NULL DEFAULT 'PENDING' CHECK (generation_status IN ('PENDING', 'GENERATING', 'READY', 'FAILED'))` | |
+| `generation_error_code` | `VARCHAR(80)` | `NULL` | Safe diagnostic code only; never raw provider response or PII |
+| `published_at` | `TIMESTAMPTZ` | `NULL` | Set only when PDF and hash are persisted and status becomes `READY` |
+
+- **Consistency constraint:** `generation_status = 'READY'` requires `document_sha256`, `pdf_storage_key`, and `published_at` to be non-null. Any non-`READY` state must not be downloadable or publicly verifiable as a valid published payslip.
+
+### 11.7 `async_outbox` *(Durable Post-Commit Work)*
+| Column | Type | Constraints / Default | Notes |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | |
+| `event_type` | `VARCHAR(80)` | `NOT NULL` | e.g., `GENERATE_PAYSLIP_PDF` |
+| `aggregate_type` | `VARCHAR(60)` | `NOT NULL` | |
+| `aggregate_id` | `UUID` | `NOT NULL` | Payslip/run identifier; no PII in payload |
+| `idempotency_key` | `VARCHAR(160)` | `NOT NULL UNIQUE` | Prevents duplicate work on retries |
+| `payload` | `JSONB` | `NOT NULL DEFAULT '{}'` | Identifiers and non-sensitive options only |
+| `status` | `VARCHAR(20)` | `NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'))` | |
+| `attempts` | `INTEGER` | `NOT NULL DEFAULT 0 CHECK (attempts >= 0)` | |
+| `available_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | Retry scheduling |
+| `processed_at` | `TIMESTAMPTZ` | `NULL` | |
+| `last_error_code` | `VARCHAR(80)` | `NULL` | Sanitized code only |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
+
+- **Indexes:** `CREATE INDEX idx_async_outbox_pending ON async_outbox (available_at, created_at) WHERE status IN ('PENDING', 'FAILED');`
+- Workers claim rows using `FOR UPDATE SKIP LOCKED`; handlers must be idempotent and must not log PII or provider response bodies.
 
 ---
 
@@ -821,11 +896,11 @@ CREATE UNIQUE INDEX uq_asset_single_active_custody
 | `notice_date` | `DATE` | `NOT NULL` | |
 | `last_working_day` | `DATE` | `NOT NULL CHECK (last_working_day >= notice_date)` | |
 | `exit_reason` | `TEXT` | `NOT NULL CHECK (length(trim(exit_reason)) > 0)` | |
-| `status` | `offboarding_status` | `NOT NULL DEFAULT 'IN_PROGRESS'` | `IN_PROGRESS` $\rightarrow$ `CLEARED` $\rightarrow$ `DEACTIVATED` |
+| `status` | `offboarding_status` | `NOT NULL DEFAULT 'IN_PROGRESS'` | Tracks clearance only: `IN_PROGRESS` $\rightarrow$ `CLEARED`. Account deactivation is tracked separately by `deactivated_at` and does not change clearance status. |
 | `initiated_by_user_id` | `UUID` | `NOT NULL REFERENCES users(id) ON DELETE RESTRICT` | HR Manager |
 | `finalized_by_user_id` | `UUID` | `NULL REFERENCES users(id) ON DELETE RESTRICT` | |
 | `finalized_at` | `TIMESTAMPTZ` | `NULL` | |
-| `deactivated_at` | `TIMESTAMPTZ` | `NULL` | Set after `last_working_day` |
+| `deactivated_at` | `TIMESTAMPTZ` | `NULL` | Set after `last_working_day`, regardless of clearance status |
 | `version` | `INTEGER` | `NOT NULL DEFAULT 1` | |
 | `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()` | |
 

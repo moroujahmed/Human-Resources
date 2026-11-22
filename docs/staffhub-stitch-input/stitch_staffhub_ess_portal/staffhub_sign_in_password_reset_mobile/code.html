@@ -15,8 +15,8 @@
 <span class="material-symbols-outlined text-surface-container-lowest text-[18px]">verified_user</span>
 </div>
 <div class="flex flex-col min-w-0">
-<span class="font-title-sm text-title-sm text-on-surface truncate">Uganda DPA 2019 Certified</span>
-<span class="font-label-mono text-label-mono text-on-surface-variant text-[11px] truncate">Statutory Tier IV Security Gate</span>
+<span class="font-title-sm text-title-sm text-on-surface truncate">Demo reference • legal review required</span>
+<span class="font-label-mono text-label-mono text-on-surface-variant text-[11px] truncate">Security controls not yet implemented</span>
 </div>
 </div>
 <div class="shrink-0 flex items-center gap-1 bg-surface-container-highest px-2 py-1 rounded">
@@ -34,7 +34,7 @@
       StaffHub Uganda
     </h1>
 <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
-      Institutional HRMS • Enterprise Payroll • Cap 219 Compliance
+      HRMS • Demo reference • legal review required
     </p>
 </section>
 <!-- Segmented View Switcher -->
@@ -67,7 +67,7 @@
 </label>
 <div class="relative flex items-center">
 <span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">badge</span>
-<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-3 py-2.5 rounded-lg font-label-data text-label-data outline-none transition-colors focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary" id="work-email" placeholder="e.g. b.kato@staffhub.ug" required="" type="email" value="b.kato@staffhub.ug"/>
+<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-3 py-2.5 rounded-lg font-label-data text-label-data outline-none transition-colors focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary" id="work-email" placeholder="e.g. employee@example.invalid" required="" type="email"/>
 </div>
 </div>
 <!-- Password -->
@@ -80,7 +80,7 @@
 </div>
 <div class="relative flex items-center">
 <span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">password</span>
-<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-10 py-2.5 rounded-lg font-label-data text-label-data outline-none transition-colors focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary" id="signin-password" required="" type="password" value="••••••••••••"/>
+<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-10 py-2.5 rounded-lg font-label-data text-label-data outline-none transition-colors focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary" id="signin-password" required="" type="password"/>
 <button class="absolute right-3 text-on-surface-variant hover:text-on-surface p-1" onclick="togglePassVisibility('signin-password', this)" type="button">
 <span class="material-symbols-outlined text-[18px]">visibility</span>
 </button>
@@ -92,7 +92,7 @@
 <input checked="" class="w-4 h-4 rounded text-primary focus:ring-primary bg-surface-container-low" type="checkbox"/>
 <span class="font-body-sm text-body-sm text-on-surface-variant">Remember device</span>
 </label>
-<a class="font-body-sm text-body-sm text-secondary hover:underline" href="#" onclick="alert('Password recovery link dispatched to registered institutional phone via SMS Gateway.'); return false;">
+<a class="font-body-sm text-body-sm text-secondary hover:underline" href="#" onclick="alert('If this work email belongs to an active account, a single-use reset link will be sent to its registered address.'); return false;">
             Forgot Password?
           </a>
 </div>
@@ -122,7 +122,7 @@
 </div>
 <div class="bg-surface-container-low rounded-lg p-3 mb-4 text-on-surface-variant font-body-sm text-body-sm flex gap-2.5 items-start">
 <span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">info</span>
-<span>Per Uganda Employment Act &amp; IT Security Protocols, system-issued temporary passwords must be redefined before accessing employee records.</span>
+<span>Temporary credentials must be changed before accessing employee records. Configure the password policy and recovery flow before production use.</span>
 </div>
 <form class="flex flex-col gap-4" onsubmit="event.preventDefault(); simulateResetDone();">
 <!-- Temporary Token / Code -->
@@ -130,7 +130,7 @@
 <label class="font-title-sm text-title-sm text-on-surface" for="temp-token">Temporary Admin Passcode</label>
 <div class="relative flex items-center">
 <span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">pin</span>
-<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-3 py-2.5 rounded-lg font-label-data text-label-data outline-none focus:bg-surface-container-lowest" id="temp-token" placeholder="e.g. UG-xxxx-xxxx" required="" type="text" value="UG-2024-SYS-9812"/>
+<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-3 py-2.5 rounded-lg font-label-data text-label-data outline-none focus:bg-surface-container-lowest" id="temp-token" placeholder="e.g. UG-xxxx-xxxx" required="" type="text"/>
 </div>
 </div>
 <!-- New Master Password -->
@@ -138,7 +138,7 @@
 <label class="font-title-sm text-title-sm text-on-surface" for="new-password">New Permanent Password</label>
 <div class="relative flex items-center">
 <span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">shield_lock</span>
-<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-10 py-2.5 rounded-lg font-label-data text-label-data outline-none focus:bg-surface-container-lowest" id="new-password" oninput="checkPasswordStrength(this.value)" required="" type="password" value="Kla#Kampala2025!"/>
+<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-10 py-2.5 rounded-lg font-label-data text-label-data outline-none focus:bg-surface-container-lowest" id="new-password" oninput="checkPasswordStrength(this.value)" required="" type="password"/>
 <button class="absolute right-3 text-on-surface-variant hover:text-on-surface p-1" onclick="togglePassVisibility('new-password', this)" type="button">
 <span class="material-symbols-outlined text-[18px]">visibility</span>
 </button>
@@ -162,14 +162,14 @@
 <label class="font-title-sm text-title-sm text-on-surface" for="confirm-password">Confirm Master Password</label>
 <div class="relative flex items-center">
 <span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">check_circle</span>
-<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-3 py-2.5 rounded-lg font-label-data text-label-data outline-none focus:bg-surface-container-lowest" id="confirm-password" required="" type="password" value="Kla#Kampala2025!"/>
+<input class="w-full bg-surface-container-low text-on-surface pl-10 pr-3 py-2.5 rounded-lg font-label-data text-label-data outline-none focus:bg-surface-container-lowest" id="confirm-password" required="" type="password"/>
 </div>
 </div>
-<!-- Cap 219 Legal Notice Card -->
+<!-- Security notice; review applicable legal requirements before production -->
 <div class="bg-surface-container-highest rounded-lg p-3 text-on-surface flex items-start gap-2">
 <span class="material-symbols-outlined text-tertiary text-[18px] shrink-0 mt-0.5">gavel</span>
 <p class="font-body-sm text-body-sm text-[12px] leading-snug">
-<strong>Penal Code Cap 120 / Computer Misuse Act:</strong> Sharing access credentials for statutory URA, NSSF, or payroll ledger modification is an extraditable offense.
+<strong>Protect your credentials:</strong> Never share passwords or reset codes. Access is audited under the configured security policy.
           </p>
 </div>
 <button class="w-full bg-primary-container hover:bg-primary text-surface-container-lowest py-3 rounded-lg font-title-md text-title-md flex items-center justify-center gap-2 shadow-md transition-colors active:scale-[0.99]" type="submit">
@@ -199,7 +199,7 @@
         </p>
 <div class="grid grid-cols-1 gap-1.5">
 <!-- Role 1 -->
-<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('b.kato@staffhub.ug', 'Brian Kato', 'Staff Employee', 'NSSF: 902847291')">
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('b.kato@example.invalid', 'Brian Kato', 'Staff Employee', 'NSSF: ••••••••')">
 <div class="flex items-center gap-2.5 min-w-0">
 <div class="w-7 h-7 rounded-full bg-primary-fixed flex items-center justify-center font-title-sm text-on-primary-fixed shrink-0 text-xs">
                 BK
@@ -212,7 +212,7 @@
 <span class="font-label-mono text-label-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant shrink-0">Select</span>
 </button>
 <!-- Role 2 -->
-<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('m.kigozi@staffhub.ug', 'Michael Kigozi', 'Line Manager', 'NSSF: 881230491')">
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('m.kigozi@example.invalid', 'Michael Kigozi', 'Line Manager', 'NSSF: ••••••••')">
 <div class="flex items-center gap-2.5 min-w-0">
 <div class="w-7 h-7 rounded-full bg-surface-variant flex items-center justify-center font-title-sm text-on-surface shrink-0 text-xs">
                 MK
@@ -225,7 +225,7 @@
 <span class="font-label-mono text-label-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant shrink-0">Select</span>
 </button>
 <!-- Role 3 -->
-<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('j.okello@staffhub.ug', 'Julius Okello', 'HR Manager', 'NSSF: 760192834')">
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('j.okello@example.invalid', 'Julius Okello', 'HR Manager', 'NSSF: ••••••••')">
 <div class="flex items-center gap-2.5 min-w-0">
 <div class="w-7 h-7 rounded-full bg-secondary-fixed-dim flex items-center justify-center font-title-sm text-on-secondary-fixed shrink-0 text-xs">
                 JO
@@ -238,7 +238,7 @@
 <span class="font-label-mono text-label-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant shrink-0">Select</span>
 </button>
 <!-- Role 4 -->
-<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('j.okello.talent@staffhub.ug', 'Julius Okello', 'Talent Recruiter', 'Portal Ref: REC-901')">
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('j.okello.talent@example.invalid', 'Julius Okello', 'Talent Recruiter', 'Portal Ref: REC-901')">
 <div class="flex items-center gap-2.5 min-w-0">
 <div class="w-7 h-7 rounded-full bg-surface-variant flex items-center justify-center font-title-sm text-on-surface shrink-0 text-xs">
                 JO
@@ -251,7 +251,7 @@
 <span class="font-label-mono text-label-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant shrink-0">Select</span>
 </button>
 <!-- Role 5 -->
-<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('s.namubiru@staffhub.ug', 'Sarah Namubiru', 'Payroll Officer', 'URA TIN: 1009848123')">
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('s.namubiru@example.invalid', 'Sarah Namubiru', 'Payroll Officer', 'URA TIN: ••••••••••')">
 <div class="flex items-center gap-2.5 min-w-0">
 <div class="w-7 h-7 rounded-full bg-tertiary-fixed flex items-center justify-center font-title-sm text-on-tertiary-fixed shrink-0 text-xs">
                 SN
@@ -264,7 +264,7 @@
 <span class="font-label-mono text-label-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant shrink-0">Select</span>
 </button>
 <!-- Role 6 -->
-<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('j.mukasa@staffhub.ug', 'Joseph Mukasa', 'Asset Officer', 'Inventory Ledger #4')">
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('j.mukasa@example.invalid', 'Joseph Mukasa', 'Asset Officer', 'Inventory Ledger #4')">
 <div class="flex items-center gap-2.5 min-w-0">
 <div class="w-7 h-7 rounded-full bg-surface-variant flex items-center justify-center font-title-sm text-on-surface shrink-0 text-xs">
                 JM
@@ -277,7 +277,7 @@
 <span class="font-label-mono text-label-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant shrink-0">Select</span>
 </button>
 <!-- Role 7 -->
-<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('r.mugisha@staffhub.ug', 'Raymond Mugisha', 'System Admin', 'Root Audit Clearances')">
+<button class="flex items-center justify-between p-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-bright text-left transition-colors active:bg-secondary-fixed" onclick="prefillRole('r.mugisha@example.invalid', 'Raymond Mugisha', 'System Admin', 'Audit &amp; Governance')">
 <div class="flex items-center gap-2.5 min-w-0">
 <div class="w-7 h-7 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center font-title-sm shrink-0 text-xs">
                 RM
@@ -307,10 +307,10 @@
 <footer class="pt-2 text-center flex flex-col items-center gap-1">
 <div class="flex items-center gap-1.5 text-on-surface-variant font-label-mono text-label-mono text-[11px]">
 <span class="material-symbols-outlined text-[14px]">shield</span>
-<span>StaffHub Uganda • Cap 219 Security Gate</span>
+<span>StaffHub • Security guidance</span>
 </div>
 <p class="font-body-sm text-body-sm text-[11px] text-on-surface-variant/80">
-        Republic of Uganda Statutory Data Processing Agreement • Kampala, Uganda
+        Privacy and data-processing terms require qualified review before production use.
       </p>
 </footer>
 </div>
@@ -436,7 +436,7 @@
         btn.disabled = false;
         btn.classList.add('bg-primary');
         btn.classList.remove('bg-primary-container');
-        alert('Institutional Identity Verified. Session Token granted for StaffHub Central ERP.');
+        alert('Prototype only: authentication is not connected.');
       }, 1000);
     }, 1200);
   }

@@ -16,7 +16,7 @@ StaffHub enforces authorization using **two combined layers** on every API reque
 | **`ORG`** | Organization-wide access across all employees/records in the permitted module. |
 
 ### 1.2 Implicit Self-Service Rule for Staff Roles
-Any internal user (`HR_MANAGER`, `LINE_MANAGER`, `RECRUITER`, `PAYROLL_OFFICER`, `ASSET_OFFICER`, `SYSTEM_ADMIN`) who is linked to an `employeeId` automatically inherits **`SELF`** employee capabilities (daily browser Check-In/Check-Out, viewing own payslips, submitting own leave requests, acknowledging own assigned assets, updating own permitted contact info).
+Any internal user (`HR_MANAGER`, `LINE_MANAGER`, `RECRUITER`, `PAYROLL_OFFICER`, `ASSET_OFFICER`, `SYSTEM_ADMIN`) who is linked to an `employeeId` automatically inherits **`SELF`** employee capabilities (daily browser Check-In/Check-Out, viewing own payslips and loan schedule, submitting own leave requests, reading their own onboarding checklist and employee-safe offboarding summary, acknowledging own assigned assets, updating own permitted contact info).
 **CRITICAL SEPARATION-OF-DUTIES RULE:** No user may ever approve **their own** leave request, attendance correction, staff requisition, sensitive profile change, payroll run, or exit clearance—even if they hold `LINE_MANAGER`, `HR_MANAGER`, or `SYSTEM_ADMIN` roles. Self-requests escalate to their assigned superior or another authorized peer approver.
 
 ---

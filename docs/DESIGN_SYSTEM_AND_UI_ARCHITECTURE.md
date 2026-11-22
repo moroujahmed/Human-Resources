@@ -82,18 +82,20 @@ Treat the Stitch HTML exports in `/design-reference/` strictly as visual bluepri
 9. **`<KampalaClock>` (`domain/KampalaClock.tsx`):**
    - Uses `Luxon` locked strictly to `Africa/Kampala` regardless of the user's laptop/phone OS timezone setting.
 10. **`<ServerWakeupBanner>` (`ui/ServerWakeupBanner.tsx`):**
-    - Detects slow initial API ping (`> 3 seconds`) on Render's `$0` free tier and displays a calm notice: *"Connecting to StaffHub server (waking from idle, ~30s)..."* so presenters never mistake cold-start wake-up for a crash.
+    - Detects a slow initial API ping (`> 3 seconds`) and displays a neutral connection notice. Provider cold-start behavior and timings are deployment-dependent; do not promise a fixed wake-up time.
 
 ---
 
 ## 3. Mandatory Stitch-to-React Defect Fix Checklist
+
+This checklist records issues found in the exported Stitch references and requirements for the future application. It is not evidence that a production UI exists. HTML/PNG exports are historical and non-canonical; in particular, the payroll PNG remains unchanged and may show stale figures or unapproved claims.
 
 When converting the exported Stitch screens in `/design-reference/` into Next.js components, Antigravity MUST verify every item below:
 
 | # | Stitch Screen Affected | Defect Found in Stitch Output | Permanent Fix in Next.js Implementation |
 | :-: | :--- | :--- | :--- |
 | **1** | `employee_self_service_home_desktop` | Contains forbidden `"biometric override"` and `"biometric & subnet gateway"` text | Purge all `"biometric"` and `"GPS"` wording; replace with `"Web Browser Check-In • Africa/Kampala (EAT)"` |
-| **2** | `employee_self_service_home_desktop` & `_mobile` | `"Show Net Pay"` reveals `UGX 4,850,000` (which is Gross, not Net) | Wire directly to real calculated latest Net Pay (`UGX 3,239,250` for Oct 2026 / `UGX 3,264,250` for Nov 2026 under FY 2026/27 PAYE rules) |
+| **2** | `employee_self_service_home_desktop` & `_mobile` | `"Show Net Pay"` reveals gross pay instead of net pay | Wire to the authorized employee's actual published payslip; never hardcode tax outputs. `UGX 3,239,250` is only a provisional October test-fixture example, not an approved payroll amount. |
 | **3** | `ess_desktop`, `ess_mobile`, `line_manager` | External `<img>` logo URL failed to load (`StaffHub Logo` alt text) | Replace all `<img>` brand logos with shared inline SVG `S` monogram inside `<AppShell>` |
 | **4** | `public_careers_portal` | Duplicate email alert says `"Submitting again will update your existing docket"`, footer says `© 2025`, and header shows a user avatar | Change alert to strictly **block** duplicate email submissions (`409`), disable Submit button, remove user avatar next to `Staff Sign In`, update copyright to `© 2026` |
 | **5** | `hr_employee_profile_offboarding_clearance` | Wrong sidebar/header (`Talent & Recruitment` / `HR Recruiter`), unmasked bank account numbers (`9030018492019`), clipped tabs (`Docum...`) | Render inside `<AppShell>` with `HR_MANAGER` role config, wrap bank/NIN in `<MaskedField />`, shorten tab names so all 6 fit cleanly |

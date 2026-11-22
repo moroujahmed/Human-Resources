@@ -20,7 +20,7 @@ StaffHub is a unified web-based Human Resource Management System (HRMS) covering
 - **Browser-Based:** Responsive across desktop, tablet, and phone.
 - **Currency & Time:** Ugandan Shillings (`UGX`) and `Africa/Kampala` (`EAT`, `UTC+3`).
 - **No Hardware Tracking:** Zero biometric scanners and zero GPS tracking.
-- **Auditability & Retention:** Important edits, approvals, and rejections record actor, timestamp, and reason. Exited employees are deactivated after their last working day; records are retained read-only and never permanently deleted.
+- **Auditability & Retention:** Important edits, approvals, and rejections record actor, timestamp, and reason. Exited employees are deactivated after their last working day; records become read-only and follow an approved retention schedule, with legally reviewed deletion/anonymization after expiry and documented legal holds.
 
 ---
 

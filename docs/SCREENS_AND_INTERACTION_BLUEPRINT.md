@@ -12,7 +12,7 @@ This document maps every Next.js App Router page to its allowed roles, visual la
 - **States & Interactions:**
   - **Standard Login:** Email + Password (with reveal toggle) $\rightarrow$ `POST /api/v1/auth/login`. Displays inline errors for invalid credentials (`401`), temporary lockout (`423`), or deactivated ex-employee account (`401 ACCOUNT_DEACTIVATED`).
   - **First-Login Forced Reset (`/change-password`):** Triggered automatically when `passwordChangeRequired === true`. Displays security rule notice (*"Users must not share passwords"*), live password-policy checklist, and blocks navigation elsewhere until `POST /api/v1/auth/change-password` succeeds.
-  - **Demo Quick-Access (Conditional):** Rendered **only** when `NEXT_PUBLIC_DEMO_MODE === 'true'`. Expandable accordion showing 7 role chips (`Employee`, `Line Manager`, `HR Manager`, `Recruiter`, `Payroll Officer`, `Asset Officer`, `System Admin`) calling `POST /api/v1/auth/demo-login`.
+  - **Demo Quick-Access (Conditional):** Server-rendered only for an explicitly isolated, non-production demo deployment using server-side configuration. Never use a `NEXT_PUBLIC_*` flag to enable demo behavior; the API's production guard and separate synthetic-data database remain authoritative. Expandable accordion showing 7 role chips (`Employee`, `Line Manager`, `HR Manager`, `Recruiter`, `Payroll Officer`, `Asset Officer`, `System Admin`) calling `POST /api/v1/auth/demo-login`.
 - **Role Default Landing Routes After Login:**
   - `EMPLOYEE` $\rightarrow$ `/home`
   - `LINE_MANAGER` $\rightarrow$ `/manager`
@@ -46,7 +46,7 @@ This document maps every Next.js App Router page to its allowed roles, visual la
 ## 2. Employee Self-Service Routes (Available to All Staff Linked to `employeeId`)
 
 ### 2.1 Employee Self-Service Home (`/home`)
-- **Stitch Reference:** `employee_self_service_home_desktop` & `_mobile` (apply Defect Fixes #1, #2, #3: remove all `"biometric"` wording, sync Net Pay to calculated FY 2026/27 net pay `UGX 3,239,250` Oct / `UGX 3,264,250` Nov, inline SVG `S` logo).
+- **Stitch Reference:** `employee_self_service_home_desktop` & `_mobile` (apply Defect Fixes #1, #2, #3: remove biometric/GPS wording, read net pay from the employee's `READY` payslip rather than hardcoding a value, and use the inline SVG `S` logo. `UGX 3,239,250` is a provisional October test-fixture example only; do not seed or lock November payroll before month close.)
 - **Interactions & API Wiring:**
   - **Attendance Hero Card (`GET /api/v1/attendance/today`):**
     - Displays live `<KampalaClock />`, shift window (`08:00 – 17:00 EAT • 15m grace`), and current status pill.
@@ -79,7 +79,7 @@ This document maps every Next.js App Router page to its allowed roles, visual la
 
 ### 3.1 Line Manager Team Operations (`/manager`)
 - **Stitch Reference:** `line_manager_team_dashboard` (apply Defect Fixes #3, #6: inline SVG logo, replace `Organization Settings` with `Staff Requisitions`, ensure zero table clipping).
-- **STRICT PRIVACY GUARANTEE:** Zero `UGX` salary, bank account, or NIN columns appear anywhere in UI or API responses.
+- **PRIVACY BOUNDARY:** Salary, bank, and NIN fields are omitted from public, directory, and team-manager projections. A linked employee may access only their own authorized payslip and personal data through `SELF` routes; sensitive fields remain masked by default and any reveal is scope-checked and audited.
 - **Tabs & Interactions:**
   1. **Team Attendance & Approval Inbox (Default):** 4 KPI cards (`Present On-Duty`, `On Approved Leave`, `Pending My Approvals`, `30D Shift Compliance`), Approval Queue (Leave + Attendance Corrections with `Approve` / `Reject` via `<MandatoryReasonModal>`), and Direct Reports Roster (`GET /api/v1/employees`, `GET /api/v1/attendance/records`).
   2. **Staff Requisitions Tab:** Button `"+ Request New Staff"` (`POST /api/v1/recruitment/requisitions`) + status table (`PENDING_HR`, `APPROVED`, `REJECTED` with HR reason).

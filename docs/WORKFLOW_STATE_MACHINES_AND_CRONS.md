@@ -80,12 +80,12 @@ Triggered by `HR_MANAGER` with an `Idempotency-Key` header:
 
 ### 2.1 Permitted Self-Service Contact Updates (Immediate)
 - **Allowed Fields:** `personal_email`, `phone`, `residential_address`, `emergency_contact_name`, `emergency_contact_phone`.
-- **Execution:** `EMPLOYEE` (`SELF`) updates via strict `UpdateOwnContactDto`. Writes old/new diff to `audit_logs` (`EMPLOYEE_CONTACT_UPDATED`).
+- **Execution:** Any authenticated internal user linked to an employee record (`SELF`) updates via strict `UpdateOwnContactDto`, regardless of assigned organizational role. Writes old/new diff to `audit_logs` (`EMPLOYEE_CONTACT_UPDATED`).
 
 ### 2.2 Sensitive Field Change Requests (`LEGAL_NAME`, `BANK_DETAILS`, `NATIONAL_ID_NIN`)
 | From State | Event / Action | To State | Allowed Actor | Preconditions & Side Effects |
 | :--- | :--- | :--- | :--- | :--- |
-| *(New)* | `SUBMIT_SENSITIVE_CHANGE` | `PENDING_HR` | `EMPLOYEE` (`SELF`), `HR_MANAGER` | Requires `request_reason` and new value payload (plus optional supporting PDF such as Bank Verification Letter). Encrypts raw bank account / NIN values before persisting `profile_change_requests`. Notifies HR Manager(s). |
+| *(New)* | `SUBMIT_SENSITIVE_CHANGE` | `PENDING_HR` | Any linked staff user (`SELF`), `HR_MANAGER` (`ORG`) | Requires `request_reason` and new value payload (plus optional supporting PDF such as Bank Verification Letter). Encrypts raw bank account / NIN values before persisting `profile_change_requests`. Notifies HR Manager(s). |
 | `PENDING_HR` | `APPROVE_SENSITIVE_CHANGE` | `APPROVED` | `HR_MANAGER` | **Anti-Self-Approval:** `reviewed_by_user_id !== employee.user_id`. Atomically updates `employees` (`legal_name` OR `bank_name` + `bank_branch` + `bank_account_encrypted` + `bank_account_last4` OR `nin_encrypted` + `nin_last4`), increments `employees.version`, writes redacted diff to `audit_logs`. |
 | `PENDING_HR` | `REJECT_SENSITIVE_CHANGE` | `REJECTED` | `HR_MANAGER` | **Mandatory `decision_reason`**. Employee profile remains untouched. Notifies employee. |
 
@@ -97,6 +97,8 @@ Triggered by `HR_MANAGER` with an `Idempotency-Key` header:
 1. Compute `today_eat = DateTime.now().setZone('Africa/Kampala').toISODate()`.
 2. **Check-In (`POST /api/v1/attendance/check-in`):**
    - Reject if `employee.status === 'EXITED'` (`403`).
+   - Reject if `today_eat.weekday NOT IN employee.work_schedule.working_days_bitmap` (`422 NOT_SCHEDULED`); non-standard weekend shifts are valid when explicitly configured in that employee's schedule.
+   - Reject if the employee has approved full-day leave. For approved half-day leave, permit check-in only outside that leave interval; persist its `leave_days`, `leave_type_id`, and `leave_request_id` on the attendance row.
    - Reject if `attendance_period_locks` exists for `(today_eat.year, today_eat.month)` (`423 PERIOD_LOCKED`).
    - Reject if `attendance_records` already has `(employee_id, today_eat)` (`409 ALREADY_CHECKED_IN`).
    - Evaluate `now_eat` against `employee.work_schedule.shift_start_time` on `today_eat`:
@@ -112,7 +114,7 @@ Triggered by `HR_MANAGER` with an `Idempotency-Key` header:
 ### 3.2 Attendance Correction Request State Machine
 | From State | Event / Action | To State | Allowed Actor | Preconditions & Side Effects |
 | :--- | :--- | :--- | :--- | :--- |
-| *(New)* | `SUBMIT_CORRECTION` | `PENDING` | `EMPLOYEE` (`SELF`) | `work_date` MUST be `<= today_eat` and NOT inside a locked `attendance_period_locks` month. **Mandatory `reason`**. Notifies Line Manager (or active delegate). |
+| *(New)* | `SUBMIT_CORRECTION` | `PENDING` | Any linked staff user (`SELF`) | `work_date` MUST be `<= today_eat` and NOT inside a locked `attendance_period_locks` month. **Mandatory `reason`**. Notifies Line Manager (or active delegate). |
 | `PENDING` | `APPROVE_CORRECTION` | `APPROVED` | `LINE_MANAGER` (`TEAM` or active delegate), `HR_MANAGER` (fallback) | **Anti-Self-Approval:** reviewer `<> employee.user_id`. Checks period still unlocked. Upserts `attendance_records` (`check_in_at`, `check_out_at`, `worked_minutes`, `is_manual_correction = true`), recalculates `PRESENT_ON_TIME` / `PRESENT_GRACE` / `LATE`, writes old/new timestamps to `audit_logs` (with `on_behalf_of_user_id` if delegated). |
 | `PENDING` | `REJECT_CORRECTION` | `REJECTED` | `LINE_MANAGER` (`TEAM` or active delegate), `HR_MANAGER` | **Mandatory `decision_reason`**. Existing attendance record remains unchanged. |
 ---
@@ -125,24 +127,27 @@ Given `employee_id`, `start_date` (`DATE`), and `end_date` (`DATE`):
 2. Query `public_holidays` where `holiday_date BETWEEN start_date AND end_date` into a fast lookup Set.
 3. Iterate calendar day `d` from `start_date` to `end_date` inclusive (interpreted strictly as `Africa/Kampala` dates):
    - Increment `working_days` by `1` **only if** `d.weekday IN working_days_bitmap` **AND** `d NOT IN holidaySet`.
-4. Return `{ calendarDays, workingDays, excludedDates: [{ date, reason: 'DAY_OFF' | 'PUBLIC_HOLIDAY', label }] }`.
+   - A half-day is allowed only for a single scheduled work date and contributes `0.50`; `MORNING` is the first half and `AFTERNOON` the second half of the scheduled shift (split at its midpoint). Multi-day requests must use full days.
+   - Split working days into calendar-year allocations; validate and reserve each year's balance independently.
+4. Return `{ calendarDays, workingDays, annualAllocations, excludedDates: [{ date, reason: 'DAY_OFF' | 'PUBLIC_HOLIDAY', label }] }`.
 5. **Hard Rule:** If `workingDays === 0` (e.g., request spans only a weekend/holiday), block submission (`422 ZERO_WORKING_DAYS`).
 
 ### 4.2 Leave Request State Machine
 | From State | Event / Action | To State | Allowed Actor | Preconditions & Atomic Side Effects |
 | :--- | :--- | :--- | :--- | :--- |
-| *(New)* | `SUBMIT_LEAVE` | `PENDING_MANAGER` | `EMPLOYEE` (`SELF`) | 1. Compute `workingDays > 0`.<br>2. **Mandatory `reason`**.<br>3. Check no overlapping `PENDING_MANAGER`, `PENDING_HR`, or `APPROVED` request (backed by `excl_leave_no_overlap`).<br>4. Lock `leave_balances` row (`FOR UPDATE`). If `leave_type.annual_entitlement_days > 0`, assert `(entitled + carried_over - used - pending) >= workingDays`.<br>5. Increment `leave_balances.pending_days += workingDays`.<br>6. Notify Line Manager (or active delegate). |
+| *(New)* | `SUBMIT_LEAVE` | `PENDING_MANAGER` | Any linked staff user (`SELF`) | 1. Compute `workingDays > 0`.<br>2. **Mandatory `reason`**.<br>3. Check no overlapping `PENDING_MANAGER`, `PENDING_HR`, or `APPROVED` request (backed by `excl_leave_no_overlap`).<br>4. Lock all affected `leave_balances` rows (`FOR UPDATE`) in ascending year order; validate each annual allocation against its balance for capped leave types.<br>5. Increment `pending_days` by each matching annual allocation.<br>6. Notify Line Manager (or active delegate). |
 | `PENDING_MANAGER` | `MANAGER_APPROVE` | `PENDING_HR` *(if HR step required)* **OR** `APPROVED` | `LINE_MANAGER` (`TEAM` or active delegate) | **Anti-Self-Approval:** reviewer `<> employee.user_id`. Checks `leave_type.requires_hr_approval === true` OR (`hr_approval_threshold_days !== null && workingDays > hr_approval_threshold_days`). If true $\rightarrow$ transitions to `PENDING_HR` and notifies HR Manager; else $\rightarrow$ triggers **Final Approval Side Effects**. |
 | `PENDING_HR` | `HR_APPROVE` | `APPROVED` | `HR_MANAGER` | **Anti-Self-Approval:** reviewer `<> employee.user_id`. Triggers **Final Approval Side Effects**. |
-| `PENDING_MANAGER` / `PENDING_HR` | `REJECT_LEAVE` | `REJECTED` | Approver (`TEAM` or `HR`) | **Mandatory `decision_reason`**. Atomically releases `leave_balances.pending_days -= workingDays`. Logs `LEAVE_REJECTED`. |
-| `PENDING_MANAGER` / `PENDING_HR` | `CANCEL_LEAVE` | `CANCELLED` | `EMPLOYEE` (`SELF`) | Atomically releases `leave_balances.pending_days -= workingDays`. Logs `LEAVE_CANCELLED`. |
+| `PENDING_MANAGER` / `PENDING_HR` | `REJECT_LEAVE` | `REJECTED` | Approver (`TEAM` or `HR`) | **Mandatory `decision_reason`**. Atomically releases pending balance by annual allocation. Logs `LEAVE_REJECTED`. |
+| `PENDING_MANAGER` / `PENDING_HR` | `CANCEL_LEAVE` | `CANCELLED` | Any linked staff user (`SELF`) | Atomically releases pending balance by annual allocation. Logs `LEAVE_CANCELLED`. |
 | `APPROVED` | `HR_REVOKE_LEAVE` | `CANCELLED` | `HR_MANAGER` | Allowed ONLY for dates whose month is NOT locked in `attendance_period_locks`. **Mandatory `decision_reason`**. Restores `used_days -= workingDays` and removes/resets generated `ON_LEAVE` attendance rows. |
 
 ### 4.3 Final Approval Atomic Side Effects
 Inside the single transaction when transitioning to `APPROVED`:
-1. Lock `leave_balances` (`FOR UPDATE`): `pending_days -= workingDays`, `used_days += workingDays`.
+1. Lock applicable `leave_balances` rows (`FOR UPDATE`): apply each annual allocation to `pending_days` and `used_days`.
 2. For each working day `d` in `[start_date, end_date]` (where `d` is a scheduled workday and not a public holiday):
-   - Upsert `attendance_records` for `(employee_id, d)` setting `status = 'ON_LEAVE'`, `notes = 'Approved Leave #' + request.id`.
+   - For full-day leave, convert an `ABSENT` record or insert an `ON_LEAVE` record. Reject with `422 ATTENDANCE_CONFLICT` if actual attendance exists; never overwrite it.
+   - For half-day leave, preserve any actual attendance and set `leave_days = 0.50`, `leave_type_id`, and `leave_request_id`. If actual attendance overlaps the requested half-shift, reject with `422 ATTENDANCE_CONFLICT`. If no attendance exists yet, leave the attendance row uncreated; check-in outside the approved leave interval or EOD reconciliation materializes it, preserving the half-day allocation.
 3. Resolve manager/HR pending notifications, notify employee (`"Leave request approved"`), and write `LEAVE_APPROVED` to `audit_logs` (recording `on_behalf_of_user_id` if delegated).
 
 ---
@@ -151,36 +156,39 @@ Inside the single transaction when transitioning to `APPROVED`:
 
 ### 5.1 Preconditions for Creating a Payroll Run
 1. Target `(year, month)` MUST NOT already have a `payroll_runs` row.
-2. An `attendance_period_locks` row MUST exist for `(year, month)` so attendance/leave inputs are frozen before payroll computation.
-3. Load the active `statutory_tax_policies` row whose `[effective_from, effective_to]` covers the pay period end date.
+2. The pay period MUST be fully closed in `Africa/Kampala`; an attendance-period lock may be created only after the final day and EOD reconciliation complete and all period corrections are resolved.
+3. An `attendance_period_locks` row MUST exist for `(year, month)` so attendance/leave inputs are frozen before payroll computation.
+4. Load the single `APPROVED` statutory policy whose effective period covers the pay period end date. Fail closed if there is no approved policy or overlapping approved policies.
 
 ### 5.2 Deterministic Calculation Pipeline Per Employee (`Decimal.js`, `ROUND_HALF_UP`)
-For every employee employed during `[period_start, period_end]` (`status IN ('ONBOARDING', 'ACTIVE', 'OFFBOARDING')`, `hire_date <= period_end`):
+All sample rates and brackets below are test fixtures only, not verified or approved Ugandan statutory guidance. Operational runs use only the separately reviewed, effective-dated `APPROVED` policy selected in Section 5.1; never fall back to these examples.
+For every employee whose employment interval intersects `[period_start, period_end]` (`hire_date <= period_end` AND (`last_working_day IS NULL OR last_working_day >= period_start`)). Do not filter by the employee's current status: a person who has since become `EXITED` may still be owed final-period pay.
 1. **Locked Attendance Summary Snapshot:**
    - `working_days_in_month` = count of scheduled workdays excluding public holidays in `(year, month)`.
    - `days_present` = count of `PRESENT_ON_TIME` + `PRESENT_GRACE` + `LATE`.
-   - `paid_leave_days` = count of `ON_LEAVE` where leave type `is_paid = true`.
-   - `absent_or_unpaid_days` = count of `ABSENT` + `ON_LEAVE` (where `is_paid = false`) + non-employed days if hired/exited mid-month.
+   - `paid_leave_days` = sum of `leave_days` where the linked leave type `is_paid = true`.
+   - `absent_or_unpaid_days` = for each scheduled date, add `1 - leave_days` when status is `ABSENT`, then add `leave_days` when the linked leave type is unpaid; add non-employed scheduled days when hired/exited mid-month. This supports partial paid/unpaid leave without treating a half-day as a full-day deduction.
 2. **Gross Pay (`UGX`):**
    - `unpaid_deduction_ugx = round((base_salary_ugx / working_days_in_month) * absent_or_unpaid_days)` *(only if `absent_or_unpaid_days > 0`)*.
    - `gross_pay_ugx = max(0, base_salary_ugx + recurring_allowances_ugx + bonus_or_arrears_ugx - unpaid_deduction_ugx)`.
 3. **NSSF (Computed on Gross Pay):**
-   - `nssf_employee_ugx = round(gross_pay_ugx * policy.nssf_employee_rate)` *(default `5%`)*.
-   - `nssf_employer_ugx = round(gross_pay_ugx * policy.nssf_employer_rate)` *(default `10%`, employer expense only—NOT subtracted from Net Pay)*.
-4. **PAYE Income Tax (Uganda Statutory Progressive Bands):**
-   - Evaluated against `gross_pay_ugx` (per Ugandan tax law, employee NSSF is **not** deducted before computing PAYE) using `policy.paye_resident_brackets` or `policy.paye_non_resident_brackets` per `employee.tax_residency`:
-     - Default Resident Monthly Bands (effective 1 Jul 2026):
+   - `nssf_employee_ugx = round(gross_pay_ugx * policy.nssf_employee_rate)`; no operational rate default is permitted.
+   - `nssf_employer_ugx = round(gross_pay_ugx * policy.nssf_employer_rate)`; employer expense only, not subtracted from net pay. Rates must come from the approved effective-dated policy.
+4. **PAYE Income Tax (approved effective-dated policy):**
+   - Evaluate the taxable base and resident/non-resident bands exactly as recorded in the approved policy; the sample formula below is a synthetic test fixture and must not be used operationally without qualified review:
+     - Example resident monthly bands (example effective date 1 Jul 2026, unverified):
        - `0 – 335,000`: `0`
        - `335,001 – 410,000`: `(gross - 335,000) * 0.20`
        - `410,001 – 485,000`: `15,000 + (gross - 410,000) * 0.25`
        - `485,001 – 10,000,000`: `33,750 + (gross - 485,000) * 0.30`
        - `> 10,000,000`: `33,750 + (gross - 485,000) * 0.30 + (gross - 10,000,000) * 0.10`
 5. **Local Service Tax (`LST`):**
-   - If `month IN policy.lst_collection_months` (default `[7, 8, 9, 10]` = July–October): look up `gross_pay_ugx` in `policy.lst_tiers` and divide annual amount by `lst_collection_months.length` (e.g., `100,000 / 4 = 25,000 UGX/month`). Otherwise `0`.
+   - Use only the approved policy's collection months and annual tiers; no operational defaults or hard-coded cap are permitted. Test fixtures may illustrate division across configured months but are not legal guidance.
 6. **Staff Loan Deduction:**
    - Sum active `staff_loans` (`status = 'ACTIVE'`), taking `min(monthly_installment_ugx, remaining_balance_ugx)`.
 7. **Net Pay:**
    - `net_pay_ugx = gross_pay_ugx - nssf_employee_ugx - paye_ugx - lst_ugx - loan_deduction_ugx - other_deductions_ugx`.
+   - Do not permit a negative net pay. Cap agreed loan/voluntary deductions to the amount remaining after statutory deductions and record any unpaid loan installment balance for a later period. If statutory deductions exceed gross, block payroll submission and require policy/payroll review rather than silently clamping statutory amounts.
 
 ### 5.3 Payroll Run State Machine
 | From State | Event / Action | To State | Allowed Actor | Preconditions & Atomic Side Effects |
@@ -190,7 +198,7 @@ For every employee employed during `[period_start, period_end]` (`status IN ('ON
 | `DRAFT` | `SUBMIT_PAYROLL` | `PENDING_APPROVAL` | `PAYROLL_OFFICER` | Sets `submitted_at`. Notifies HR Manager / Approver. |
 | `PENDING_APPROVAL` | `RETURN_PAYROLL` | `DRAFT` | `HR_MANAGER` | **Mandatory `decision_reason`**. Returns to Payroll Officer for revision. |
 | `PENDING_APPROVAL` | `APPROVE_PAYROLL` | `APPROVED` | `HR_MANAGER` | **Separation of Duties:** `actor.userId !== run.prepared_by_user_id`. Sets `approved_by_user_id`, `approved_at`. Logs `PAYROLL_APPROVED`. |
-| `APPROVED` | `LOCK_AND_PUBLISH` | `LOCKED` | `HR_MANAGER` or `PAYROLL_OFFICER` | **Atomic DB Transaction (< 100ms):**<br>1. Set `status = 'LOCKED'`, `locked_at`, `locked_by_user_id`.<br>2. Itemize and decrement `staff_loans.remaining_balance_ugx` recording before/after balances in `payroll_loan_deductions` ledger (marking `SETTLED` if balance reaches `0`).<br>3. Compute deterministic `document_sha256` tamper hash and `verification_code`, and insert `payslips` rows.<br>4. Log `PAYROLL_LOCKED`.<br>**Post-Commit Asynchronous Pipeline (Decoupled from DB transaction):**<br>1. Render tamper-verified PDF payslips with embedded QR code (`/verify/:verificationCode`) via `pdfkit`.<br>2. Upload PDFs to private S3/MinIO bucket and update `payslips.pdf_storage_key`.<br>3. Dispatch privacy-safe email notifications (`"Your payslip for [Month] is ready"`—zero UGX figures in email). |
+| `APPROVED` | `LOCK_AND_PUBLISH` | `LOCKED` | `HR_MANAGER` or `PAYROLL_OFFICER` | In a short transaction, set the run to `LOCKED`, settle itemized loan deductions, create payslip metadata in `PENDING` state, enqueue idempotent PDF-generation outbox events, and append `PAYROLL_LOCKED` to the audit log. After commit, a worker renders PDFs, calculates the final document hash, uploads to private storage, and marks each payslip `READY` with `pdf_storage_key` and `published_at`. Only `READY` slips can be downloaded or publicly verified. Failed jobs retry safely and notify an operator after the retry limit; never hold a database transaction open for PDF rendering, storage, or email. |
 
 ### 5.4 Post-Lock Authorised Adjustments (`LOCKED` Payroll Protection)
 - **Hard Rule:** Any direct `PUT`/`PATCH` on `payroll_items` belonging to a `LOCKED` run is rejected (`423 PAYROLL_LOCKED_DIRECT_EDIT_FORBIDDEN`) AND blocked by PostgreSQL trigger `trg_payroll_items_locked_guard`.
@@ -206,7 +214,7 @@ For every employee employed during `[period_start, period_end]` (`status IN ('ON
 | From State | Event / Action | To State | Allowed Actor | Preconditions & Atomic Side Effects |
 | :--- | :--- | :--- | :--- | :--- |
 | *(Asset Available)* | `ISSUE_ASSET` | `PENDING_ACKNOWLEDGEMENT` | `ASSET_OFFICER` | Assert `asset.condition NOT IN ('DAMAGED','LOST','RETIRED')`. Partial unique index `uq_asset_single_active_custody` guarantees zero concurrent assignees (`409 ASSET_ALREADY_ASSIGNED`). Creates `"Pending My Action"` notification for employee. |
-| `PENDING_ACKNOWLEDGEMENT` | `ACKNOWLEDGE_ASSET` | `ACKNOWLEDGED` | Assigned `EMPLOYEE` (`SELF`) | Sets `acknowledged_at = now()`. Resolves employee pending notification. Logs `ASSET_ACKNOWLEDGED`. |
+| `PENDING_ACKNOWLEDGEMENT` | `ACKNOWLEDGE_ASSET` | `ACKNOWLEDGED` | Assigned linked staff user (`SELF`) | Sets `acknowledged_at = now()`. Resolves employee pending notification. Logs `ASSET_ACKNOWLEDGED`. |
 | `PENDING_ACKNOWLEDGEMENT` / `ACKNOWLEDGED` | `RECORD_RETURN` | `RETURNED` | `ASSET_OFFICER` | Sets `returned_at = now()`, `received_by_user_id`, `return_condition`. Updates `assets.condition`. If `return_condition = 'DAMAGED'`, requires `incident_notes`. Frees asset for future issuing and refreshes any active offboarding `ASSET_RETURN` clearance track. |
 | `PENDING_ACKNOWLEDGEMENT` / `ACKNOWLEDGED` | `REPORT_DAMAGE_OR_LOSS` | `CLOSED_DAMAGED` / `CLOSED_LOST` | `ASSET_OFFICER` | **Mandatory `incident_notes`**. Sets `returned_at = now()` (closing active custody slot), updates `assets.condition` (`DAMAGED`/`LOST`), writes `ASSET_INCIDENT_LOGGED`, and flags HR/Offboarding recovery if applicable. |
 
@@ -227,17 +235,18 @@ Triggered by `HR_MANAGER`:
 
 ### 7.2 Dynamic Blocker Enforcement & Track Sign-Off
 - When `ASSET_OFFICER` clicks sign-off on `ASSET_RETURN`: backend queries `asset_assignments WHERE employee_id = X AND returned_at IS NULL`. If count `> 0`, **physically blocks** clearance (`422 CLEARANCE_BLOCKED`).
-- When `PAYROLL_OFFICER` clicks sign-off on `FINANCE_LOANS`: backend checks `staff_loans WHERE employee_id = X AND remaining_balance_ugx > 0`. If balance `> 0`, **physically blocks** clearance (`422 CLEARANCE_BLOCKED`) until settled.
+- When `PAYROLL_OFFICER` clicks sign-off on `FINANCE_LOANS`: backend checks `staff_loans WHERE employee_id = X AND remaining_balance_ugx > 0`. If balance `> 0`, **physically blocks** clearance (`422 CLEARANCE_BLOCKED`) until settled or handled under an approved, legally reviewed recovery policy. This blocker does not stop final-pay calculation or payment of earned wages.
 - **Finalize Clearance (`IN_PROGRESS` $\rightarrow$ `CLEARED`):** Allowed ONLY when all 4 `offboarding_clearance_items.status === 'CLEARED'`.
 
-### 7.3 Account Deactivation (`CLEARED` $\rightarrow$ `DEACTIVATED`)
-- **Rule:** Allowed once `status === 'CLEARED'` AND `today_eat > last_working_day` (automated via `00:05 EAT` cron or manually by HR post-`last_working_day`).
+### 7.3 Account Deactivation (independent of clearance status)
+- **Rule:** Allowed once `today_eat > last_working_day`, regardless of unresolved clearance items (automated via `00:05 EAT` cron or manually by HR post-`last_working_day`). Deactivation does not clear or waive outstanding items.
+- Clearance owners may continue resolving outstanding items after account deactivation; the case can transition to `CLEARED` when all tracks are complete, without reactivating the account.
 - Inside atomic transaction:
-  1. `offboarding_cases.status = 'DEACTIVATED'`, `deactivated_at = now()`.
+  1. Set `offboarding_cases.deactivated_at = now()` without changing `offboarding_cases.status`; preserve each clearance item's current state for follow-up.
   2. `employees.status = 'EXITED'`.
   3. `users.is_active = false`, `users.deactivated_at = now()`.
   4. `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = emp.user_id AND revoked_at IS NULL`.
-  5. Audit log `EMPLOYEE_ACCOUNT_DEACTIVATED`. Employee, attendance, leave, payslip, and asset records remain preserved read-only indefinitely.
+  5. Audit log `EMPLOYEE_ACCOUNT_DEACTIVATED`. Employee, attendance, leave, payslip, and asset records remain preserved read-only under the approved retention policy.
 
 ---
 
@@ -254,7 +263,8 @@ Protected via constant-time `X-Cron-Secret: <CRON_SHARED_SECRET>` comparison and
   3. For each employee (skipping if `(employee_id, target_date)` already exists in `attendance_records`):
      - If `target_date` is a public holiday $\rightarrow$ insert `status = 'HOLIDAY'`.
      - Else if `target_date.weekday NOT IN employee.work_schedule.working_days_bitmap` $\rightarrow$ insert `status = 'DAY_OFF'`.
-     - Else if an `APPROVED` leave request covers `target_date` $\rightarrow$ insert `status = 'ON_LEAVE'`.
+     - Else if an `APPROVED` full-day leave request covers `target_date` $\rightarrow$ insert `status = 'ON_LEAVE'` with `leave_days = 1`.
+     - Else if an `APPROVED` half-day leave request covers `target_date` $\rightarrow$ insert `status = 'ABSENT'` with `leave_days = 0.5` and its leave references; the remaining half is absent unless the employee checked in outside the leave interval.
      - Else $\rightarrow$ insert `status = 'ABSENT'`, `notes = 'Auto-marked absent at 23:55 EAT EOD reconciliation'`.
   4. **Missed Check-Out Auto-Flagging:** For any record on `target_date` with `check_in_at IS NOT NULL` and `check_out_at IS NULL`:
      - Append note: `' [Auto-closed at 23:55 EAT: Missed check-out]'`.
@@ -267,14 +277,19 @@ Protected via constant-time `X-Cron-Secret: <CRON_SHARED_SECRET>` comparison and
 - **Endpoint:** `POST /api/v1/internal/jobs/process-daily-transitions`
 - **Idempotent Logic:**
   1. **Close Expired Vacancies:** `UPDATE vacancies SET status = 'CLOSED' WHERE status = 'PUBLISHED' AND closing_at < now()`.
-  2. **Deactivate Cleared Exits Past Last Working Day:** Query `offboarding_cases` where `status = 'CLEARED'` AND `last_working_day < today_eat` $\rightarrow$ execute Section 7.3 deactivation transaction for each.
-  3. **Notify HR of Overdue Uncleared Exits:** Query `offboarding_cases` where `status = 'IN_PROGRESS'` AND `last_working_day < today_eat` $\rightarrow$ notify HR Manager (`"Exit overdue with unresolved clearance blockers"`).
+  2. **Deactivate Exits Past Last Working Day:** Query `offboarding_cases` where `deactivated_at IS NULL` AND `last_working_day < today_eat` $\rightarrow$ execute Section 7.3 deactivation transaction for each, regardless of clearance status.
+  3. **Notify HR of Unresolved Clearance:** Query clearance items that remain `PENDING` or `BLOCKED` after the last working day $\rightarrow$ notify HR Manager without preventing account deactivation or final-pay processing.
   4. **Expire Acting Delegations:** `UPDATE acting_delegations SET is_active = false WHERE is_active = true AND ends_at < now()`.
 
 ### Job 3: Annual Leave Balances Rollover
 - **Schedule:** Annually on **`01 Jan 00:01 EAT`** (`31 Dec 21:01 UTC`).
 - **Endpoint:** `POST /api/v1/internal/jobs/rollover-leave-balances`
 - **Idempotent Logic:**
-  1. For every active employee and active leave type, compute carry-over days from prior year (`min(max(0, entitled + carried_over - used), max_carry_over_days)` where `max_carry_over_days = 5.00` for Annual Leave, `0` for Sick/Maternity/Compassionate).
-  2. Insert or update `leave_balances` for `year = new_year` (`entitled_days = leave_type.annual_entitlement_days`, `carried_over_days = carry_over`, `used_days = 0`, `pending_days = 0`).
-  3. Log `LEAVE_BALANCES_ROLLED_OVER` to `audit_logs`.
+  1. For every active employee and active leave type, compute carry-over from the prior year's available balance (`min(max(0, entitled + carried_over - used - pending), max_carry_over_days)`; the configured carry cap is policy data, not a hardcoded runtime constant).
+  2. Insert the new-year balance in a transaction with `ON CONFLICT DO NOTHING`; never reset an existing row's used or pending days. Leave submission must initialize a missing future-year balance from approved leave policy before reserving an allocation.
+  3. Log `LEAVE_BALANCES_ROLLED_OVER` to `audit_logs` with counts only; no employee PII.
+
+### Job 4: Durable Async Outbox
+- **Schedule:** Every 5 minutes or via an always-on worker where lower latency is required.
+- **Endpoint:** `POST /api/v1/internal/jobs/process-async-outbox`
+- **Idempotent Logic:** Claim available rows using `FOR UPDATE SKIP LOCKED`; increment attempts; dispatch registered handlers (including payslip PDF generation); mark completion only after successful side effects. Retry transient errors with bounded backoff, mark exhausted jobs `FAILED`, and notify an operator with a sanitized error code. Handlers must use the outbox idempotency key, avoid PII in logs/payloads, and never expose an unready payslip.

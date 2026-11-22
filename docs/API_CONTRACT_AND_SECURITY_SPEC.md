@@ -8,8 +8,8 @@
   - Document/CV uploads: `multipart/form-data`
   - Report/Payslip exports: `application/pdf` or `text/csv; charset=utf-8`
 - **Global NestJS Input Validation (`main.ts`):**
-  - `ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true })`
-  - **Effect:** Any unexpected property injected into a JSON body (e.g., `"role": "SYSTEM_ADMIN"` or `"baseSalaryUgx": 99999999` on an employee contact update) triggers an immediate `400 Bad Request`—completely preventing Mass Assignment vulnerabilities.
+  - Validate bodies and query parameters with strict Zod schemas exported from `packages/shared`; unknown keys are rejected.
+  - **Effect:** Unexpected properties (e.g., `"role": "SYSTEM_ADMIN"` on a contact update) trigger `400 Bad Request`. Authorization and explicit update mappings remain mandatory; validation alone does not prevent mass assignment.
 - **HTTP Security Headers (`helmet`):**
   - `X-Content-Type-Options: nosniff`
   - `X-Frame-Options: DENY`
@@ -17,6 +17,9 @@
   - `Strict-Transport-Security` (enabled when served over HTTPS)
 - **CORS Policy:**
   - Strict origin allowlist from `CORS_ORIGIN` environment variable (`credentials: true` enabled for `HttpOnly` refresh cookies; wildcard `*` strictly forbidden).
+  - Production must prefer same-site HTTPS origins (for example, `app.example.com` and `api.example.com`) so browser third-party-cookie blocking does not break refresh sessions. Use `SameSite=Lax; Secure` for that deployment. If cross-site hosting is unavoidable, use `SameSite=None; Secure` and verify cookie behavior in every supported browser; do not treat this as a reliable fallback where third-party cookies are blocked.
+  - All cookie-setting or cookie-authenticated auth requests require an exact allowlisted `Origin`. Login, CSRF bootstrap, refresh, and logout reject missing, `null`, mismatched, or untrusted origins. Credentialed CORS must return the exact allowed origin, never `*`.
+  - The CSRF token is `base64url(HMAC-SHA-256(CSRF_HMAC_SECRET, raw_refresh_token))`, compared in constant time and never logged or persisted. Login returns it in JSON; refresh rotates the refresh token and returns the matching new token. After a page reload, `POST /auth/csrf` (JSON body, refresh cookie, exact `Origin`) returns the current token so the client can keep it in memory. Cookie-authenticated refresh and logout require it in `X-CSRF-Token`. The independent `CSRF_HMAC_SECRET` must be a high-entropy secret-manager value.
 
 ---
 
@@ -32,7 +35,7 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
   "fieldErrors": [
     { "field": "startDate", "message": "Overlaps request #LV-2026-019 (18 Dec 2026)." }
   ],
-  "timestampEat": "2026-11-18T01:27:00+03:00",
+  "timestampEat": "2026-11-18T08:04:00+03:00",
   "requestId": "7f3b9a12-4410-4b78-9d2a-1e8802a9b011"
 }
 ```
@@ -50,6 +53,8 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | `409` | `VERSION_CONFLICT` | Stale optimistic-lock `version` number |
 | `415` | `UNSUPPORTED_MEDIA_TYPE` | Uploaded CV/document failed binary magic-byte inspection |
 | `422` | `VACANCY_CLOSED` | Application submitted after `closing_at (EAT)` or vacancy not `PUBLISHED` |
+| `422` | `NOT_SCHEDULED` | Check-in/out attempted on a date that is not a working day in the employee's assigned schedule |
+| `422` | `ATTENDANCE_CONFLICT` | Check-in conflicts with approved leave, full-day leave conflicts with actual attendance, or actual attendance overlaps a requested half-shift |
 | `422` | `MUST_CHECK_IN_FIRST` | Attempting Check-Out with no Check-In on `work_date` |
 | `422` | `LEAVE_OVERLAP` / `INSUFFICIENT_LEAVE_BALANCE` / `ZERO_WORKING_DAYS` | Leave rule violation |
 | `422` | `REASON_REQUIRED` | Rejecting, correcting, adjusting payroll, or logging asset damage/loss without reason |
@@ -72,8 +77,8 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 - After **5 consecutive failures**, set `locked_until = now() + 15 minutes`, log `AUTH_ACCOUNT_LOCKED` to `audit_logs`, and return `423 ACCOUNT_LOCKED`. Successful login resets counter to `0`.
 
 ### 3.3 Token Architecture (Zero `localStorage` Refresh Risks)
-- **Access Token (JWT):** `15-minute` TTL, held strictly **in React application memory** (never `localStorage`), passed via `Authorization: Bearer <token>`. Payload contains ONLY `{ sub: userId, role, employeeId, jti }`—never sensitive PII.
-- **Refresh Token:** `64-byte` cryptographically random opaque token, `SHA-256` hashed in `refresh_tokens`, delivered in an `HttpOnly`, `Secure` (`true` in prod), `SameSite=Lax`, `Path=/api/v1/auth` cookie (`7-day` TTL).
+- **Access Token (JWT):** `15-minute` TTL, held strictly **in React application memory** (never `localStorage`), passed via `Authorization: Bearer <token>`. Payload contains ONLY `{ sub: userId, role, employeeId, authzVersion, jti }`—never sensitive PII. Guards compare the token's authorization version and current account status/role with the database; role changes invalidate existing sessions.
+- **Refresh Token:** `64-byte` cryptographically random opaque token, `SHA-256` hashed in `refresh_tokens`, delivered in an `HttpOnly`, `Secure` cookie (`Path=/api/v1/auth`, `7-day` TTL). Prefer same-site HTTPS production domains and `SameSite=Lax`; cross-site deployments may use `SameSite=None` only after supported-browser cookie behavior is verified. The CSRF token is derived from the raw cookie as specified in Section 1, so it rotates with the refresh token and requires no additional database column.
 - **Silent Rotation & Reuse Detection:**
   - Calling `POST /auth/refresh` verifies the cookie hash, marks the old token `revoked_at = now()`, issues a fresh access token + new refresh cookie sharing the same `family_id`.
   - **Theft Mitigation:** If an already-revoked refresh token is presented, the backend immediately revokes **every** token in that `family_id`, logs `SECURITY_REFRESH_TOKEN_REUSE`, and returns `401 UNAUTHORIZED`.
@@ -131,14 +136,15 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 ### 7.1 Authentication & Session Module (`/auth`)
 | Method & Path | Access | Request Body / Params | Behavior & Response |
 | :--- | :--- | :--- | :--- |
-| `POST /auth/login` | `PUBLIC` (Rate-limited) | `{ email, password }` | Verifies `Argon2id` hash, checks lockout & `isActive`. If `mustChangePassword=true`, returns `{ passwordChangeRequired: true, tempToken }`. Else sets `HttpOnly` refresh cookie and returns `{ accessToken, user }`. |
-| `POST /auth/refresh` | `PUBLIC` (Cookie) | Cookie: `staffhub_rt` | Validates hashed refresh token, rotates token family, checks `user.isActive`, returns new `{ accessToken }`. |
-| `POST /auth/logout` | `AUTHENTICATED` | Cookie: `staffhub_rt` | Revokes refresh token in DB, clears cookie, logs `AUTH_LOGOUT`. |
+| `POST /auth/login` | `PUBLIC` (Rate-limited; exact `Origin`) | `{ email, password }` | Verifies `Argon2id` hash, checks lockout & `isActive`. If `mustChangePassword=true`, returns `{ passwordChangeRequired: true, tempToken }`. Else sets `HttpOnly` refresh cookie and returns `{ accessToken, csrfToken, user }`. |
+| `POST /auth/csrf` | `PUBLIC` (valid refresh cookie; exact `Origin`) | JSON `{}` | Validates that the refresh cookie is active, unexpired, unrevoked, and belongs to an active user, then returns the current cookie-bound `{ csrfToken }` for page-reload recovery. Requires `Content-Type: application/json`; no session or business state is changed. |
+| `POST /auth/refresh` | `PUBLIC` (refresh cookie; exact `Origin`, `X-CSRF-Token`) | Cookie: `staffhub_rt` | Validates CSRF and hashed refresh token, rotates token family, checks `user.isActive`, returns new `{ accessToken, csrfToken }`. |
+| `POST /auth/logout` | `AUTHENTICATED` (exact `Origin`, `X-CSRF-Token`) | Cookie: `staffhub_rt` | Validates CSRF, revokes refresh token in DB, clears cookie, logs `AUTH_LOGOUT`. |
 | `POST /auth/change-password` | `AUTHENTICATED` or `tempToken` | `{ currentPassword, newPassword }` | Validates password policy, updates `Argon2id` hash, sets `mustChangePassword=false`, revokes prior refresh tokens, logs `AUTH_PASSWORD_CHANGED`. |
 | `POST /auth/forgot-password` | `PUBLIC` (Rate-limited) | `{ email }` | Always returns `200` (prevents user enumeration). Dispatches privacy-safe reset link if active account exists. |
 | `POST /auth/reset-password` | `PUBLIC` | `{ token, newPassword }` | Validates single-use hashed token, updates password, revokes sessions. |
 | `GET /auth/me` | `AUTHENTICATED` | — | Returns `{ user, employeeSummary, allowedNavRoutes, unreadActionCount }`. |
-| `POST /auth/demo-login` | `DEMO_MODE=true` ONLY | `{ role }` | Returns `404` when `DEMO_MODE !== 'true'`. Signs in seeded demo persona for live presentation. |
+| `POST /auth/demo-login` | Isolated non-production demo environment only | `{ role }` | Returns `404` unless `DEMO_MODE=true` and `NODE_ENV !== 'production'`; startup fails if demo login is enabled in production. Uses a separate demo database and synthetic data. |
 
 ---
 
@@ -175,7 +181,7 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | `POST /recruitment/offers/:id/send` | `RECRUITER`, `HR_MANAGER` | **Blocked unless `APPROVED`** $\rightarrow$ `SENT` + dispatches privacy-safe email. |
 | `POST /recruitment/offers/:id/record-decision` | `RECRUITER`, `HR_MANAGER` | `{ decision: 'ACCEPTED' \| 'DECLINED', notes? }`. |
 | `POST /recruitment/offers/:id/convert` | `HR_MANAGER` (`Idempotency-Key`) | `{ workEmail?, workScheduleId? }` — Atomic conversion to `User + Employee + LeaveBalances + 4-Role OnboardingChecklist`. |
-| `GET /recruitment/onboarding/:employeeId` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `ASSET_OFFICER`, `EMPLOYEE` (`SELF`) | Returns checklist + tasks. |
+| `GET /recruitment/onboarding/:employeeId` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `ASSET_OFFICER`, any linked staff user (`SELF`, own checklist only) | Returns checklist + tasks. |
 | `PATCH /recruitment/onboarding/tasks/:taskId` | Assigned Task Role (`HR`/`MGR`/`EMP`/`ASSET`) | `{ isCompleted }` — Verifies actor matches `task.assignedRole` & scope. Auto-activates employee when all tasks complete. |
 
 ---
@@ -184,11 +190,11 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | Method & Path | Access | Key Payload / Rules |
 | :--- | :--- | :--- |
 | `GET /employees` | Internal Roles (`ORG` or `TEAM` for `LINE_MANAGER`) | Role-scoped projection! `LINE_MANAGER` receives direct reports ONLY, with `salary`, `bank`, `nin`, `tin`, `nssf` **physically omitted**. |
-| `GET /employees/:id` | `HR_MANAGER`, `PAYROLL_OFFICER`, `LINE_MANAGER` (`TEAM`), `EMPLOYEE` (`SELF`) | Strict DTO masking. Optional `?reveal=true` allowed ONLY for `HR_MANAGER`, `PAYROLL_OFFICER`, or `SELF`—logs `PII_REVEALED` in audit trail! |
-| `PATCH /employees/:id/contact` | `EMPLOYEE` (`SELF`), `HR_MANAGER` | Strict `UpdateOwnContactDto` (`phone`, `personalEmail`, `residentialAddress`, `emergencyContactName`, `emergencyContactPhone`). |
+| `GET /employees/:id` | `HR_MANAGER`, `PAYROLL_OFFICER`, `LINE_MANAGER` (`TEAM`), any linked staff user (`SELF`) | Strict role-scoped projection. Optional `?reveal=true` allowed ONLY for `HR_MANAGER`, `PAYROLL_OFFICER`, or `SELF`—logs `PII_REVEALED` in audit trail. |
+| `PATCH /employees/:id/contact` | Any linked staff user (`SELF`), `HR_MANAGER` (`ORG`) | Strict shared contact schema (`phone`, `personalEmail`, `residentialAddress`, `emergencyContactName`, `emergencyContactPhone`). |
 | `PATCH /employees/:id/employment` | `HR_MANAGER` | `{ jobTitle, departmentId, managerId, workScheduleId, baseSalaryUgx, recurringAllowancesUgx, taxResidency, version }`. |
-| `GET /employees/change-requests` | `HR_MANAGER` (`ORG`), `EMPLOYEE` (`SELF`) | Lists pending/historical sensitive change requests. |
-| `POST /employees/:id/change-requests` | `EMPLOYEE` (`SELF`), `HR_MANAGER` | `multipart/form-data`: `fieldType`, `newValueJson`, `requestReason`, optional `supportingDoc` PDF. Encrypts bank/NIN payloads. |
+| `GET /employees/change-requests` | `HR_MANAGER` (`ORG`), any linked staff user (`SELF`) | Lists pending/historical sensitive change requests. |
+| `POST /employees/:id/change-requests` | Any linked staff user (`SELF`), `HR_MANAGER` (`ORG`) | `multipart/form-data`: `fieldType`, `newValueJson`, `requestReason`, optional `supportingDoc` PDF. Encrypts bank/NIN payloads. |
 | `POST /employees/change-requests/:reqId/approve` | `HR_MANAGER` (Anti-self-approval) | Atomically updates `employees`, increments `version`, writes redacted diff to `audit_logs`. |
 | `POST /employees/change-requests/:reqId/reject` | `HR_MANAGER` | `{ reason }` (**Mandatory**). |
 | `GET /performance/reviews` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `EMPLOYEE` (`SELF`) | Lists performance appraisal cycles. |
@@ -201,16 +207,16 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 ### 7.5 Attendance & Corrections (`/attendance`)
 | Method & Path | Access | Key Payload / Rules |
 | :--- | :--- | :--- |
-| `GET /attendance/today` | `AUTHENTICATED` (`SELF`) | Returns `nowEat`, employee's `workSchedule`, today's `attendanceRecord` (if any), and allowed button state (`CAN_CHECK_IN`, `CAN_CHECK_OUT`, `COMPLETED`). |
+| `GET /attendance/today` | `AUTHENTICATED` (`SELF`) | Returns `nowEat`, employee's `workSchedule`, today's `attendanceRecord` (if any), and allowed button state (`CAN_CHECK_IN`, `CAN_CHECK_OUT`, `NOT_SCHEDULED`, `COMPLETED`). Approved leave intervals also gate the button state. |
 | `POST /attendance/check-in` | `AUTHENTICATED` (`SELF`, `Idempotency-Key`) | Zero client time/GPS accepted; server evaluates `Africa/Kampala` against schedule + grace period. |
 | `POST /attendance/check-out` | `AUTHENTICATED` (`SELF`) | Blocked (`422 MUST_CHECK_IN_FIRST`) unless checked in today. Computes `workedMinutes`. |
-| `GET /attendance/records` | `HR_MANAGER` (`ORG`), `LINE_MANAGER` (`TEAM`), `EMPLOYEE` (`SELF`) | `?from=&to=&employeeId=&status=`. |
-| `GET /attendance/corrections` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `EMPLOYEE` (`SELF`) | Lists pending and historical correction requests. |
-| `POST /attendance/corrections` | `AUTHENTICATED` (`SELF`) | `{ workDate, requestedCheckInAt, requestedCheckOutAt?, reason }` (**Mandatory `reason`**). Blocked if period locked. |
+| `GET /attendance/records` | `HR_MANAGER` (`ORG`), `PAYROLL_OFFICER` (locked summary only), `LINE_MANAGER` (`TEAM`), any linked staff user (`SELF`) | `?from=&to=&employeeId=&status=`. `SELF` applies to every internal user linked to an employee record. |
+| `GET /attendance/corrections` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), any linked staff user (`SELF`) | Lists pending and historical correction requests. |
+| `POST /attendance/corrections` | Any linked staff user (`SELF`) | `{ workDate, requestedCheckInAt, requestedCheckOutAt?, reason }` (**Mandatory `reason`**). Blocked if period locked. |
 | `POST /attendance/corrections/:id/approve` | `LINE_MANAGER` (`TEAM`/delegate), `HR_MANAGER` | Anti-self-approval. Updates attendance record, recalculates `PRESENT`/`LATE`, logs audit entry. |
 | `POST /attendance/corrections/:id/reject` | `LINE_MANAGER` (`TEAM`/delegate), `HR_MANAGER` | `{ reason }` (**Mandatory**). |
 | `GET /attendance/period-locks` | `HR_MANAGER`, `PAYROLL_OFFICER` | Lists locked `(year, month)` attendance periods. |
-| `POST /attendance/period-locks` | `HR_MANAGER`, `PAYROLL_OFFICER` | `{ year, month }` — Locks period prior to payroll run. |
+| `POST /attendance/period-locks` | `HR_MANAGER`, `PAYROLL_OFFICER` | `{ year, month }` — Allowed only after month end in EAT, EOD reconciliation completion, and resolution of all pending corrections; locks attendance/leave mutations for that period. |
 
 ---
 
@@ -218,13 +224,13 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | Method & Path | Access | Key Payload / Rules |
 | :--- | :--- | :--- |
 | `GET /leave/types` | `AUTHENTICATED` | Returns active leave types & HR threshold rules. |
-| `GET /leave/balances` | `HR_MANAGER` (`ORG`), `LINE_MANAGER` (`TEAM`), `EMPLOYEE` (`SELF`) | `?year=&employeeId=`. |
-| `POST /leave/calculate-working-days` | `AUTHENTICATED` | `{ startDate, endDate }` $\rightarrow$ returns `{ calendarDays, workingDays, excludedDates }`. |
-| `GET /leave/requests` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `EMPLOYEE` (`SELF`) | Supports queue filters (`pendingMyApproval=true`). |
-| `POST /leave/requests` | `AUTHENTICATED` (`SELF`, `Idempotency-Key`) | `multipart/form-data`: `leaveTypeId`, `startDate`, `endDate`, `reason`, `handoverEmployeeId?`, `attachment?`. Enforces no-overlap & sufficient balance. |
+| `GET /leave/balances` | `HR_MANAGER` (`ORG`), `PAYROLL_OFFICER` (`ORG`), `LINE_MANAGER` (`TEAM`), any linked staff user (`SELF`) | `?year=&employeeId=`. |
+| `POST /leave/calculate-working-days` | Authenticated internal staff | `{ startDate, endDate, halfDayPeriod? }` $\rightarrow$ returns `{ calendarDays, workingDays, excludedDates, annualAllocations }`. |
+| `GET /leave/requests` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), any linked staff user (`SELF`) | Supports queue filters (`pendingMyApproval=true`). |
+| `POST /leave/requests` | Any linked staff user (`SELF`, `Idempotency-Key`) | `multipart/form-data`: `leaveTypeId`, `startDate`, `endDate`, `halfDayPeriod?`, `reason`, `handoverEmployeeId?`, `attachment?`. Enforces no-overlap by calendar date (only one active request per employee/date, even for complementary half-days), per-year balance, and schedule rules. A half-day must be a single scheduled work date; use `FULL` to request both halves. |
 | `POST /leave/requests/:id/approve` | `LINE_MANAGER` (`TEAM`/delegate) or `HR_MANAGER` | Anti-self-approval. Routes to `PENDING_HR` or `APPROVED` (atomic balance + attendance update). |
 | `POST /leave/requests/:id/reject` | `LINE_MANAGER` (`TEAM`/delegate) or `HR_MANAGER` | `{ reason }` (**Mandatory**). Releases `pendingDays`. |
-| `POST /leave/requests/:id/cancel` | `EMPLOYEE` (`SELF`) or `HR_MANAGER` (revoke) | `{ reason? }` (mandatory if HR revoking approved leave). |
+| `POST /leave/requests/:id/cancel` | Any linked staff user (`SELF`) or `HR_MANAGER` (revoke) | `{ reason? }` (mandatory if HR revoking approved leave). |
 | `GET /delegations` / `POST /delegations` / `POST /delegations/:id/revoke` | `SYSTEM_ADMIN`, `HR_MANAGER`, `LINE_MANAGER` (own team) | `{ delegateUserId, startsAt, endsAt, reason }`. |
 
 ---
@@ -233,19 +239,20 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | Method & Path | Access | Key Payload / Rules |
 | :--- | :--- | :--- |
 | `GET /payroll/runs` & `GET /payroll/runs/:id` | `PAYROLL_OFFICER`, `HR_MANAGER` | Returns run metadata, stepper state, totals (`UGX`), and items. |
-| `POST /payroll/runs` | `PAYROLL_OFFICER` (`Idempotency-Key`) | `{ year, month }` — Requires locked attendance period; computes PAYE, NSSF, LST, Loans via active policy. |
+| `POST /payroll/runs` | `PAYROLL_OFFICER` (`Idempotency-Key`) | `{ year, month }` — Requires a closed, locked attendance period and exactly one `APPROVED` statutory policy covering period end; fails closed otherwise. Includes employees whose employment dates overlap the pay period even if their current status is `EXITED`. |
 | `PATCH /payroll/runs/:runId/items/:itemId` | `PAYROLL_OFFICER` | `{ bonusOrArrearsUgx?, otherDeductionsUgx?, notes? }` — **Blocked (`423`) unless `run.status === 'DRAFT'`**. |
 | `POST /payroll/runs/:id/submit` | `PAYROLL_OFFICER` | `DRAFT` $\rightarrow$ `PENDING_APPROVAL`. |
 | `POST /payroll/runs/:id/return` | `HR_MANAGER` | `{ reason }` (**Mandatory**) $\rightarrow$ `DRAFT`. |
 | `POST /payroll/runs/:id/approve` | `HR_MANAGER` | Separation of duties (`actor !== preparedBy`) $\rightarrow$ `APPROVED`. |
-| `POST /payroll/runs/:id/lock` | `HR_MANAGER`, `PAYROLL_OFFICER` (`Idempotency-Key`) | `APPROVED` $\rightarrow$ `LOCKED`, settles loan installments, generates & stores verifiable PDF payslips. |
+| `POST /payroll/runs/:id/lock` | `HR_MANAGER`, `PAYROLL_OFFICER` (`Idempotency-Key`) | `APPROVED` $\rightarrow$ `LOCKED`; settles loan installments, inserts pending payslip records and durable outbox jobs. PDF render, hash, and private upload run post-commit; only `READY` slips can be downloaded or verified. |
 | `GET /payroll/runs/:id/export/bank-eft` | `PAYROLL_OFFICER`, `HR_MANAGER` | Returns CSV bank disbursement schedule (decrypts account numbers only in export stream) + logs `EXPORT_BANK_EFT` in `audit_logs`. |
 | `GET /payroll/runs/:id/export/statutory` | `PAYROLL_OFFICER`, `HR_MANAGER` | Returns URA PAYE & NSSF schedule CSV + logs `EXPORT_STATUTORY`. |
 | `GET /payroll/adjustments` | `PAYROLL_OFFICER`, `HR_MANAGER` | Lists post-lock adjustment requests. |
 | `POST /payroll/items/:itemId/adjustments` | `PAYROLL_OFFICER` | `{ adjustmentType, category, amountUgx, reason }` (**Mandatory `reason`**). |
 | `POST /payroll/adjustments/:id/approve` / `reject` | `HR_MANAGER` | Distinct from requester; reject requires `reason`. |
-| `GET /payroll/my-payslips` & `GET /payroll/payslips/:id/pdf-url` | `EMPLOYEE` (`SELF`) or `PAYROLL_OFFICER`/`HR_MANAGER` | `pdf-url` enforces `SELF` or HR/Payroll scope, returns 120s pre-signed URL. |
-| `GET /payroll/loans` / `POST /payroll/loans` | `PAYROLL_OFFICER`, `HR_MANAGER`, `EMPLOYEE` (`SELF` read) | Manage staff salary advances & loans. |
+| `GET /payroll/my-payslips` & `GET /payroll/payslips/:id/pdf-url` | Any linked staff user (`SELF`) or `PAYROLL_OFFICER`/`HR_MANAGER` (`ORG`) | Enforces `SELF` or HR/Payroll scope; only `READY` payslips return a 120s pre-signed URL. |
+| `GET /payroll/loans` | `PAYROLL_OFFICER`, `HR_MANAGER` (`ORG`), any linked staff user (`SELF`, own schedule/balance only) | Returns role-scoped loan schedules and balances. |
+| `POST /payroll/loans` | `PAYROLL_OFFICER`, `HR_MANAGER` | Creates a staff salary advance or loan under the approved policy. |
 
 ---
 
@@ -254,8 +261,8 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | :--- | :--- | :--- |
 | `GET /assets` & `POST /assets` & `PATCH /assets/:id` | `ASSET_OFFICER`, `HR_MANAGER` (read) | Register/update items (`assetTag`, `serialNumber`, `name`, `category`, `purchaseValueUgx`, `condition`, `version`). |
 | `POST /assets/:id/issue` | `ASSET_OFFICER` | `{ employeeId }` — Enforces max 1 active assignee (`409 ASSET_ALREADY_ASSIGNED`). |
-| `GET /assets/my-assets` | `AUTHENTICATED` (`SELF`) | Lists employee's assigned items & pending acknowledgements. |
-| `POST /assets/assignments/:id/acknowledge` | Assigned `EMPLOYEE` (`SELF`) | Marks receipt `ACKNOWLEDGED` + timestamp. |
+| `GET /assets/my-assets` | Any linked staff user (`SELF`) | Lists employee's assigned items & pending acknowledgements. |
+| `POST /assets/assignments/:id/acknowledge` | Assigned staff user (`SELF`) | Marks receipt `ACKNOWLEDGED` + timestamp. |
 | `POST /assets/assignments/:id/return` | `ASSET_OFFICER` | `{ returnCondition, notes? }` (`notes` required if `DAMAGED`). Frees custody lock & refreshes offboarding blockers. |
 | `POST /assets/assignments/:id/incident` | `ASSET_OFFICER` | `{ outcome: 'CLOSED_DAMAGED' \| 'CLOSED_LOST', incidentNotes }` (**Mandatory `incidentNotes`**). |
 
@@ -264,11 +271,12 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 ### 7.9 Offboarding & Clearance (`/offboarding`)
 | Method & Path | Access | Key Payload / Rules |
 | :--- | :--- | :--- |
-| `GET /offboarding/cases` & `GET /offboarding/cases/:id` | `HR_MANAGER`, `ASSET_OFFICER` (assets track), `PAYROLL_OFFICER` (loans track), `LINE_MANAGER` (`TEAM` handover) | Returns case, progress (`X of 4`), and live blocker details. |
+| `GET /offboarding/cases` | `HR_MANAGER`, `ASSET_OFFICER` (assets track), `PAYROLL_OFFICER` (loans track), `LINE_MANAGER` (`TEAM` handover) | Returns role-scoped case lists; never includes employee-only cases outside the caller's `ORG`/`TEAM` scope. |
+| `GET /offboarding/cases/:id` | Same operational roles, plus any linked employee user (`SELF`, own case only) | Returns role-scoped case details; `SELF` receives only their own exit status and employee-safe checklist, never internal notes or other employees' data. |
 | `POST /offboarding/cases` | `HR_MANAGER` | `{ employeeId, exitType, noticeDate, lastWorkingDay, exitReason }` — Creates 4 clearance tracks with live asset/loan blocker detection. |
-| `POST /offboarding/cases/:id/clearances/:trackType/sign-off` | Role owning track (`ASSET_OFFICER`, `LINE_MANAGER`, `PAYROLL_OFFICER`, `HR_MANAGER`) | `{ notes? }` — Physically blocked (`422 CLEARANCE_BLOCKED`) if unreturned assets or unsettled loans exist. |
+| `POST /offboarding/cases/:id/clearances/:trackType/sign-off` | Role owning track (`ASSET_OFFICER`, `LINE_MANAGER`, `PAYROLL_OFFICER`, `HR_MANAGER`) | `{ notes? }` — Physically blocked (`422 CLEARANCE_BLOCKED`) if unreturned assets or unsettled loans exist. Clearance can continue after account deactivation. |
 | `POST /offboarding/cases/:id/finalize` | `HR_MANAGER` | Transitions `IN_PROGRESS` $\rightarrow$ `CLEARED` ONLY when all 4 tracks are `CLEARED`. |
-| `POST /offboarding/cases/:id/deactivate` | `HR_MANAGER` | Allowed once `CLEARED` and `today_eat > last_working_day`: sets `users.isActive=false`, revokes sessions, sets `employees.status='EXITED'`. |
+| `POST /offboarding/cases/:id/deactivate` | `HR_MANAGER` | Allowed once `today_eat > last_working_day` and `deactivatedAt` is unset, regardless of clearance status: sets `users.isActive=false`, revokes sessions, sets `employees.status='EXITED'`, and sets `offboarding_cases.deactivated_at` without changing clearance status. This does not block final-pay processing. |
 
 ---
 
@@ -278,8 +286,11 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | `GET /admin/users` / `POST /admin/users` / `PATCH /admin/users/:id/role` | `SYSTEM_ADMIN` | User creation (`mustChangePassword=true`), role updates, force password reset. |
 | `GET /admin/schedules` / `POST /admin/schedules` / `PATCH /admin/schedules/:id` | `SYSTEM_ADMIN`, `HR_MANAGER` | Manage shifts & grace periods (`GET` open to all authenticated users). |
 | `GET /admin/holidays` / `POST /admin/holidays` / `DELETE /admin/holidays/:id` | `SYSTEM_ADMIN`, `HR_MANAGER` | Manage Ugandan public holidays (`GET` open to all authenticated users). |
-| `GET /admin/tax-policies` / `POST /admin/tax-policies` | `SYSTEM_ADMIN`, `PAYROLL_OFFICER` | Versioned PAYE, NSSF, and LST configuration (`HR_MANAGER` read). |
+| `GET /admin/tax-policies` / `POST /admin/tax-policies` | `SYSTEM_ADMIN`, `PAYROLL_OFFICER` | Create/read versioned PAYE, NSSF, and LST configuration; new policies start `DRAFT` and are never used for payroll. |
+| `POST /admin/tax-policies/:id/approve` | Authorized statutory policy reviewer (`SYSTEM_ADMIN` or `HR_MANAGER`, not creator) | `{ legalSourceReference, supersedesPolicyId? }` — Requires verification against current official sources; records approver/time and transitions `DRAFT` to `APPROVED`. If superseding an approved version, atomically set its `effective_to` to the day before the new policy starts and audit both changes; reject any remaining effective-date overlap. |
 | `GET /audit/logs` / `GET /audit/logs/export` | `SYSTEM_ADMIN` (full), `HR_MANAGER` (HR scope), `PAYROLL_OFFICER` (Payroll scope) | Read-only filterable audit stream (`from`, `to`, `actorId`, `action`, `entityType`). |
 | `GET /notifications/inbox` / `PATCH /notifications/:id/read` | `AUTHENTICATED` (`SELF`) | Returns `"Pending My Action"` items + unread count. |
 | `POST /internal/jobs/reconcile-attendance` | `X-Cron-Secret` header ONLY | Executes `23:55 EAT` idempotent EOD absence marking. |
-| `POST /internal/jobs/process-daily-transitions` | `X-Cron-Secret` header ONLY | Executes `00:05 EAT` vacancy closing, cleared exit deactivation, and delegation expiry. |
+| `POST /internal/jobs/process-daily-transitions` | `X-Cron-Secret` header ONLY | Executes `00:05 EAT` vacancy closing, post-last-working-day exit deactivation (even with open clearance items), and delegation expiry. |
+| `POST /internal/jobs/rollover-leave-balances` | `X-Cron-Secret` header ONLY | Executes idempotent annual leave-balance rollover at `00:01 EAT` on 1 January. |
+| `POST /internal/jobs/process-async-outbox` | `X-Cron-Secret` header ONLY | Claims durable post-commit work with `FOR UPDATE SKIP LOCKED`; handlers (including payslip PDF generation) must be idempotent, retryable, and emit only sanitized errors. |

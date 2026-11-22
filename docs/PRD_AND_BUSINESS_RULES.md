@@ -68,12 +68,14 @@ StaffHub is a unified, web-based Human Resource Management System (HRMS) built t
 
 ---
 
-### Process 3: Employee Records & Privacy Controls
+### Process 3: Employee Records, Performance & Privacy Controls
 1. **Profile Creation & Retention:**
    - HR creates and maintains official employee records.
-   - **Rule:** Employee records are **never permanently deleted**. Departed staff retain read-only historical profiles (`status = EXITED`, `user.is_active = false`).
+   - **Rule:** Normal workflows do not hard-delete employee records. Retain read-only departed-employee history only for an approved retention period; after expiry, apply the legally reviewed deletion or anonymization process, subject to documented legal holds.
+   - Applicant CVs, application records, and employee PII require an approved, documented retention and deletion/anonymization schedule. Do not retain unsuccessful applications indefinitely; obtain privacy/legal review of the schedule before production use.
 2. **Self-Service vs. HR-Approved Updates:**
    - Employees may directly update **permitted personal contact details** (Personal Phone, Personal Email, Residential Address, Emergency Contact Name/Phone). Changes log to the audit trail automatically.
+   - These `SELF` permissions apply to any authenticated internal user linked to an employee record, regardless of organizational role; they do not grant access to another person's record.
    - **Rule (Sensitive Field Approval):** Changes to **Legal Name**, **Bank Name / Branch / Account Number**, or **National ID (NIN)** CANNOT take effect immediately. Submitting a change creates a `PENDING_HR` change request storing `old_value`, `new_value`, optional supporting proof document, and requester timestamp.
    - HR Manager approves (applying the new value atomically + logging audit history) or rejects (requiring a mandatory `reason`).
 3. **Strict Field-Level Privacy:**
@@ -94,6 +96,7 @@ StaffHub is a unified, web-based Human Resource Management System (HRMS) built t
    - Each employee is linked to an assigned **Work Schedule** (e.g., Mon–Fri `08:00 – 17:00 EAT`, with configurable `grace_period_minutes`, e.g., `15` minutes, plus support for non-standard/shift schedules).
    - Check-in `<= shift_start + grace_period` $\rightarrow$ `PRESENT_ON_TIME` (or `PRESENT_GRACE` if after `shift_start` and `<= shift_start + grace_period`, still counted as non-late).
    - Check-in `> shift_start + grace_period` $\rightarrow$ `LATE`.
+   - Check-in/out is allowed only on a scheduled workday for the employee. A roster that includes the current date permits it; otherwise return `NOT_SCHEDULED`. Approved full-day leave blocks check-in; for half-day leave, check-in is permitted only outside the approved leave interval.
 3. **Automated End-of-Day Absence Reconciliation:**
    - **Rule:** At end of working day (`23:55 EAT`), if an active employee has **no check-in recorded** for `work_date`, the system marks them **`ABSENT`** *unless* one of the following holds:
      - Employee has an **`APPROVED` Leave** covering `work_date` (record shows `ON_LEAVE`).
@@ -103,7 +106,7 @@ StaffHub is a unified, web-based Human Resource Management System (HRMS) built t
    - Employees can request a correction (e.g., missed check-out or system/network issue) by specifying requested `check_in_at` / `check_out_at` (`EAT`) and a **mandatory `reason`**.
    - Routes to **Line Manager** (`PENDING_MANAGER`). Line Manager approves (updates attendance record + recalculates `LATE`/`PRESENT` status + logs audit entry) or rejects (requires mandatory `reason`).
 5. **Attendance Locking for Payroll:**
-   - Before payroll runs for a pay period, HR/Payroll locks the period's attendance summary (`attendance_period_lock`) so approved payroll numbers cannot drift retroactively.
+   - HR/Payroll may lock a period only after its final calendar day has ended in EAT, end-of-day reconciliation has completed, and no attendance corrections for the period remain pending. A lock blocks further attendance and leave mutations for that period.
 
 ---
 
@@ -114,6 +117,7 @@ StaffHub is a unified, web-based Human Resource Management System (HRMS) built t
 2. **Working-Day Calculation Engine:**
    - **Rule:** Leave duration is counted **exclusively in working days** based on the employee’s assigned Work Schedule (excluding scheduled days off/weekends) AND excluding configured **Ugandan Public Holidays**.
    - If a requested range contains `0` working days (e.g., only a weekend/holiday), submission is blocked.
+   - A half-day request must be for one scheduled workday and counts as `0.5` days. A request crossing calendar years is split into per-year allocations and checked against each year's available balance.
 3. **Validation Rules on Leave Submission:**
    - **Rule (No Overlaps):** Employees MUST NOT submit a leave request whose date range overlaps any of their existing `PENDING_*` or `APPROVED` leave requests.
    - **Rule (Sufficient Balance):** Employees MUST NOT request more working days than their current `available_days` for that leave type.
@@ -124,7 +128,7 @@ StaffHub is a unified, web-based Human Resource Management System (HRMS) built t
    - **Rule:** Rejecting a leave request MUST include a mandatory `reason`.
    - **Rule (Atomic Approval Side Effects):** On final `APPROVED`, the system atomically:
      1. Deducts `working_days` from `leave_balances` (`used_days`).
-     2. Creates or updates `attendance_records` for each covered working day to `ON_LEAVE`.
+     2. Records each approved leave allocation against its work date. Full-day leave becomes `ON_LEAVE`; half-day leave records `0.5` and preserves attendance. Reject with `ATTENDANCE_CONFLICT` if actual attendance overlaps the scheduled leave half; never overwrite actual check-in/out.
      3. Logs the approval to `audit_logs`.
    - Employees may cancel a `PENDING_*` request (restoring pending balance); cancelling an already `APPROVED` future leave requires HR/Manager reversal with reason.
 
@@ -137,24 +141,20 @@ StaffHub is a unified, web-based Human Resource Management System (HRMS) built t
      - **Locked Attendance Summary** for that month (working days present, approved leave days, unexcused absent days for pro-rata unpaid deduction if applicable)
      - Approved Leave (paid vs. unpaid leave)
      - Any active staff loan / advance / SACCO deduction schedules.
-2. **Configurable Uganda Statutory Deduction Engine (Default FY 2026/27 Policy):**
-   - All tax brackets and statutory rates are stored in versioned, effective-dated **Payroll Policy Tables** (never hardcoded constants), editable only by authorized Admin/Payroll policy stewards:
-   - **NSSF (National Social Security Fund):**
-     - **Employee Deduction:** `5%` of Gross Monthly Pay (deducted from employee pay).
-     - **Employer Contribution:** `10%` of Gross Monthly Pay (recorded as employer cost on payslip/reports; **never** deducted from employee Net Pay).
-     - Employee NSSF is **not** subtracted before calculating Uganda PAYE.
-   - **PAYE (Pay As You Earn — URA Resident Monthly Bands, effective 1 July 2026):**
+2. **Configurable Uganda Statutory Deduction Engine:**
+   - All tax brackets and statutory rates are stored in versioned, effective-dated **Payroll Policy Tables** (never hardcoded constants). The numeric FY 2026/27 values below are provisional demo fixtures, not legal advice or an approved production policy. Before production payroll, an authorized reviewer must verify each rate against current official sources, record the source and effective dates, and approve the policy. Payroll preparation must fail closed if no approved policy covers the period.
+   - **NSSF (National Social Security Fund):** The synthetic test fixture assumes a `5%` employee contribution and `10%` employer contribution. These are not approved production rates; verify the current rates and treatment against official sources. Employer contributions are employer cost and are not deducted from employee net pay.
+     - The test fixture assumes employee NSSF does not reduce the PAYE taxable base; verify and document the approved taxable-base rule before operational use.
+   - **PAYE (Pay As You Earn — synthetic resident-band fixture; example effective date 1 July 2026, not verified):**
      - `UGX 0 – 335,000`: `0` (`0%`)
      - `UGX 335,001 – 410,000`: `20%` of amount exceeding `335,000`
      - `UGX 410,001 – 485,000`: `UGX 15,000` + `25%` of amount exceeding `410,000`
      - `UGX 485,001 – 10,000,000`: `UGX 33,750` + `30%` of amount exceeding `485,000`
      - `Above UGX 10,000,000`: above calculation + additional `10%` on amount exceeding `10,000,000`
      - *(Non-resident tax schedule also supported via employee tax-residency flag.)*
-   - **Local Service Tax (LST):**
-     - Banded by monthly gross income (up to `UGX 100,000/year` max for salaries `> UGX 1,000,000/month`).
-     - Deducted per configurable schedule (default: **4 equal monthly instalments in July, August, September, and October**; `UGX 0` in November–June unless configured otherwise).
+   - **Local Service Tax (LST):** Synthetic test tiers and collection months only. Verify the applicable amounts, thresholds, and collection schedule against current official sources before approving an operational policy; do not assume a hard-coded cap or default schedule.
 3. **Approval, Locking & Post-Lock Adjustments:**
-   - Pipeline: `DRAFT` $\rightarrow$ `PENDING_APPROVAL` $\rightarrow$ `APPROVED` $\rightarrow$ `LOCKED` (Payslips Published).
+   - Pipeline: `DRAFT` $\rightarrow$ `PENDING_APPROVAL` $\rightarrow$ `APPROVED` $\rightarrow$ `LOCKED`; payslips become available only after PDF generation and private storage succeed.
    - **Rule:** Payroll MUST be reviewed and approved by an **authorised approver** (e.g., HR Manager / Finance Approver distinct from the Payroll Officer preparer—separation of duties!) before payslips are published.
    - **Rule (Immutability After Lock):** Once `LOCKED`, payroll line items CANNOT be edited directly (`UPDATE` blocked by application service & DB rules).
    - **Rule (Authorised Adjustment):** Any post-lock correction MUST be recorded as a separate **`payroll_adjustment`** entry (linked to the locked payroll run/item, requiring authorised approval and a **mandatory `reason`**), either settled off-cycle or carried into the next payroll cycle with full audit history.
@@ -180,17 +180,18 @@ StaffHub is a unified, web-based Human Resource Management System (HRMS) built t
 
 ### Process 8: Offboarding, Clearance Blockers & Account Deactivation
 1. **Initiating Exit Process:**
-   - **HR Manager** opens an exit process for an employee (`OFFBOARDING_IN_PROGRESS`), setting Exit Type (Resignation, Contract Expiry, Termination, Retirement), Notice Date, `Last Working Day (EAT)`, and mandatory Exit Reason.
+   - **HR Manager** opens an exit process for an employee, setting employee status to `OFFBOARDING` and creating an offboarding case with clearance status `IN_PROGRESS`; the case records Exit Type (Resignation, Contract Expiry, Termination, Retirement), Notice Date, `Last Working Day (EAT)`, and mandatory Exit Reason.
 2. **Multi-Departmental Clearance Checklist & Hard Blockers:**
    - System generates clearance tracks:
      1. **Asset Return Clearance** (Asset Officer verifies all active `asset_assignments` are `RETURNED` or formally settled).
      2. **Operational Handover** (Line Manager confirms handover tasks/successor transfer).
-     3. **Finance / Loan Settlement Clearance** (Payroll/Finance confirms `outstanding_loans_ugx = 0` or deduction scheduled in final terminal pay).
+     3. **Finance / Loan Settlement Clearance** (Payroll/Finance confirms `outstanding_loans_ugx = 0` or applies a deduction only under an approved, legally reviewed policy).
      4. **HR Exit Clearance** (Exit interview & Certificate of Service).
-   - **Rule (Hard Clearance Blocker):** System MUST physically **block** HR from finalizing clearance (`Finalize Exit`) if any unreturned assets or unsettled loans remain open (unless an authorized emergency override with mandatory written justification is explicitly logged where policy permits—and never silently).
+   - **Rule (Hard Clearance Blocker):** The MVP MUST physically **block** HR from finalizing clearance (`Finalize Exit`) while unreturned assets or unsettled loans remain open. No emergency override is supported.
+   - Clearance blockers must not delay account deactivation after the last working day or stop calculation/payment of earned or statutory final wages. Clearance status and final-pay processing are separate; any loan recovery from wages requires approved legal review.
 3. **Account Deactivation & Record Preservation:**
-   - **Rule:** After the employee’s `Last Working Day` passes (or upon finalized exit post-last-working-day via the `00:05 EAT` scheduled job / manual finalize), the user account is **deactivated** (`user.is_active = false`, all active refresh tokens immediately revoked).
-   - **Rule:** Employee profile, attendance history, leave history, payslips, asset history, and audit records remain preserved read-only (`status = EXITED`) and are **never permanently deleted**.
+   - **Rule:** After the employee’s `Last Working Day` passes, deactivate the user account (`user.is_active = false`, all active refresh tokens immediately revoked), regardless of clearance status. Keep account deactivation, clearance completion, and final-pay processing separate.
+   - **Rule:** Employee profile, attendance history, leave history, payslips, asset history, and audit records become read-only after exit and follow an approved retention schedule; deletion or anonymization after expiry must respect documented legal holds.
 
 ---
 
@@ -204,4 +205,4 @@ StaffHub is a unified, web-based Human Resource Management System (HRMS) built t
 3. **Export Accountability:**
    - Downloading sensitive CSV/PDF reports (Payroll EFT schedules, Statutory schedules, Audit bundles, Employee Directories) logs an `EXPORT` event in `audit_logs` (`actor`, `report_type`, `filters`, `timestamp_eat`) and stamps exported PDFs with *"Confidential — Exported by [Name] at [EAT Timestamp]"*.
 4. **Demo Mode Safeguard:**
-   - `DEMO_MODE=true` enables non-production quick-switch demo login helpers for academic/client presentations. In real production (`DEMO_MODE=false`), all demo endpoints return `404 Not Found` and are physically disabled.
+   - Demo login is available only in an isolated non-production environment using a separate synthetic-data database. `DEMO_MODE=true` with `NODE_ENV=production` is a startup error; production demo endpoints always return `404 Not Found`.

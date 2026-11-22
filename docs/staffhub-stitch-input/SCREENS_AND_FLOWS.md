@@ -34,7 +34,7 @@ Upload `DESIGN.md`, `PRD_AND_ROLES.md`, and `SCREENS_AND_FLOWS.md` to Stitch AI,
 - **Offboarding Tab:** Clearance Progress Bar (`3/5 Cleared`) with red **Blocker Cards** (e.g., `"Blocked: HP EliteBook not yet returned to Asset Officer"`), keeping `"Deactivate Account"` disabled until blockers clear.
 
 ## Screen 7: Monthly Payroll Run & Locked Payslip Drawer (Payroll Officer)
-- **Layout:** Period Header (`November 2026 • Currency: UGX`), 4-Step Workflow Stepper (`Draft` $\rightarrow$ `Review` $\rightarrow$ `Approved` $\rightarrow$ `Locked`), 4 Financial Summary Cards (`Gross UGX`, `NSSF`, `PAYE + LST`, `Net Pay UGX`), and dense tabular-numeric payroll table with right-aligned currency columns.
+- **Layout:** Period Header (`October 2026 demo fixture • Currency: UGX`), 4-Step Workflow Stepper (`Draft` $\rightarrow$ `Review` $\rightarrow$ `Approved` $\rightarrow$ `Locked`), 4 Financial Summary Cards (`Gross UGX`, `NSSF`, `PAYE + LST`, `Net Pay UGX`), and dense tabular-numeric payroll table with right-aligned currency columns. The mock run is illustrative only; it is not legal payroll output or proof of disbursement.
 - **Locked Banner:** Crisp warning banner (`"Payroll Locked — Direct edits disabled"`) with `"Create Authorised Adjustment"` button.
 - **Payslip Drawer:** Clean printable `UGX` payslip preview featuring itemized deductions and a Verification QR Code.
 
