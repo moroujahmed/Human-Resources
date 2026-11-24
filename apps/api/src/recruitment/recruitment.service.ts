@@ -75,7 +75,6 @@ export class RecruitmentService {
     const requisition = await this.prisma.staffRequisition.findUnique({ where: { id } });
     if (!requisition) throw new NotFoundException("REQUISITION_NOT_FOUND");
     if (requisition.requestedByUserId === user.id) throw new ForbiddenException("SELF_APPROVAL_FORBIDDEN");
-    if (requisition.requestedByUserId === user.id) throw new ForbiddenException("SELF_APPROVAL_FORBIDDEN");
     if (requisition.status !== "PENDING_HR") throw new ConflictException("INVALID_REQUISITION_STATE");
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.staffRequisition.update({

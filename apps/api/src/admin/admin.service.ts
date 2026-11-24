@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  NotImplementedException,
   UnauthorizedException,
 } from "@nestjs/common";
 import * as argon2 from "argon2";
@@ -199,21 +200,49 @@ export class AdminService {
       return this.reconcileAttendance();
     }
     if (job === "process-daily-transitions") {
-      await this.prisma.vacancy.updateMany({
+      const now = new Date();
+      const closedVacancies = await this.prisma.vacancy.updateMany({
         where: { status: "PUBLISHED", closingAt: { lt: new Date() } },
         data: { status: "CLOSED" },
       });
-      return { ok: true };
+      const shiftedDate = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+      const todayEat = new Date(`${shiftedDate.toISOString().slice(0, 10)}T00:00:00.000Z`);
+      const dueCases = await this.prisma.offboardingCase.findMany({
+        where: { status: { in: ["IN_PROGRESS", "CLEARED"] }, deactivatedAt: null, lastWorkingDay: { lt: todayEat } },
+        include: { employee: { select: { id: true, userId: true } } },
+      });
+      let deactivated = 0;
+      for (const exitCase of dueCases) {
+        const result = await this.prisma.$transaction(async (tx) => {
+          const claimed = await tx.offboardingCase.updateMany({
+            where: { id: exitCase.id, status: { in: ["IN_PROGRESS", "CLEARED"] }, deactivatedAt: null },
+            data: { deactivatedAt: now },
+          });
+          if (claimed.count !== 1) return false;
+          await tx.user.updateMany({
+            where: { id: exitCase.employee.userId, isActive: true },
+            data: { isActive: false, deactivatedAt: now, authzVersion: { increment: 1 } },
+          });
+          await tx.refreshToken.updateMany({ where: { userId: exitCase.employee.userId, revokedAt: null }, data: { revokedAt: now } });
+          await tx.employee.updateMany({ where: { id: exitCase.employee.id, status: "OFFBOARDING" }, data: { status: "EXITED" } });
+          await tx.auditLog.create({
+            data: {
+              actorRole: "SYSTEM", action: "OFFBOARDING_ACCOUNT_DEACTIVATED",
+              entityType: "OffboardingCase", entityId: exitCase.id,
+              checksumSha256: this.auditChecksum("OFFBOARDING_ACCOUNT_DEACTIVATED", exitCase.id),
+            },
+          });
+          return true;
+        });
+        if (result) deactivated += 1;
+      }
+      return { closedVacancies: closedVacancies.count, deactivatedEmployees: deactivated };
     }
     if (job === "rollover-leave-balances") {
-      return { ok: true, note: "Leave rollover requires approved organization policy" };
+      throw new NotImplementedException("LEAVE_ROLLOVER_POLICY_REQUIRED");
     }
     if (job === "process-async-outbox") {
-      const pending = await this.prisma.asyncOutbox.findMany({
-        where: { status: { in: ["PENDING", "FAILED"] } },
-        take: 100,
-      });
-      return { processed: 0, pending: pending.length };
+      throw new NotImplementedException("OUTBOX_HANDLERS_NOT_CONFIGURED");
     }
     throw new NotFoundException("CRON_JOB_NOT_FOUND");
   }
@@ -221,32 +250,52 @@ export class AdminService {
   private async reconcileAttendance() {
     const today = new Date(Date.now() + 3 * 60 * 60 * 1000);
     const date = new Date(`${today.toISOString().slice(0, 10)}T00:00:00.000Z`);
-    const holidays = await this.prisma.publicHoliday.findMany({ where: { holidayDate: date } });
-    if (holidays.length) return { reconciled: 0 };
-    const employees = await this.prisma.employee.findMany({ include: { workSchedule: true } });
+    const holiday = await this.prisma.publicHoliday.findUnique({ where: { holidayDate: date } });
+    const employees = await this.prisma.employee.findMany({
+      where: {
+        status: { in: ["ONBOARDING", "ACTIVE", "OFFBOARDING"] },
+        hireDate: { lte: date },
+        OR: [{ lastWorkingDay: null }, { lastWorkingDay: { gte: date } }],
+      },
+      include: { workSchedule: true },
+    });
     let reconciled = 0;
+    let flaggedMissedCheckouts = 0;
+    const isoWeekday = date.getUTCDay() === 0 ? 7 : date.getUTCDay();
     for (const employee of employees) {
-      const isoWeekday = date.getUTCDay() === 0 ? 7 : date.getUTCDay();
-      if (!employee.workSchedule.workingDaysBitmap.includes(isoWeekday)) continue;
+      const workingDay = employee.workSchedule.workingDaysBitmap.includes(isoWeekday);
       const approvedLeave = await this.prisma.leaveRequest.findFirst({
         where: { employeeId: employee.id, status: "APPROVED", startDate: { lte: date }, endDate: { gte: date } },
+        include: { leaveType: { select: { id: true } } },
       });
-      if (approvedLeave) continue;
       const existing = await this.prisma.attendanceRecord.findUnique({
         where: { employeeId_workDate: { employeeId: employee.id, workDate: date } },
       });
       if (!existing) {
-        await this.prisma.attendanceRecord.create({
-          data: {
-            employeeId: employee.id,
-            workDate: date,
-            scheduleId: employee.workScheduleId,
-            status: "ABSENT",
-          },
+        const isHalfDay = approvedLeave?.halfDayPeriod !== undefined && approvedLeave.halfDayPeriod !== "FULL";
+        const status = holiday ? "HOLIDAY" : !workingDay ? "DAY_OFF" : approvedLeave && !isHalfDay ? "ON_LEAVE" : "ABSENT";
+        const inserted = await this.prisma.attendanceRecord.createMany({
+          data: [{
+            employeeId: employee.id, workDate: date, scheduleId: employee.workScheduleId,
+            status,
+            ...(approvedLeave && workingDay && !holiday ? {
+              leaveRequestId: approvedLeave.id,
+              leaveTypeId: approvedLeave.leaveType.id,
+              leaveDays: isHalfDay ? "0.5" : "1",
+            } : {}),
+            ...(status === "ABSENT" ? { notes: "Auto-marked absent at end-of-day reconciliation" } : {}),
+          }],
+          skipDuplicates: true,
         });
-        reconciled += 1;
+        reconciled += inserted.count;
+      } else if (existing.checkInAt && !existing.checkOutAt && !existing.notes?.includes("Missed check-out")) {
+        await this.prisma.attendanceRecord.update({
+          where: { id: existing.id },
+          data: { notes: `${existing.notes ? `${existing.notes} ` : ""}[Auto-flagged: Missed check-out]` },
+        });
+        flaggedMissedCheckouts += 1;
       }
     }
-    return { reconciled };
+    return { reconciled, flaggedMissedCheckouts };
   }
 }
