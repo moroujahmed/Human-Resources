@@ -1,6 +1,8 @@
 import { Body, Controller, Get, Headers, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import {
   ApplicationStageSchema,
+  InterviewCreateSchema,
+  InterviewReviewSchema,
   JobOfferCreateSchema,
   OnboardingTaskUpdateSchema,
   OfferDecisionSchema,
@@ -45,6 +47,11 @@ export class RecruitmentController {
     return this.recruitment.vacancies(user, status ? VacancyStatusSchema.parse(status) : undefined);
   }
 
+  @Get("interviewers")
+  interviewers(@CurrentUser() user: AuthenticatedUser) {
+    return this.recruitment.interviewers(user);
+  }
+
   @Post("vacancies")
   createVacancy(@CurrentUser() user: AuthenticatedUser, @Body() body: unknown) {
     return this.recruitment.createVacancy(user, VacancyCreateSchema.parse(body));
@@ -68,6 +75,16 @@ export class RecruitmentController {
   @Patch("applications/:id/stage")
   stageApplication(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string, @Body() body: unknown) {
     return this.recruitment.stageApplication(user, id, ApplicationStageSchema.parse(body));
+  }
+
+  @Post("applications/:id/interviews")
+  scheduleInterview(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string, @Body() body: unknown) {
+    return this.recruitment.scheduleInterview(user, id, InterviewCreateSchema.parse(body));
+  }
+
+  @Patch("interviews/:id")
+  reviewInterview(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string, @Body() body: unknown) {
+    return this.recruitment.reviewInterview(user, id, InterviewReviewSchema.parse(body));
   }
 
   @Post("applications/:id/offers")

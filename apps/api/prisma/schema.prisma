@@ -164,6 +164,7 @@ model User {
   employee                     Employee?
   refreshTokens                RefreshToken[]
   passwordResetTokens          PasswordResetToken[]
+  interviewReviews             InterviewPanelReview[]
   actingDelegationsAsDelegator ActingDelegation[]   @relation("Delegator")
   actingDelegationsAsDelegate  ActingDelegation[]   @relation("Delegate")
   createdAuditLogs             AuditLog[]           @relation("AuditActor")
@@ -466,8 +467,25 @@ model Interview {
   createdByUserId    String         @map("created_by_user_id") @db.Uuid
   createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   application        JobApplication @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  reviews            InterviewPanelReview[]
 
   @@map("interviews")
+}
+
+model InterviewPanelReview {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  interviewId        String    @map("interview_id") @db.Uuid
+  reviewerUserId     String    @map("reviewer_user_id") @db.Uuid
+  score              Decimal   @db.Decimal(3, 2)
+  feedback           String    @db.Text
+  recommendation     String    @db.VarChar(20)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  interview          Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  reviewer           User      @relation(fields: [reviewerUserId], references: [id], onDelete: Restrict)
+
+  @@unique([interviewId, reviewerUserId], map: "uq_interview_panel_reviews_reviewer")
+  @@map("interview_panel_reviews")
 }
 
 model JobOffer {

@@ -18,6 +18,8 @@ import {
   OnboardingTaskUpdateSchema,
   OfferDecisionSchema,
   PublicOfferDecisionSchema,
+  InterviewCreateSchema,
+  InterviewReviewSchema,
 } from "./index";
 
 describe("shared contracts", () => {
@@ -93,5 +95,21 @@ describe("shared contracts", () => {
     expect(OfferDecisionSchema.safeParse({ decision: "DECLINED", notes: "Accepted another role" }).success).toBe(true);
     expect(PublicOfferDecisionSchema.safeParse({ decision: "ACCEPTED", token: "x".repeat(64) }).success).toBe(true);
     expect(PublicOfferDecisionSchema.safeParse({ decision: "ACCEPTED", token: "short" }).success).toBe(false);
+  });
+
+  it("validates interview scheduling and panel reviews", () => {
+    expect(InterviewCreateSchema.safeParse({
+      scheduledAt: "2027-01-01T09:00:00.000Z", interviewMode: "VIDEO", locationOrLink: "https://meet.example.invalid/1",
+      interviewerUserIds: ["10000000-0000-4000-8000-000000000001"],
+    }).success).toBe(true);
+    expect(InterviewCreateSchema.safeParse({
+      scheduledAt: "tomorrow", interviewMode: "VIDEO", locationOrLink: "x", interviewerUserIds: [],
+    }).success).toBe(false);
+    expect(InterviewCreateSchema.safeParse({
+      scheduledAt: "2027-01-01T09:00:00.000Z", interviewMode: "VIDEO", locationOrLink: "javascript:alert(1)",
+      interviewerUserIds: ["10000000-0000-4000-8000-000000000001"],
+    }).success).toBe(false);
+    expect(InterviewReviewSchema.safeParse({ score: 4.5, feedback: "Strong experience and clear answers.", outcome: "ADVANCE" }).success).toBe(true);
+    expect(InterviewReviewSchema.safeParse({ score: 6, feedback: "Good", outcome: "ADVANCE" }).success).toBe(false);
   });
 });

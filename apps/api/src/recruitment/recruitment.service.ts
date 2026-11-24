@@ -10,6 +10,8 @@ import { createHash, randomBytes } from "node:crypto";
 import * as argon2 from "argon2";
 import type {
   ApplicationStage,
+  InterviewCreate,
+  InterviewReview,
   JobOfferCreate,
   OnboardingTaskUpdate,
   OfferDecision,
@@ -154,6 +156,15 @@ export class RecruitmentService {
     });
   }
 
+  async interviewers(user: AuthenticatedUser): Promise<Record<string, unknown>[]> {
+    this.requireRecruitmentRole(user, false);
+    return this.prisma.user.findMany({
+      where: { isActive: true, role: { in: ["HR_MANAGER", "RECRUITER", "LINE_MANAGER", "EMPLOYEE"] } },
+      select: { id: true, email: true, employee: { select: { legalName: true } } },
+      orderBy: { email: "asc" },
+    });
+  }
+
   async createVacancy(user: AuthenticatedUser, input: VacancyCreate): Promise<Record<string, unknown>> {
     this.requireRecruitmentRole(user);
     if (input.salaryBandMaxUgx !== undefined
@@ -204,10 +215,10 @@ export class RecruitmentService {
     if (user.role === "LINE_MANAGER") {
       if (vacancy.requisition.requestedByUserId !== user.id) throw new ForbiddenException("FORBIDDEN_SCOPE");
       return this.prisma.jobApplication.findMany({
-        where: { vacancyId, status: "SHORTLISTED" },
+        where: { vacancyId, status: { in: ["SHORTLISTED", "INTERVIEWING"] } },
         select: {
           id: true, applicationCode: true, fullName: true, status: true, submittedAt: true, stageNotes: true,
-          interviews: { select: { id: true, scheduledAt: true, outcome: true } },
+          interviews: { select: { id: true, scheduledAt: true, interviewMode: true, locationOrLink: true, interviewerUserIds: true, outcome: true, reviews: { select: { reviewerUserId: true, score: true, feedback: true, recommendation: true } } } },
         },
         orderBy: { submittedAt: "desc" },
       });
@@ -220,7 +231,7 @@ export class RecruitmentService {
         expectedGrossUgx: true, earliestStartDate: true, coverNote: true, cvOriginalFilename: true,
         cvMimeType: true, status: true, stageNotes: true, submittedAt: true,
         offer: { select: { id: true, status: true, offeredJobTitle: true, proposedStartDate: true } },
-        interviews: { select: { id: true, scheduledAt: true, interviewMode: true, outcome: true, score: true } },
+          interviews: { select: { id: true, scheduledAt: true, interviewMode: true, locationOrLink: true, interviewerUserIds: true, outcome: true, reviews: { select: { reviewerUserId: true, score: true, feedback: true, recommendation: true } } } },
       },
       orderBy: { submittedAt: "desc" },
     });
@@ -274,6 +285,65 @@ export class RecruitmentService {
         },
       });
       return updated;
+    });
+  }
+
+  async scheduleInterview(user: AuthenticatedUser, applicationId: string, input: InterviewCreate): Promise<Record<string, unknown>> {
+    this.requireRecruitmentRole(user, false);
+    const application = await this.prisma.jobApplication.findUnique({ where: { id: applicationId } });
+    if (!application) throw new NotFoundException("APPLICATION_NOT_FOUND");
+    if (application.status !== "SHORTLISTED" && application.status !== "INTERVIEWING") {
+      throw new ConflictException("APPLICATION_NOT_READY_FOR_INTERVIEW");
+    }
+    if (new Date(input.scheduledAt) <= new Date()) throw new UnprocessableEntityException("INTERVIEW_MUST_BE_IN_FUTURE");
+    const activePanelists = await this.prisma.user.count({ where: { id: { in: input.interviewerUserIds }, isActive: true } });
+    if (activePanelists !== input.interviewerUserIds.length) throw new UnprocessableEntityException("INTERVIEWER_NOT_ACTIVE");
+    return this.prisma.$transaction(async (tx) => {
+      const updatedApplication = await tx.jobApplication.updateMany({
+        where: { id: applicationId, status: { in: ["SHORTLISTED", "INTERVIEWING"] } },
+        data: { status: "INTERVIEWING" },
+      });
+      if (updatedApplication.count !== 1) throw new ConflictException("APPLICATION_CHANGED");
+      const interview = await tx.interview.create({
+        data: {
+          applicationId,
+          scheduledAt: new Date(input.scheduledAt),
+          interviewMode: input.interviewMode,
+          locationOrLink: input.locationOrLink,
+          interviewerUserIds: input.interviewerUserIds,
+          createdByUserId: user.id,
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: "INTERVIEW_SCHEDULED",
+          entityType: "Interview", entityId: interview.id,
+          checksumSha256: createHash("sha256").update(`INTERVIEW_SCHEDULED:${interview.id}:${Date.now()}`).digest("hex"),
+        },
+      });
+      return interview;
+    });
+  }
+
+  async reviewInterview(user: AuthenticatedUser, interviewId: string, input: InterviewReview): Promise<Record<string, unknown>> {
+    const interview = await this.prisma.interview.findUnique({ where: { id: interviewId } });
+    if (!interview) throw new NotFoundException("INTERVIEW_NOT_FOUND");
+    if (!interview.interviewerUserIds.includes(user.id)) throw new ForbiddenException("INTERVIEW_PANELIST_REQUIRED");
+    if (interview.outcome === "CANCELLED") throw new ConflictException("INTERVIEW_CANCELLED");
+    return this.prisma.$transaction(async (tx) => {
+      const review = await tx.interviewPanelReview.upsert({
+        where: { interviewId_reviewerUserId: { interviewId, reviewerUserId: user.id } },
+        create: { interviewId, reviewerUserId: user.id, score: input.score, feedback: input.feedback.trim(), recommendation: input.outcome },
+        update: { score: input.score, feedback: input.feedback.trim(), recommendation: input.outcome },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: "INTERVIEW_REVIEWED",
+          entityType: "Interview", entityId: interviewId,
+          checksumSha256: createHash("sha256").update(`INTERVIEW_REVIEWED:${interviewId}:${Date.now()}`).digest("hex"),
+        },
+      });
+      return review;
     });
   }
 

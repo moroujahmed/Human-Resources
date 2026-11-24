@@ -39,8 +39,10 @@ interface Application {
   status: string;
   submittedAt: string;
   stageNotes?: string | null;
+  interviews?: { id: string; scheduledAt: string; interviewMode: string; locationOrLink?: string; interviewerUserIds: string[]; outcome: string; reviews: { reviewerUserId: string; score: number | string; feedback: string; recommendation: string }[] }[];
   offer?: { id: string; status: string; offeredJobTitle: string; proposedStartDate: string } | null;
 }
+interface Interviewer { id: string; email: string; employee?: { legalName: string } | null }
 
 const reqRoles: StaffHubRole[] = ["LINE_MANAGER", "HR_MANAGER", "SYSTEM_ADMIN"];
 const recruiterRoles: StaffHubRole[] = ["RECRUITER", "HR_MANAGER"];
@@ -48,7 +50,7 @@ const hrRoles: StaffHubRole[] = ["HR_MANAGER", "SYSTEM_ADMIN"];
 
 function localInputToEatIso(value: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
-  if (!match) throw new Error("Enter a valid closing date and time.");
+  if (!match) throw new Error("Enter a valid Kampala date and time.");
   const [, y, mo, d, h, mi] = match.map(Number) as unknown as [number, number, number, number, number, number];
   return new Date(Date.UTC(y, mo - 1, d, h - 3, mi)).toISOString();
 }
@@ -74,6 +76,13 @@ export default function RecruitmentPage() {
   const [offerAllowances, setOfferAllowances] = useState("0");
   const [offerStartDate, setOfferStartDate] = useState("");
   const [offerExpiresAt, setOfferExpiresAt] = useState("");
+  const [interviewers, setInterviewers] = useState<Interviewer[]>([]);
+  const [interviewCandidateId, setInterviewCandidateId] = useState("");
+  const [interviewAt, setInterviewAt] = useState("");
+  const [interviewMode, setInterviewMode] = useState("VIDEO");
+  const [interviewLocation, setInterviewLocation] = useState("");
+  const [interviewPanel, setInterviewPanel] = useState<string[]>([]);
+  const [reviewDrafts, setReviewDrafts] = useState<Record<string, { score: string; feedback: string; outcome: string }>>({});
   const [vacancyRequisitionId, setVacancyRequisitionId] = useState("");
   const [vacancyTitle, setVacancyTitle] = useState("");
   const [location, setLocation] = useState("Kampala HQ");
@@ -93,6 +102,7 @@ export default function RecruitmentPage() {
         api<Vacancy[]>("/recruitment/vacancies", session),
         api<Department[]>("/admin/departments", session),
       ]);
+      if (recruiterRoles.includes(role)) setInterviewers(await api<Interviewer[]>("/recruitment/interviewers", session));
       setRequisitions(reqs); setVacancies(jobs);
       setDepartments(depts); setDepartmentId((current) => current || depts[0]?.id || "");
       setVacancyRequisitionId((current) => current || reqs.find((req) => req.status === "APPROVED")?.id || "");
@@ -159,6 +169,40 @@ export default function RecruitmentPage() {
       setMessage(`Application moved to ${status.replaceAll("_", " ")}.`);
       if (selectedVacancy) setApplications(await api<Application[]>(`/recruitment/vacancies/${selectedVacancy.id}/applications`, session));
     } catch (stageError: unknown) { setError(stageError instanceof Error ? stageError.message : "Unable to update application"); }
+    finally { setBusy(false); }
+  }
+
+  async function scheduleInterview(event: React.FormEvent, application: Application) {
+    event.preventDefault();
+    if (!session || !selectedVacancy) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api(`/recruitment/applications/${application.id}/interviews`, session, {
+        method: "POST",
+        body: JSON.stringify({
+          scheduledAt: localInputToEatIso(interviewAt), interviewMode, locationOrLink: interviewLocation,
+          interviewerUserIds: interviewPanel,
+        }),
+      });
+      setMessage("Interview scheduled and panelists assigned.");
+      setInterviewCandidateId(""); setInterviewAt(""); setInterviewLocation(""); setInterviewPanel([]);
+      setApplications(await api<Application[]>(`/recruitment/vacancies/${selectedVacancy.id}/applications`, session));
+    } catch (scheduleError: unknown) { setError(scheduleError instanceof Error ? scheduleError.message : "Unable to schedule interview"); }
+    finally { setBusy(false); }
+  }
+
+  async function submitInterviewReview(interviewId: string) {
+    if (!session || !selectedVacancy) return;
+    const draft = reviewDrafts[interviewId];
+    if (!draft) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api(`/recruitment/interviews/${interviewId}`, session, {
+        method: "PATCH", body: JSON.stringify({ score: Number(draft.score), feedback: draft.feedback, outcome: draft.outcome }),
+      });
+      setMessage("Interview panel review saved.");
+      setApplications(await api<Application[]>(`/recruitment/vacancies/${selectedVacancy.id}/applications`, session));
+    } catch (reviewError: unknown) { setError(reviewError instanceof Error ? reviewError.message : "Unable to save interview review"); }
     finally { setBusy(false); }
   }
 
@@ -271,6 +315,25 @@ export default function RecruitmentPage() {
               {recruiterRoles.includes(role) ? <button className="button" type="button" onClick={() => void downloadCv(app.id)}>Download CV</button> : null}
               {recruiterRoles.includes(role) && app.status === "APPLIED" ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "SHORTLISTED")}>Shortlist</button> : null}
               {recruiterRoles.includes(role) && app.status === "SHORTLISTED" ? <button className="button" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "INTERVIEWING")}>Move to interview</button> : null}
+              {app.interviews?.map((interview) => <div key={interview.id} className="panel" style={{ display: "grid", gap: 6 }}>
+                <strong>{new Intl.DateTimeFormat("en-UG", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Kampala" }).format(new Date(interview.scheduledAt))} · {interview.interviewMode.replaceAll("_", " ")} · {interview.outcome.replaceAll("_", " ")}</strong>
+                {interview.locationOrLink ? interview.interviewMode === "VIDEO" ? <a href={interview.locationOrLink} target="_blank" rel="noreferrer">Join video interview</a> : <p>Location: {interview.locationOrLink}</p> : null}
+                {interview.reviews.map((review) => <p key={review.reviewerUserId}>Panelist review: {review.score} / 5 · {review.recommendation.replaceAll("_", " ")} · {review.feedback}</p>)}
+                {interview.interviewerUserIds.includes(session?.user?.id ?? "") && interview.outcome === "SCHEDULED" ? <form onSubmit={(event) => { event.preventDefault(); void submitInterviewReview(interview.id); }} style={{ display: "grid", gap: 6 }}>
+                  <label>Panel score (1–5)<input type="number" min="1" max="5" step="0.5" value={reviewDrafts[interview.id]?.score ?? ""} onChange={(event) => setReviewDrafts((current) => ({ ...current, [interview.id]: { score: event.target.value, feedback: current[interview.id]?.feedback ?? "", outcome: current[interview.id]?.outcome ?? "COMPLETED" } }))} required /></label>
+                  <label>Feedback<textarea minLength={10} maxLength={5000} value={reviewDrafts[interview.id]?.feedback ?? ""} onChange={(event) => setReviewDrafts((current) => ({ ...current, [interview.id]: { score: current[interview.id]?.score ?? "", feedback: event.target.value, outcome: current[interview.id]?.outcome ?? "COMPLETED" } }))} required /></label>
+                  <label>Recommendation<select value={reviewDrafts[interview.id]?.outcome ?? "COMPLETED"} onChange={(event) => setReviewDrafts((current) => ({ ...current, [interview.id]: { score: current[interview.id]?.score ?? "", feedback: current[interview.id]?.feedback ?? "", outcome: event.target.value } }))}><option value="COMPLETED">Complete interview</option><option value="ADVANCE">Recommend advancing</option><option value="REJECT">Recommend rejection</option></select></label>
+                  <button className="button" type="submit" disabled={busy}>Save panel review</button>
+                </form> : null}
+              </div>)}
+              {recruiterRoles.includes(role) && ["SHORTLISTED", "INTERVIEWING"].includes(app.status) ? <button className="button" type="button" disabled={busy} onClick={() => { setInterviewCandidateId(interviewCandidateId === app.id ? "" : app.id); setError(""); }}>Schedule interview</button> : null}
+              {interviewCandidateId === app.id ? <form onSubmit={(event) => void scheduleInterview(event, app)} style={{ display: "grid", gap: 6 }}>
+                <label>Interview date/time (Kampala)<input type="datetime-local" value={interviewAt} onChange={(event) => setInterviewAt(event.target.value)} required /></label>
+                <label>Format<select value={interviewMode} onChange={(event) => setInterviewMode(event.target.value)}><option value="VIDEO">Video</option><option value="IN_PERSON">In person</option><option value="PHONE">Phone</option></select></label>
+                <label>Location or meeting link<input value={interviewLocation} onChange={(event) => setInterviewLocation(event.target.value)} maxLength={255} required /></label>
+                <label>Panelists<select multiple value={interviewPanel} onChange={(event) => setInterviewPanel(Array.from(event.currentTarget.selectedOptions, (option) => option.value))} required>{interviewers.map((person) => <option key={person.id} value={person.id}>{person.employee?.legalName ?? person.email} · {person.email}</option>)}</select></label>
+                <button className="button button-primary" type="submit" disabled={busy || interviewPanel.length === 0}>Save interview schedule</button>
+              </form> : null}
               {recruiterRoles.includes(role) && ["APPLIED", "SHORTLISTED", "INTERVIEWING"].includes(app.status) ? <><input aria-label={`Rejection reason for ${app.applicationCode}`} placeholder="Rejection reason" value={rejectionReasons[app.id] ?? ""} onChange={(event) => setRejectionReasons((current) => ({ ...current, [app.id]: event.target.value }))} /><button className="button" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "REJECTED")}>Reject application</button></> : null}
               {recruiterRoles.includes(role) && !app.offer && ["SHORTLISTED", "INTERVIEWING"].includes(app.status) ? <button className="button button-primary" type="button" disabled={busy} onClick={() => { setOfferCandidateId(offerCandidateId === app.id ? "" : app.id); setError(""); }}>Prepare offer</button> : null}
               {offerCandidateId === app.id ? <form onSubmit={(event) => void createOffer(event, app)} style={{ display: "grid", gap: 6 }}>

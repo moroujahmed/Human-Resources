@@ -172,8 +172,9 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | `GET /recruitment/vacancies/:id/applications` | `RECRUITER`, `HR_MANAGER`, `LINE_MANAGER` (own reqs) | Returns candidate pipeline grouped/filtered by `status`. |
 | `GET /recruitment/applications/:id/cv-url` | `RECRUITER`, `HR_MANAGER`, `LINE_MANAGER` (shortlisted) | Returns `{ signedUrl, expiresInSeconds: 120 }`. |
 | `PATCH /recruitment/applications/:id/stage` | `RECRUITER`, `HR_MANAGER` | `{ status, stageNotes? }` (`stageNotes` required when `REJECTED`). |
-| `POST /recruitment/applications/:id/interviews` | `RECRUITER`, `HR_MANAGER` | `{ scheduledAt, interviewMode, locationOrLink, interviewerUserIds }` |
-| `PATCH /recruitment/interviews/:id` | `RECRUITER`, `HR_MANAGER`, Panelist | `{ score, feedback, outcome }`. |
+| `GET /recruitment/interviewers` | `RECRUITER`, `HR_MANAGER` | Lists active panelists for scheduling. |
+| `POST /recruitment/applications/:id/interviews` | `RECRUITER`, `HR_MANAGER` | `{ scheduledAt, interviewMode, locationOrLink, interviewerUserIds }`; future interview, active panel members, shortlisted/interviewing candidate, HTTPS link for video. |
+| `PATCH /recruitment/interviews/:id` | Assigned panelist | `{ score, feedback, outcome }`; upserts one independent review per panelist. |
 | `POST /recruitment/applications/:id/offers` | `RECRUITER`, `HR_MANAGER` | Creates `DRAFT` offer (`offeredJobTitle`, `departmentId`, `reportingManagerId`, `offeredBaseSalaryUgx`, `offeredAllowancesUgx`, `proposedStartDate`, `offerExpiresAt`). |
 | `POST /recruitment/offers/:id/submit` | `RECRUITER`, `HR_MANAGER` | `DRAFT`/`REJECTED` $\rightarrow$ `PENDING_APPROVAL`. |
 | `POST /recruitment/offers/:id/approve` | `HR_MANAGER` | `PENDING_APPROVAL` $\rightarrow$ `APPROVED`; PDF generation is not yet implemented. |

@@ -8,7 +8,7 @@ Phase 0 specifications and the formal audit are in [`docs/PHASE_0_COMPLETION_AUD
 
 The repository now includes working slices for authentication/session refresh, self-service, attendance, leave, employee directory, recruitment, assets, offboarding, administration, and audit review. See the [construction readiness report](docs/CONSTRUCTION_READINESS_REPORT.md) for verified checks, remaining implementation gaps, and external approval gates.
 
-This is **not a complete or production-ready HRMS**. Payroll processing is deliberately blocked until reviewed statutory rules and a verified calculator are implemented. Offer approval, candidate email decisions, conversion, and onboarding invitations are implemented; panel interview workflow, formal document generation, durable workers, database-backed end-to-end acceptance, deployment configuration, and legal/privacy approvals remain incomplete. The synthetic seed is for local development only.
+This is **not a complete or production-ready HRMS**. Payroll processing is deliberately blocked until reviewed statutory rules and a verified calculator are implemented. Interview scheduling and independent panel reviews, offer approval, candidate email decisions, conversion, and onboarding invitations are implemented; requisition headcount fill tracking, formal document generation, durable workers, database-backed end-to-end acceptance, deployment configuration, and legal/privacy approvals remain incomplete. The synthetic seed is for local development only.
 
 ## Development setup
 

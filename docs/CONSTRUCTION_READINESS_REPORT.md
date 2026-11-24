@@ -11,8 +11,8 @@ This report does not claim operational payroll approval, production launch appro
 | Gate | Evidence |
 | :--- | :--- |
 | Monorepo baseline | npm workspaces, Node 22.22.3 pin, strict TypeScript, lint, tests, and builds are configured. |
-| Construction command | `npm run check:construction` passes: Prisma validation, ESLint, shared/API/web TypeScript checks, 37 tests, and API/web production builds, including `/offer-response`. |
-| Fresh PostgreSQL migration replay | All 3 migrations applied successfully to an isolated PostgreSQL 18 database. |
+| Construction command | `npm run check:construction` passes: Prisma validation, ESLint, shared/API/web TypeScript checks, 41 tests, and API/web production builds including recruitment and offer-response pages. |
+| Fresh PostgreSQL migration replay | The original 3 migrations passed against isolated PostgreSQL 18. The offer-response-token and panel-review migrations added afterward pass Prisma schema validation; a fresh database replay remains to be run in CI or a PostgreSQL environment. |
 | Identity database constraints | `scripts/check-db-constraints.sql` passes transactionally. |
 | Phase 2 database constraints | `scripts/check-phase2-db.sql` passes transactionally on clean and seeded databases. |
 | Demo seed replay | `npm run db:seed` passed repeatedly against isolated PostgreSQL with external, synthetic credentials. |
@@ -58,7 +58,7 @@ Payroll run creation, edits, submission, approval, and locking return `PAYROLL_C
 
 Construction should proceed in this order:
 
-1. Finish recruitment workflows: panel interview scheduling/scoring and requisition headcount tracking remain incomplete. Offer approval, candidate email decisions, and onboarding conversion invitations are implemented.
+1. Finish recruitment workflows: requisition headcount fill tracking remains incomplete. Interview scheduling and independent panel reviews now have API and UI workflows. Offer approval, candidate email decisions, and onboarding conversion invitations are implemented.
 2. Implement reviewed and tested payroll calculations before enabling payroll transitions.
 3. Complete payslip, formal offer PDF, clearance, and report generation/delivery.
 4. Implement policy-approved leave rollover and durable, idempotent outbox handlers. Daily attendance reconciliation, vacancy closing, and due offboarding deactivation are implemented.

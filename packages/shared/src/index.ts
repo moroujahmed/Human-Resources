@@ -231,6 +231,29 @@ export const ApplicationStageSchema = z.object({
 
 export type ApplicationStage = z.infer<typeof ApplicationStageSchema>;
 
+export const InterviewCreateSchema = z.object({
+  scheduledAt: z.string().datetime(),
+  interviewMode: z.enum(["IN_PERSON", "VIDEO", "PHONE"]),
+  locationOrLink: z.string().trim().min(3).max(255),
+  interviewerUserIds: z.array(z.string().uuid()).min(1).max(12).refine((ids) => new Set(ids).size === ids.length),
+}).strict().superRefine((value, context) => {
+  if (value.interviewMode === "VIDEO") {
+    try {
+      if (new URL(value.locationOrLink).protocol !== "https:") throw new Error("HTTPS required");
+    } catch {
+      context.addIssue({ code: "custom", path: ["locationOrLink"], message: "Video interview links must use HTTPS" });
+    }
+  }
+});
+export type InterviewCreate = z.infer<typeof InterviewCreateSchema>;
+
+export const InterviewReviewSchema = z.object({
+  score: z.number().min(1).max(5),
+  feedback: z.string().trim().min(10).max(5000),
+  outcome: z.enum(["COMPLETED", "ADVANCE", "REJECT"]),
+}).strict();
+export type InterviewReview = z.infer<typeof InterviewReviewSchema>;
+
 export const JobOfferCreateSchema = z.object({
   offeredJobTitle: z.string().trim().min(3).max(150),
   departmentId: z.string().uuid(),
