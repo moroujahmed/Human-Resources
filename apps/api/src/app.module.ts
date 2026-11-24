@@ -14,6 +14,7 @@ import { AssetsModule } from "./assets/assets.module";
 import { OffboardingModule } from "./offboarding/offboarding.module";
 import { PayrollModule } from "./payroll/payroll.module";
 import { AdminModule } from "./admin/admin.module";
+import { PerformanceModule } from "./performance/performance.module";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { AdminModule } from "./admin/admin.module";
     OffboardingModule,
     PayrollModule,
     AdminModule,
+    PerformanceModule,
   ],
   controllers: [HealthController],
   providers: [PrismaService, { provide: APP_GUARD, useClass: ThrottlerGuard }],

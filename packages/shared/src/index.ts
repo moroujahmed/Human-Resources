@@ -254,6 +254,24 @@ export const InterviewReviewSchema = z.object({
 }).strict();
 export type InterviewReview = z.infer<typeof InterviewReviewSchema>;
 
+export const PerformanceReviewCreateSchema = z.object({
+  employeeId: z.string().uuid(),
+  reviewPeriod: z.string().trim().min(3).max(60),
+  objectives: z.array(z.string().trim().min(3).max(500)).min(1).max(12),
+}).strict();
+export type PerformanceReviewCreate = z.infer<typeof PerformanceReviewCreateSchema>;
+
+export const SelfAssessmentSchema = z.object({
+  selfAssessment: z.string().trim().min(20).max(10000),
+}).strict();
+export type SelfAssessment = z.infer<typeof SelfAssessmentSchema>;
+
+export const ManagerReviewSchema = z.object({
+  managerFeedback: z.string().trim().min(20).max(10000),
+  rating: z.number().min(1).max(5),
+}).strict();
+export type ManagerReview = z.infer<typeof ManagerReviewSchema>;
+
 export const JobOfferCreateSchema = z.object({
   offeredJobTitle: z.string().trim().min(3).max(150),
   departmentId: z.string().uuid(),

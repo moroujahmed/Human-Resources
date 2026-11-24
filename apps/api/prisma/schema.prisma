@@ -581,6 +581,7 @@ model PerformanceReview {
   employee          Employee  @relation("ReviewedEmployee", fields: [employeeId], references: [id], onDelete: Restrict)
   reviewerManager   Employee  @relation("ReviewManager", fields: [reviewerManagerId], references: [id], onDelete: Restrict)
 
+  @@unique([employeeId, reviewPeriod], map: "uq_performance_reviews_employee_period")
   @@map("performance_reviews")
 }
 

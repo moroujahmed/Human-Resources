@@ -11,8 +11,8 @@ This report does not claim operational payroll approval, production launch appro
 | Gate | Evidence |
 | :--- | :--- |
 | Monorepo baseline | npm workspaces, Node 22.22.3 pin, strict TypeScript, lint, tests, and builds are configured. |
-| Construction command | `npm run check:construction` passes: Prisma validation, ESLint, shared/API/web TypeScript checks, 45 tests, and API/web production builds including recruitment and offer-response pages. |
-| Fresh PostgreSQL migration replay | The original 3 migrations passed against isolated PostgreSQL 18. Prisma schema validation passes for the latest changes. The four newer feature migrations have not yet been replayed against a fresh database; CI or a PostgreSQL environment must verify that step. |
+| Construction command | `npm run check:construction` passes: Prisma validation, ESLint, shared/API/web TypeScript checks, 49 tests, and API/web production builds including `/performance`. |
+| Fresh PostgreSQL migration replay | The original 3 migrations passed against isolated PostgreSQL 18. Five newer feature migrations have not yet been replayed against a fresh database; CI or a PostgreSQL environment must verify that step. |
 | Identity database constraints | `scripts/check-db-constraints.sql` passes transactionally. |
 | Phase 2 database constraints | `scripts/check-phase2-db.sql` passes transactionally on clean and seeded databases. |
 | Demo seed replay | `npm run db:seed` passed repeatedly against isolated PostgreSQL with external, synthetic credentials. |
@@ -23,7 +23,7 @@ This report does not claim operational payroll approval, production launch appro
 
 ## Implemented application slices
 
-Current working tree includes session refresh, protected routes, self-service profile and payslips, live HR and manager dashboards, attendance and corrections, leave requests and approvals, employee directory, recruitment intake and pipeline, role-scoped four-party onboarding checklists with account setup invitations, asset issue/return, offboarding clearance, account/schedule/holiday administration, role-scoped audit review, private CV storage, and public application verification. Automated tests cover foundational schemas and representative API/web behavior; full end-to-end acceptance coverage remains outstanding.
+Current working tree includes session refresh, protected routes, self-service profile and payslips, live HR and manager dashboards, attendance and corrections, leave requests and approvals, employee directory, recruitment intake/interviews/offers and onboarding, role-scoped performance reviews, role-scoped four-party onboarding checklists with account setup invitations, asset issue/return, offboarding clearance, account/schedule/holiday administration, role-scoped audit review, private CV storage, and public application verification. Automated tests cover foundational schemas and representative API/web behavior; full end-to-end acceptance coverage remains outstanding.
 
 Payroll run creation, edits, submission, approval, and locking return `PAYROLL_CALCULATOR_NOT_CONFIGURED`. The current arithmetic is synthetic and must not create payroll outputs.
 

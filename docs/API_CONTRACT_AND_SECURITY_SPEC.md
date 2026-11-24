@@ -200,10 +200,10 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | `POST /employees/:id/change-requests` | Any linked staff user (`SELF`), `HR_MANAGER` (`ORG`) | `multipart/form-data`: `fieldType`, `newValueJson`, `requestReason`, optional `supportingDoc` PDF. Encrypts bank/NIN payloads. |
 | `POST /employees/change-requests/:reqId/approve` | `HR_MANAGER` (Anti-self-approval) | Atomically updates `employees`, increments `version`, writes redacted diff to `audit_logs`. |
 | `POST /employees/change-requests/:reqId/reject` | `HR_MANAGER` | `{ reason }` (**Mandatory**). |
-| `GET /performance/reviews` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `EMPLOYEE` (`SELF`) | Lists performance appraisal cycles. |
-| `POST /performance/reviews` | `LINE_MANAGER` (`TEAM`), `HR_MANAGER` | Initiates review cycle for direct report. |
-| `PATCH /performance/reviews/:id/self-assessment` | `EMPLOYEE` (`SELF`) | `{ selfAssessment }` $\rightarrow$ `SELF_REVIEW_SUBMITTED`. |
-| `PATCH /performance/reviews/:id/manager-review` | `LINE_MANAGER` (`TEAM`) | `{ managerFeedback, rating }` (`1.00â€“5.00`) $\rightarrow$ `COMPLETED`. |
+| `GET /performance/reviews` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `EMPLOYEE` (`SELF`) | Lists only role-scoped performance review cycles. |
+| `POST /performance/reviews` | `LINE_MANAGER` (`TEAM`), `HR_MANAGER` | { employeeId, reviewPeriod, objectives[] }; one cycle per employee and period. |
+| `PATCH /performance/reviews/:id/self-assessment` | `EMPLOYEE` (`SELF`) | `{ selfAssessment }`; only the linked employee can submit a pending self-review. |
+| `PATCH /performance/reviews/:id/manager-review` | `LINE_MANAGER` (`TEAM`) | `{ managerFeedback, rating }` (1–5); completes a direct report review after self-assessment. |
 
 ---
 

@@ -21,6 +21,9 @@ import {
   InterviewCreateSchema,
   InterviewReviewSchema,
   VacancyStatusSchema,
+  PerformanceReviewCreateSchema,
+  SelfAssessmentSchema,
+  ManagerReviewSchema,
 } from "./index";
 
 describe("shared contracts", () => {
@@ -116,5 +119,14 @@ describe("shared contracts", () => {
 
   it("accepts the automatically filled vacancy state", () => {
     expect(VacancyStatusSchema.safeParse("FILLED").success).toBe(true);
+  });
+
+  it("validates performance review objectives, self-assessment, and manager rating", () => {
+    expect(PerformanceReviewCreateSchema.safeParse({
+      employeeId: "10000000-0000-4000-8000-000000000001", reviewPeriod: "2026 Annual", objectives: ["Complete an operational improvement project"],
+    }).success).toBe(true);
+    expect(SelfAssessmentSchema.safeParse({ selfAssessment: "I completed the project and documented measurable outcomes." }).success).toBe(true);
+    expect(ManagerReviewSchema.safeParse({ managerFeedback: "Consistently delivered outcomes and supported the team.", rating: 4.2 }).success).toBe(true);
+    expect(ManagerReviewSchema.safeParse({ managerFeedback: "Too short", rating: 7 }).success).toBe(false);
   });
 });

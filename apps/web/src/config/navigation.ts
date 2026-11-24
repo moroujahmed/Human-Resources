@@ -8,6 +8,7 @@ export const ROLE_NAVIGATION: Record<StaffHubRole, Array<{ label: string; href: 
     { label: "My Payslips", href: "/my-payslips" },
     { label: "My Assets", href: "/my-assets" },
     { label: "Onboarding", href: "/onboarding" },
+    { label: "Performance", href: "/performance" },
     { label: "Profile", href: "/profile" },
   ],
   LINE_MANAGER: [
@@ -15,11 +16,13 @@ export const ROLE_NAVIGATION: Record<StaffHubRole, Array<{ label: string; href: 
     { label: "Leave Approvals", href: "/leave" },
     { label: "Staff Requisitions", href: "/recruitment" },
     { label: "Onboarding", href: "/onboarding" },
+    { label: "Performance Reviews", href: "/performance" },
     { label: "My Self-Service", href: "/home" },
   ],
   HR_MANAGER: [
     { label: "HR Overview", href: "/hr" },
     { label: "Employee Directory", href: "/hr/employees" },
+    { label: "Performance Reviews", href: "/performance" },
     { label: "Recruitment", href: "/recruitment" },
     { label: "Onboarding", href: "/onboarding" },
     { label: "Offboarding", href: "/hr/offboarding" },
