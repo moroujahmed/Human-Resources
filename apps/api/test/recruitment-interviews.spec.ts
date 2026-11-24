@@ -16,6 +16,46 @@ function serviceWith(prisma: Record<string, unknown>): RecruitmentService {
 }
 
 describe("recruitment interviews", () => {
+  it("lets only the original requester cancel a pending requisition", async () => {
+    const requisitionId = "91000000-0000-4000-8000-000000000001";
+    const cancelled = { id: requisitionId, status: "CANCELLED" };
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const auditCreate = vi.fn().mockResolvedValue({});
+    const tx = {
+      staffRequisition: { updateMany, findUniqueOrThrow: vi.fn().mockResolvedValue(cancelled) },
+      auditLog: { create: auditCreate },
+    };
+    const prisma = {
+      staffRequisition: { findUnique: vi.fn().mockResolvedValue({ id: requisitionId, requestedByUserId: recruiter.id, status: "PENDING_HR", version: 1 }) },
+      $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
+    };
+    const service = serviceWith(prisma);
+    await expect(service.cancelRequisition(recruiter, requisitionId)).resolves.toEqual(cancelled);
+    expect(updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: requisitionId, requestedByUserId: recruiter.id, status: "PENDING_HR", version: 1 },
+      data: { status: "CANCELLED", version: { increment: 1 } },
+    }));
+    expect(auditCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ action: "REQUISITION_CANCELLED" }) }));
+  });
+
+  it("closes a published vacancy atomically and records an audit event", async () => {
+    const closed = { id: "90000000-0000-4000-8000-000000000001", status: "CLOSED" };
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const auditCreate = vi.fn().mockResolvedValue({});
+    const tx = {
+      vacancy: { updateMany, findUniqueOrThrow: vi.fn().mockResolvedValue(closed) },
+      auditLog: { create: auditCreate },
+    };
+    const prisma = {
+      vacancy: { findUnique: vi.fn().mockResolvedValue({ id: closed.id, status: "PUBLISHED" }) },
+      $transaction: vi.fn(async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
+    };
+    const service = serviceWith(prisma);
+    await expect(service.closeVacancy(recruiter, closed.id)).resolves.toEqual(closed);
+    expect(updateMany).toHaveBeenCalledWith({ where: { id: closed.id, status: "PUBLISHED" }, data: { status: "CLOSED" } });
+    expect(auditCreate).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ action: "VACANCY_CLOSED" }) }));
+  });
+
   it("schedules only for shortlisted candidates and records an audit event", async () => {
     const created = { id: interviewId, applicationId };
     const interviewCreate = vi.fn().mockResolvedValue(created);

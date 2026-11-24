@@ -42,6 +42,11 @@ export class RecruitmentController {
     return this.recruitment.rejectRequisition(user, id, parsed.reason);
   }
 
+  @Post("requisitions/:id/cancel")
+  cancelRequisition(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.recruitment.cancelRequisition(user, id);
+  }
+
   @Get("vacancies")
   vacancies(@CurrentUser() user: AuthenticatedUser, @Query("status") status: string | undefined) {
     return this.recruitment.vacancies(user, status ? VacancyStatusSchema.parse(status) : undefined);
@@ -60,6 +65,11 @@ export class RecruitmentController {
   @Post("vacancies/:id/publish")
   publishVacancy(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.recruitment.publishVacancy(user, id);
+  }
+
+  @Post("vacancies/:id/close")
+  closeVacancy(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.recruitment.closeVacancy(user, id);
   }
 
   @Get("vacancies/:id/applications")

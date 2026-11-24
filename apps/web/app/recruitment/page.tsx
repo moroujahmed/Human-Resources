@@ -11,6 +11,7 @@ interface Department { id: string; name: string; code: string }
 interface Requisition {
   id: string;
   requisitionCode: string;
+  requestedByUserId?: string;
   jobTitle: string;
   headcount: number;
   employmentType: string;
@@ -134,6 +135,16 @@ export default function RecruitmentPage() {
     finally { setBusy(false); }
   }
 
+  async function cancelRequisition(id: string) {
+    if (!session) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api(`/recruitment/requisitions/${id}/cancel`, session, { method: "POST" });
+      setMessage("Pending requisition cancelled."); await loadData();
+    } catch (cancelError: unknown) { setError(cancelError instanceof Error ? cancelError.message : "Unable to cancel requisition"); }
+    finally { setBusy(false); }
+  }
+
   async function createVacancy(event: React.FormEvent) {
     event.preventDefault(); if (!session) return;
     setBusy(true); setError(""); setMessage("");
@@ -149,6 +160,14 @@ export default function RecruitmentPage() {
     setBusy(true); setError(""); setMessage("");
     try { await api(`/recruitment/vacancies/${vacancyId}/publish`, session, { method: "POST" }); setMessage("Vacancy published to the public careers page."); await loadData(); }
     catch (publishError: unknown) { setError(publishError instanceof Error ? publishError.message : "Unable to publish vacancy"); }
+    finally { setBusy(false); }
+  }
+
+  async function closeVacancy(vacancyId: string) {
+    if (!session) return;
+    setBusy(true); setError(""); setMessage("");
+    try { await api(`/recruitment/vacancies/${vacancyId}/close`, session, { method: "POST" }); setMessage("Vacancy closed to new applications."); await loadData(); }
+    catch (closeError: unknown) { setError(closeError instanceof Error ? closeError.message : "Unable to close vacancy"); }
     finally { setBusy(false); }
   }
 
@@ -286,8 +305,8 @@ export default function RecruitmentPage() {
         </section> : null}
 
         <section className="panel" style={{ marginTop: 16 }}><h3>Requisitions</h3>
-          {requisitions.length === 0 ? <p>No requisitions available.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Reference</th><th>Role</th><th>Department</th><th>Headcount</th><th>Status</th>{canApproveRequisition ? <th>Decision</th> : null}</tr></thead><tbody>
-            {requisitions.map((req) => <tr key={req.id}><td>{req.requisitionCode}</td><td>{req.jobTitle}</td><td>{req.department.name}</td><td>{req.headcount}</td><td>{req.status.replaceAll("_", " ")}</td>{canApproveRequisition ? <td>{req.status === "PENDING_HR" ? <div style={{ display: "grid", gap: 8 }}><button className="button button-primary" type="button" disabled={busy} onClick={() => void decideRequisition(req.id, true)}>Approve</button><input aria-label={`Rejection reason for ${req.requisitionCode}`} placeholder="Rejection reason (10+ chars)" value={rejectionReasons[req.id] ?? ""} onChange={(event) => setRejectionReasons((current) => ({ ...current, [req.id]: event.target.value }))} /><button className="button" type="button" disabled={busy} onClick={() => void decideRequisition(req.id, false)}>Reject</button></div> : req.decisionReason ?? "—"}</td> : null}</tr>)}
+          {requisitions.length === 0 ? <p>No requisitions available.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Reference</th><th>Role</th><th>Department</th><th>Headcount</th><th>Status</th>{canApproveRequisition || role === "LINE_MANAGER" ? <th>Decision</th> : null}</tr></thead><tbody>
+            {requisitions.map((req) => <tr key={req.id}><td>{req.requisitionCode}</td><td>{req.jobTitle}</td><td>{req.department.name}</td><td>{req.headcount}</td><td>{req.status.replaceAll("_", " ")}</td>{canApproveRequisition || role === "LINE_MANAGER" ? <td>{req.status === "PENDING_HR" ? <div style={{ display: "grid", gap: 8 }}>{canApproveRequisition && req.requestedByUserId !== session?.user?.id ? <><button className="button button-primary" type="button" disabled={busy} onClick={() => void decideRequisition(req.id, true)}>Approve</button><input aria-label={`Rejection reason for ${req.requisitionCode}`} placeholder="Rejection reason (10+ chars)" value={rejectionReasons[req.id] ?? ""} onChange={(event) => setRejectionReasons((current) => ({ ...current, [req.id]: event.target.value }))} /><button className="button" type="button" disabled={busy} onClick={() => void decideRequisition(req.id, false)}>Reject</button></> : null}{req.requestedByUserId === session?.user?.id ? <button className="button" type="button" disabled={busy} onClick={() => void cancelRequisition(req.id)}>Cancel</button> : null}</div> : req.decisionReason ?? "—"}</td> : null}</tr>)}
           </tbody></table></div>}
         </section>
 
@@ -305,7 +324,7 @@ export default function RecruitmentPage() {
 
         <section className="panel" style={{ marginTop: 16 }}><h3>Vacancies</h3>
           {vacancies.length === 0 ? <p>No vacancies are available.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Reference</th><th>Title</th><th>Department</th><th>Closes</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-            {vacancies.map((vacancy) => <tr key={vacancy.id}><td>{vacancy.vacancyCode}</td><td>{vacancy.title}</td><td>{vacancy.requisition.department.name}</td><td>{new Intl.DateTimeFormat("en-UG", { dateStyle: "medium", timeZone: "Africa/Kampala" }).format(new Date(vacancy.closingAt))}</td><td>{vacancy.status}</td><td><div style={{ display: "flex", gap: 8 }}>{canManageVacancies && vacancy.status === "DRAFT" ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void publish(vacancy.id)}>Publish</button> : null}<button className="button" type="button" onClick={() => void openPipeline(vacancy)}>Applications</button></div></td></tr>)}
+            {vacancies.map((vacancy) => <tr key={vacancy.id}><td>{vacancy.vacancyCode}</td><td>{vacancy.title}</td><td>{vacancy.requisition.department.name}</td><td>{new Intl.DateTimeFormat("en-UG", { dateStyle: "medium", timeZone: "Africa/Kampala" }).format(new Date(vacancy.closingAt))}</td><td>{vacancy.status}</td><td><div style={{ display: "flex", gap: 8 }}>{canManageVacancies && vacancy.status === "DRAFT" ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void publish(vacancy.id)}>Publish</button> : null}{canManageVacancies && vacancy.status === "PUBLISHED" ? <button className="button" type="button" disabled={busy} onClick={() => void closeVacancy(vacancy.id)}>Close</button> : null}<button className="button" type="button" onClick={() => void openPipeline(vacancy)}>Applications</button></div></td></tr>)}
           </tbody></table></div>}
         </section>
 

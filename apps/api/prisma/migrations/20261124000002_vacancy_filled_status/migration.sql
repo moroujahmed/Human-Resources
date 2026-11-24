@@ -1,0 +1,1 @@
+ALTER TYPE "VacancyStatus" ADD VALUE 'FILLED';

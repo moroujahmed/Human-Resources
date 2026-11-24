@@ -139,7 +139,29 @@ export class RecruitmentService {
     });
   }
 
-  async vacancies(user: AuthenticatedUser, status: "DRAFT" | "PUBLISHED" | "CLOSED" | "CANCELLED" | undefined): Promise<Record<string, unknown>[]> {
+  async cancelRequisition(user: AuthenticatedUser, id: string): Promise<Record<string, unknown>> {
+    const requisition = await this.prisma.staffRequisition.findUnique({ where: { id } });
+    if (!requisition) throw new NotFoundException("REQUISITION_NOT_FOUND");
+    if (requisition.requestedByUserId !== user.id) throw new ForbiddenException("REQUISITION_REQUESTER_REQUIRED");
+    if (requisition.status !== "PENDING_HR") throw new ConflictException("INVALID_REQUISITION_STATE");
+    return this.prisma.$transaction(async (tx) => {
+      const changed = await tx.staffRequisition.updateMany({
+        where: { id, requestedByUserId: user.id, status: "PENDING_HR", version: requisition.version },
+        data: { status: "CANCELLED", version: { increment: 1 } },
+      });
+      if (changed.count !== 1) throw new ConflictException("REQUISITION_CHANGED");
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: "REQUISITION_CANCELLED",
+          entityType: "StaffRequisition", entityId: id,
+          checksumSha256: createHash("sha256").update(`REQUISITION_CANCELLED:${id}:${Date.now()}`).digest("hex"),
+        },
+      });
+      return tx.staffRequisition.findUniqueOrThrow({ where: { id } });
+    });
+  }
+
+  async vacancies(user: AuthenticatedUser, status: "DRAFT" | "PUBLISHED" | "CLOSED" | "CANCELLED" | "FILLED" | undefined): Promise<Record<string, unknown>[]> {
     if (user.role === "LINE_MANAGER") {
       if (!user.employeeId) throw new ForbiddenException("EMPLOYEE_LINK_REQUIRED");
       return this.prisma.vacancy.findMany({
@@ -203,6 +225,25 @@ export class RecruitmentService {
     return this.prisma.vacancy.update({
       where: { id },
       data: { status: "PUBLISHED", publishedByUserId: user.id, publishedAt: new Date() },
+    });
+  }
+
+  async closeVacancy(user: AuthenticatedUser, id: string): Promise<Record<string, unknown>> {
+    this.requireRecruitmentRole(user, false);
+    const vacancy = await this.prisma.vacancy.findUnique({ where: { id } });
+    if (!vacancy) throw new NotFoundException("VACANCY_NOT_FOUND");
+    if (vacancy.status !== "PUBLISHED") throw new ConflictException("INVALID_VACANCY_STATE");
+    return this.prisma.$transaction(async (tx) => {
+      const changed = await tx.vacancy.updateMany({ where: { id, status: "PUBLISHED" }, data: { status: "CLOSED" } });
+      if (changed.count !== 1) throw new ConflictException("VACANCY_CHANGED");
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: "VACANCY_CLOSED",
+          entityType: "Vacancy", entityId: id,
+          checksumSha256: createHash("sha256").update(`VACANCY_CLOSED:${id}:${Date.now()}`).digest("hex"),
+        },
+      });
+      return tx.vacancy.findUniqueOrThrow({ where: { id } });
     });
   }
 
@@ -548,7 +589,7 @@ export class RecruitmentService {
     const offer = await this.prisma.jobOffer.findUnique({
       where: { id: offerId },
       include: {
-        application: { include: { vacancy: { include: { requisition: { select: { employmentType: true } } } } } },
+        application: { include: { vacancy: { include: { requisition: { select: { id: true, headcount: true, employmentType: true } } } } } },
         reportingManager: { select: { id: true, userId: true } },
       },
     });
@@ -608,6 +649,27 @@ export class RecruitmentService {
         },
       });
       await tx.jobOffer.update({ where: { id: offerId }, data: { status: "CONVERTED" } });
+      const convertedCount = await tx.jobOffer.count({
+        where: {
+          status: "CONVERTED",
+          application: { is: { vacancy: { is: { requisitionId: offer.application.vacancy.requisition.id } } } },
+        },
+      });
+      if (convertedCount >= offer.application.vacancy.requisition.headcount) {
+        const filled = await tx.vacancy.updateMany({
+          where: { requisitionId: offer.application.vacancy.requisition.id, status: { in: ["PUBLISHED", "CLOSED"] } },
+          data: { status: "FILLED" },
+        });
+        if (filled.count) {
+          await tx.auditLog.create({
+            data: {
+              actorUserId: user.id, actorRole: user.role, action: "VACANCY_FILLED",
+              entityType: "Vacancy", entityId: offer.application.vacancy.id,
+              checksumSha256: createHash("sha256").update(`VACANCY_FILLED:${offer.application.vacancy.id}:${convertedCount}`).digest("hex"),
+            },
+          });
+        }
+      }
       await tx.jobApplication.update({
         where: { id: offer.applicationId },
         data: { status: "OFFER_ACCEPTED" },

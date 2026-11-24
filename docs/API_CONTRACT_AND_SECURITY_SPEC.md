@@ -165,6 +165,7 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | `POST /recruitment/requisitions` | `LINE_MANAGER`, `HR_MANAGER` | `{ departmentId, jobTitle, headcount, employmentType, justification, targetStartDate }` $\rightarrow$ `PENDING_HR`. |
 | `POST /recruitment/requisitions/:id/approve` | `HR_MANAGER` | Transitions `PENDING_HR` $\rightarrow$ `APPROVED` + audit log. |
 | `POST /recruitment/requisitions/:id/reject` | `HR_MANAGER` | `{ reason }` (**Mandatory**) $\rightarrow$ `REJECTED` + audit log. |
+| `POST /recruitment/requisitions/:id/cancel` | Original requester | Cancels only a `PENDING_HR` requisition, with version check and audit log. |
 | `GET /recruitment/vacancies` | `HR_MANAGER`, `RECRUITER`, `LINE_MANAGER` (own reqs) | Lists internal & public vacancies with applicant counts. |
 | `POST /recruitment/vacancies` | `RECRUITER`, `HR_MANAGER` | `{ requisitionId, title, location, description, requirements, salaryBandMinUgx?, salaryBandMaxUgx?, closingAt }` — **Blocked unless requisition `APPROVED`**. |
 | `POST /recruitment/vacancies/:id/publish` | `RECRUITER`, `HR_MANAGER` | Transitions `DRAFT` $\rightarrow$ `PUBLISHED`. |

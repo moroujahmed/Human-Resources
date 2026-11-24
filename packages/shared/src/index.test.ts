@@ -20,6 +20,7 @@ import {
   PublicOfferDecisionSchema,
   InterviewCreateSchema,
   InterviewReviewSchema,
+  VacancyStatusSchema,
 } from "./index";
 
 describe("shared contracts", () => {
@@ -111,5 +112,9 @@ describe("shared contracts", () => {
     }).success).toBe(false);
     expect(InterviewReviewSchema.safeParse({ score: 4.5, feedback: "Strong experience and clear answers.", outcome: "ADVANCE" }).success).toBe(true);
     expect(InterviewReviewSchema.safeParse({ score: 6, feedback: "Good", outcome: "ADVANCE" }).success).toBe(false);
+  });
+
+  it("accepts the automatically filled vacancy state", () => {
+    expect(VacancyStatusSchema.safeParse("FILLED").success).toBe(true);
   });
 });

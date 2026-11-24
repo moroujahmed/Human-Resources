@@ -207,7 +207,7 @@ export const RequisitionDecisionSchema = z.object({
   reason: z.string().trim().min(10).max(2000),
 }).strict();
 
-export const VacancyStatusSchema = z.enum(["DRAFT", "PUBLISHED", "CLOSED", "CANCELLED"]);
+export const VacancyStatusSchema = z.enum(["DRAFT", "PUBLISHED", "CLOSED", "CANCELLED", "FILLED"]);
 
 export const VacancyCreateSchema = z.object({
   requisitionId: z.string().uuid(),
