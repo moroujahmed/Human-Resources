@@ -1,0 +1,226 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { AppShell } from "../../src/components/AppShell";
+import { ModulePage } from "../../src/components/ModulePage";
+import { api } from "../../src/lib/api";
+import { getSession } from "../../src/lib/session";
+import type { StaffHubRole } from "@staffhub/shared";
+
+interface Department { id: string; name: string; code: string }
+interface Requisition {
+  id: string;
+  requisitionCode: string;
+  jobTitle: string;
+  headcount: number;
+  employmentType: string;
+  status: string;
+  targetStartDate: string;
+  decisionReason?: string | null;
+  department: Department;
+}
+interface Vacancy {
+  id: string;
+  vacancyCode: string;
+  title: string;
+  location: string;
+  description: string;
+  requirements: string;
+  closingAt: string;
+  status: string;
+  requisition: { id: string; requisitionCode: string; status: string; department: Department };
+}
+interface Application {
+  id: string;
+  applicationCode: string;
+  fullName: string;
+  applicantEmail?: string;
+  phone?: string;
+  status: string;
+  submittedAt: string;
+  stageNotes?: string | null;
+}
+
+const reqRoles: StaffHubRole[] = ["LINE_MANAGER", "HR_MANAGER", "SYSTEM_ADMIN"];
+const recruiterRoles: StaffHubRole[] = ["RECRUITER", "HR_MANAGER"];
+const hrRoles: StaffHubRole[] = ["HR_MANAGER", "SYSTEM_ADMIN"];
+
+function localInputToEatIso(value: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(value);
+  if (!match) throw new Error("Enter a valid closing date and time.");
+  const [, y, mo, d, h, mi] = match.map(Number) as unknown as [number, number, number, number, number, number];
+  return new Date(Date.UTC(y, mo - 1, d, h - 3, mi)).toISOString();
+}
+
+export default function RecruitmentPage() {
+  const session = getSession();
+  const role: StaffHubRole = session?.user?.role ?? "HR_MANAGER";
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [requisitions, setRequisitions] = useState<Requisition[]>([]);
+  const [vacancies, setVacancies] = useState<Vacancy[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
+  const [departmentId, setDepartmentId] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [headcount, setHeadcount] = useState(1);
+  const [employmentType, setEmploymentType] = useState("FULL_TIME");
+  const [justification, setJustification] = useState("");
+  const [targetStartDate, setTargetStartDate] = useState("");
+  const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
+  const [vacancyRequisitionId, setVacancyRequisitionId] = useState("");
+  const [vacancyTitle, setVacancyTitle] = useState("");
+  const [location, setLocation] = useState("Kampala HQ");
+  const [description, setDescription] = useState("");
+  const [requirements, setRequirements] = useState("");
+  const [closingAt, setClosingAt] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const loadData = useCallback(async () => {
+    if (!session) { setError("Please sign in to access recruitment."); setLoading(false); return; }
+    try {
+      const [reqs, jobs, depts] = await Promise.all([
+        api<Requisition[]>("/recruitment/requisitions", session),
+        api<Vacancy[]>("/recruitment/vacancies", session),
+        api<Department[]>("/admin/departments", session),
+      ]);
+      setRequisitions(reqs); setVacancies(jobs);
+      setDepartments(depts); setDepartmentId((current) => current || depts[0]?.id || "");
+      setVacancyRequisitionId((current) => current || reqs.find((req) => req.status === "APPROVED")?.id || "");
+    } catch (loadError: unknown) { setError(loadError instanceof Error ? loadError.message : "Unable to load recruitment data"); }
+    finally { setLoading(false); }
+  }, [role, session]);
+
+  useEffect(() => { void loadData(); }, [loadData]);
+
+  async function createRequisition(event: React.FormEvent) {
+    event.preventDefault(); if (!session) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api<Requisition>("/recruitment/requisitions", session, { method: "POST", body: JSON.stringify({ departmentId, jobTitle, headcount, employmentType, justification, targetStartDate }) });
+      setMessage("Staff requisition submitted for HR review."); setJobTitle(""); setJustification(""); setTargetStartDate(""); await loadData();
+    } catch (submitError: unknown) { setError(submitError instanceof Error ? submitError.message : "Unable to submit requisition"); }
+    finally { setBusy(false); }
+  }
+
+  async function decideRequisition(id: string, approve: boolean) {
+    if (!session) return;
+    const reason = rejectionReasons[id]?.trim();
+    if (!approve && (reason?.length ?? 0) < 10) { setError("Enter at least 10 characters to explain the rejection."); return; }
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api(`/recruitment/requisitions/${id}/${approve ? "approve" : "reject"}`, session, { method: "POST", ...(!approve ? { body: JSON.stringify({ reason }) } : {}) });
+      setMessage(approve ? "Requisition approved." : "Requisition rejected."); await loadData();
+    } catch (decisionError: unknown) { setError(decisionError instanceof Error ? decisionError.message : "Unable to update requisition"); }
+    finally { setBusy(false); }
+  }
+
+  async function createVacancy(event: React.FormEvent) {
+    event.preventDefault(); if (!session) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api<Vacancy>("/recruitment/vacancies", session, { method: "POST", body: JSON.stringify({ requisitionId: vacancyRequisitionId, title: vacancyTitle, location, description, requirements, closingAt: localInputToEatIso(closingAt) }) });
+      setMessage("Vacancy saved as a draft."); setVacancyTitle(""); setDescription(""); setRequirements(""); setClosingAt(""); await loadData();
+    } catch (createError: unknown) { setError(createError instanceof Error ? createError.message : "Unable to create vacancy"); }
+    finally { setBusy(false); }
+  }
+
+  async function publish(vacancyId: string) {
+    if (!session) return;
+    setBusy(true); setError(""); setMessage("");
+    try { await api(`/recruitment/vacancies/${vacancyId}/publish`, session, { method: "POST" }); setMessage("Vacancy published to the public careers page."); await loadData(); }
+    catch (publishError: unknown) { setError(publishError instanceof Error ? publishError.message : "Unable to publish vacancy"); }
+    finally { setBusy(false); }
+  }
+
+  async function openPipeline(vacancy: Vacancy) {
+    if (!session) return;
+    setSelectedVacancy(vacancy); setError("");
+    try { setApplications(await api<Application[]>(`/recruitment/vacancies/${vacancy.id}/applications`, session)); }
+    catch (loadError: unknown) { setError(loadError instanceof Error ? loadError.message : "Unable to load applications"); }
+  }
+
+  async function stageApplication(applicationId: string, status: "SHORTLISTED" | "INTERVIEWING" | "REJECTED") {
+    if (!session) return;
+    const stageNotes = rejectionReasons[applicationId];
+    if (status === "REJECTED" && (stageNotes?.trim().length ?? 0) < 10) { setError("Enter at least 10 characters as the rejection reason."); return; }
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api(`/recruitment/applications/${applicationId}/stage`, session, { method: "PATCH", body: JSON.stringify({ status, ...(status === "REJECTED" ? { stageNotes } : {}) }) });
+      setMessage(`Application moved to ${status.replaceAll("_", " ")}.`);
+      if (selectedVacancy) setApplications(await api<Application[]>(`/recruitment/vacancies/${selectedVacancy.id}/applications`, session));
+    } catch (stageError: unknown) { setError(stageError instanceof Error ? stageError.message : "Unable to update application"); }
+    finally { setBusy(false); }
+  }
+
+  async function downloadCv(applicationId: string) {
+    if (!session) return;
+    setError("");
+    try {
+      const result = await api<{ signedUrl: string }>(`/recruitment/applications/${applicationId}/cv-url`, session);
+      window.open(result.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (downloadError: unknown) { setError(downloadError instanceof Error ? downloadError.message : "Unable to prepare CV download"); }
+  }
+
+  const canCreateRequisition = reqRoles.includes(role);
+  const canManageVacancies = recruiterRoles.includes(role);
+  const canApproveRequisition = hrRoles.includes(role);
+  const approvedRequisitions = requisitions.filter((req) => req.status === "APPROVED");
+
+  return <AppShell role={role} title="Recruitment">
+    <ModulePage eyebrow="Lifecycle" title="Recruitment pipeline" description="Create and review staff requisitions, publish approved vacancies, and manage the applicant shortlist.">
+      {error ? <p className="status-danger" role="alert">{error}</p> : null}
+      {message ? <p className="status-success" role="status">{message}</p> : null}
+      {loading ? <p>Loading recruitment data…</p> : <>
+        {canCreateRequisition ? <section className="panel"><h3>Staff requisition</h3>
+          {departments.length === 0 ? <p>Department list is unavailable for this role. Ask HR to create the request.</p> : <form onSubmit={createRequisition} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 10 }}>
+            <label>Department<select value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} required>{departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select></label>
+            <label>Job title<input value={jobTitle} onChange={(event) => setJobTitle(event.target.value)} maxLength={150} required /></label>
+            <label>Headcount<input type="number" min="1" max="100" value={headcount} onChange={(event) => setHeadcount(Number(event.target.value))} required /></label>
+            <label>Employment type<select value={employmentType} onChange={(event) => setEmploymentType(event.target.value)}><option value="FULL_TIME">Full time</option><option value="PART_TIME">Part time</option><option value="CONTRACT">Contract</option></select></label>
+            <label>Target start date<input type="date" value={targetStartDate} onChange={(event) => setTargetStartDate(event.target.value)} required /></label>
+            <label style={{ gridColumn: "1 / -1" }}>Justification<textarea rows={3} minLength={10} maxLength={3000} value={justification} onChange={(event) => setJustification(event.target.value)} required /></label>
+            <button className="button button-primary" type="submit" disabled={busy}>Submit requisition</button>
+          </form>}
+        </section> : null}
+
+        <section className="panel" style={{ marginTop: 16 }}><h3>Requisitions</h3>
+          {requisitions.length === 0 ? <p>No requisitions available.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Reference</th><th>Role</th><th>Department</th><th>Headcount</th><th>Status</th>{canApproveRequisition ? <th>Decision</th> : null}</tr></thead><tbody>
+            {requisitions.map((req) => <tr key={req.id}><td>{req.requisitionCode}</td><td>{req.jobTitle}</td><td>{req.department.name}</td><td>{req.headcount}</td><td>{req.status.replaceAll("_", " ")}</td>{canApproveRequisition ? <td>{req.status === "PENDING_HR" ? <div style={{ display: "grid", gap: 8 }}><button className="button button-primary" type="button" disabled={busy} onClick={() => void decideRequisition(req.id, true)}>Approve</button><input aria-label={`Rejection reason for ${req.requisitionCode}`} placeholder="Rejection reason (10+ chars)" value={rejectionReasons[req.id] ?? ""} onChange={(event) => setRejectionReasons((current) => ({ ...current, [req.id]: event.target.value }))} /><button className="button" type="button" disabled={busy} onClick={() => void decideRequisition(req.id, false)}>Reject</button></div> : req.decisionReason ?? "—"}</td> : null}</tr>)}
+          </tbody></table></div>}
+        </section>
+
+        {canManageVacancies ? <section className="panel" style={{ marginTop: 16 }}><h3>Draft a vacancy</h3>
+          {approvedRequisitions.length === 0 ? <p>An approved requisition is required before a vacancy can be created.</p> : <form onSubmit={createVacancy} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 10 }}>
+            <label>Approved requisition<select value={vacancyRequisitionId} onChange={(event) => setVacancyRequisitionId(event.target.value)}>{approvedRequisitions.map((req) => <option key={req.id} value={req.id}>{req.requisitionCode} · {req.jobTitle}</option>)}</select></label>
+            <label>Vacancy title<input value={vacancyTitle} onChange={(event) => setVacancyTitle(event.target.value)} maxLength={150} required /></label>
+            <label>Location<input value={location} onChange={(event) => setLocation(event.target.value)} maxLength={120} required /></label>
+            <label>Closing date/time (Kampala)<input type="datetime-local" value={closingAt} onChange={(event) => setClosingAt(event.target.value)} required /></label>
+            <label style={{ gridColumn: "1 / -1" }}>Description<textarea rows={4} minLength={10} maxLength={10000} value={description} onChange={(event) => setDescription(event.target.value)} required /></label>
+            <label style={{ gridColumn: "1 / -1" }}>Requirements<textarea rows={4} minLength={10} maxLength={10000} value={requirements} onChange={(event) => setRequirements(event.target.value)} required /></label>
+            <button className="button button-primary" type="submit" disabled={busy}>Save draft</button>
+          </form>}
+        </section> : null}
+
+        <section className="panel" style={{ marginTop: 16 }}><h3>Vacancies</h3>
+          {vacancies.length === 0 ? <p>No vacancies are available.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Reference</th><th>Title</th><th>Department</th><th>Closes</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+            {vacancies.map((vacancy) => <tr key={vacancy.id}><td>{vacancy.vacancyCode}</td><td>{vacancy.title}</td><td>{vacancy.requisition.department.name}</td><td>{new Intl.DateTimeFormat("en-UG", { dateStyle: "medium", timeZone: "Africa/Kampala" }).format(new Date(vacancy.closingAt))}</td><td>{vacancy.status}</td><td><div style={{ display: "flex", gap: 8 }}>{canManageVacancies && vacancy.status === "DRAFT" ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void publish(vacancy.id)}>Publish</button> : null}<button className="button" type="button" onClick={() => void openPipeline(vacancy)}>Applications</button></div></td></tr>)}
+          </tbody></table></div>}
+        </section>
+
+        {selectedVacancy ? <section className="panel" style={{ marginTop: 16 }}><div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}><h3>Applications · {selectedVacancy.title}</h3><button className="button" type="button" onClick={() => { setSelectedVacancy(null); setApplications([]); }}>Close</button></div>
+          {applications.length === 0 ? <p>No applications are available to your role for this vacancy.</p> : <div className="table-wrap"><table className="data-table"><thead><tr><th>Candidate</th><th>Reference</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+            {applications.map((app) => <tr key={app.id}><td>{app.fullName}<br /><small>{app.applicantEmail ?? "Shortlisted candidate"}</small></td><td>{app.applicationCode}</td><td>{new Intl.DateTimeFormat("en-UG", { dateStyle: "medium", timeZone: "Africa/Kampala" }).format(new Date(app.submittedAt))}</td><td>{app.status}</td><td><div style={{ display: "grid", gap: 8, minWidth: 190 }}>
+              {recruiterRoles.includes(role) ? <button className="button" type="button" onClick={() => void downloadCv(app.id)}>Download CV</button> : null}
+              {recruiterRoles.includes(role) && app.status === "APPLIED" ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "SHORTLISTED")}>Shortlist</button> : null}
+              {recruiterRoles.includes(role) && app.status === "SHORTLISTED" ? <button className="button" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "INTERVIEWING")}>Move to interview</button> : null}
+              {recruiterRoles.includes(role) && ["APPLIED", "SHORTLISTED", "INTERVIEWING"].includes(app.status) ? <><input aria-label={`Rejection reason for ${app.applicationCode}`} placeholder="Rejection reason" value={rejectionReasons[app.id] ?? ""} onChange={(event) => setRejectionReasons((current) => ({ ...current, [app.id]: event.target.value }))} /><button className="button" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "REJECTED")}>Reject application</button></> : null}
+            </div></td></tr>)}
+          </tbody></table></div>}
+        </section> : null}
+      </>}
+    </ModulePage>
+  </AppShell>;
+}

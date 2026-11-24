@@ -27,6 +27,8 @@
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate": "prisma migrate deploy",
+    "db:seed": "npm run db:seed --workspace=@staffhub/api",
+    "check:construction": "npm run db:validate && npm run lint && npm run typecheck && npm test && npm run build",
     "compose:config": "docker compose --env-file .env.docker.example config --quiet"
   },
   "devDependencies": {

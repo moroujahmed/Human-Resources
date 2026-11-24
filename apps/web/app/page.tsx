@@ -1,20 +1,19 @@
-import { StaffHubRoleSchema } from "@staffhub/shared";
+import Link from "next/link";
+import { BrandMark } from "../src/components/AppShell";
 
 export default function HomePage() {
   return (
-    <main>
-      <p>Phase 1 foundation</p>
-      <h1>StaffHub</h1>
-      <p>
-        The web and API workspaces are initialized. Product workflows are not
-        implemented yet.
-      </p>
-      <h2>Defined staff roles</h2>
-      <ul>
-        {StaffHubRoleSchema.options.map((role) => (
-          <li key={role}>{role}</li>
-        ))}
-      </ul>
+    <main className="login-page">
+      <section className="login-card">
+        <BrandMark />
+        <p className="eyebrow">StaffHub Uganda</p>
+        <h1>Human resources operations</h1>
+        <p>Secure access for employee, management, recruitment, payroll, asset, and administration workflows.</p>
+        <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
+          <Link className="button button-primary" href="/login">Sign in</Link>
+          <Link className="button" href="/careers">Open vacancies</Link>
+        </div>
+      </section>
     </main>
   );
 }

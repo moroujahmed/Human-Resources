@@ -49,11 +49,12 @@ END $$;
 
 DO $$
 BEGIN
-    INSERT INTO employees (user_id, employee_code, legal_name, hire_date, last_working_day)
+    INSERT INTO employees (user_id, employee_code, legal_name, work_email, hire_date, last_working_day)
     VALUES (
         '00000000-0000-4000-8000-000000000001',
         'EMP-TEST',
         'Test Employee',
+        'test-employee@example.invalid',
         DATE '2026-04-10',
         DATE '2026-04-09'
     );

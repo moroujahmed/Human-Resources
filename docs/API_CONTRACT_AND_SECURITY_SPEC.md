@@ -98,7 +98,7 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | All Authenticated Endpoints | `120 requests / 1 minute` | Authenticated `userId` |
 
 ### 4.2 Public Careers Bot & Upload Hardening
-1. **Cloudflare Turnstile:** Public `POST /careers/vacancies/:id/apply` validates the `turnstileToken` server-side via Cloudflare `siteverify` before processing file uploads or DB writes (auto-bypassed only in local `NODE_ENV=test` / local Docker when secret is intentionally unset).
+1. **Cloudflare Turnstile:** Public `POST /careers/vacancies/:id/apply` validates the `turnstileToken` server-side via Cloudflare `siteverify` before processing file uploads or DB writes. Missing production configuration fails closed; only automated tests may bypass verification when no secret is set.
 2. **File Upload Verification Pipeline (CVs, Bank Letters, Leave Proof):**
    - `multer` memory storage capped strictly at **`5 MB`** (`5 * 1024 * 1024` bytes).
    - Server reads the binary buffer header using `file-type` (`fromBuffer(file.buffer)`):
@@ -239,7 +239,7 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | Method & Path | Access | Key Payload / Rules |
 | :--- | :--- | :--- |
 | `GET /payroll/runs` & `GET /payroll/runs/:id` | `PAYROLL_OFFICER`, `HR_MANAGER` | Returns run metadata, stepper state, totals (`UGX`), and items. |
-| `POST /payroll/runs` | `PAYROLL_OFFICER` (`Idempotency-Key`) | `{ year, month }` — Requires a closed, locked attendance period and exactly one `APPROVED` statutory policy covering period end; fails closed otherwise. Includes employees whose employment dates overlap the pay period even if their current status is `EXITED`. |
+| `POST /payroll/runs` | `PAYROLL_OFFICER` (`Idempotency-Key`) | Returns `422 PAYROLL_CALCULATOR_NOT_CONFIGURED` until reviewed statutory rules and payroll arithmetic are implemented. Demo arithmetic is deliberately blocked from creating payroll runs. |
 | `PATCH /payroll/runs/:runId/items/:itemId` | `PAYROLL_OFFICER` | `{ bonusOrArrearsUgx?, otherDeductionsUgx?, notes? }` — **Blocked (`423`) unless `run.status === 'DRAFT'`**. |
 | `POST /payroll/runs/:id/submit` | `PAYROLL_OFFICER` | `DRAFT` $\rightarrow$ `PENDING_APPROVAL`. |
 | `POST /payroll/runs/:id/return` | `HR_MANAGER` | `{ reason }` (**Mandatory**) $\rightarrow$ `DRAFT`. |

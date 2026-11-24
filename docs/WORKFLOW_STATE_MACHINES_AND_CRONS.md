@@ -29,7 +29,7 @@ All state transitions in StaffHub MUST execute inside an explicit backend servic
 
 ### 1.3 Public Job Application Guardrails (No Login Account Required)
 On `POST /api/v1/careers/vacancies/:id/apply`:
-1. Verify Cloudflare Turnstile `turnstileToken` server-side (auto-bypassed only in local test/dev when secret is intentionally unset).
+1. Verify Cloudflare Turnstile `turnstileToken` server-side (bypassed only in automated tests when secret is intentionally unset).
 2. Load `vacancies` row: MUST satisfy `status === 'PUBLISHED'` AND `now_utc <= closing_at` (`closing_at` evaluated in `Africa/Kampala`). Otherwise reject with `422 VACANCY_CLOSED`.
 3. Normalize `applicant_email = email.trim().toLowerCase()`. Pre-check `(vacancy_id, applicant_email)` and handle unique index `uq_application_vacancy_email` conflict by returning `409 DUPLICATE_APPLICATION`—**never silently overwriting an earlier application**.
 4. Inspect uploaded CV file buffer via `file-type` binary magic bytes: allow ONLY `application/pdf` (`%PDF-`) and `.docx` OOXML up to `5 MB` (`415 UNSUPPORTED_MEDIA_TYPE` otherwise).

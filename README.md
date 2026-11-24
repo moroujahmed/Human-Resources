@@ -4,9 +4,11 @@ StaffHub is a proposed web-based HRMS for Uganda, using UGX and the `Africa/Kamp
 
 ## Project status
 
-Phase 0 specifications and the formal audit are in [`docs/PHASE_0_COMPLETION_AUDIT.md`](docs/PHASE_0_COMPLETION_AUDIT.md). Phase 1 adds a runnable monorepo scaffold: Next.js web app, NestJS API with exact-origin CORS and Helmet headers, shared Zod contracts, an initial Prisma identity/session schema, Docker Compose services, CI, and smoke tests. See the [Phase 1 completion audit](docs/PHASE_1_COMPLETION_AUDIT.md) for validation evidence and remaining limits.
+Phase 0 specifications and the formal audit are in [`docs/PHASE_0_COMPLETION_AUDIT.md`](docs/PHASE_0_COMPLETION_AUDIT.md). Phase 1 adds a runnable monorepo scaffold: Next.js web app, NestJS API with exact-origin CORS and Helmet headers, shared Zod contracts, an initial Prisma identity/session schema, Docker Compose services, CI, and smoke tests. See the [Phase 1 completion audit](docs/PHASE_1_COMPLETION_AUDIT.md) for validation evidence and remaining limits. Phase 2 adds the PostgreSQL domain migration and isolated synthetic demo seed; see the [Phase 2 completion audit](docs/PHASE_2_COMPLETION_AUDIT.md).
 
-This is **not a complete HRMS**. Recruitment, attendance, leave, payroll, assets, performance, offboarding, authentication, demo seeding, and their domain migrations are not implemented. The current tests validate only the scaffold and identity foundation.
+The repository now includes working slices for authentication/session refresh, self-service, attendance, leave, employee directory, recruitment, assets, offboarding, administration, and audit review. See the [construction readiness report](docs/CONSTRUCTION_READINESS_REPORT.md) for verified checks, remaining implementation gaps, and external approval gates.
+
+This is **not a complete or production-ready HRMS**. Payroll processing is deliberately blocked until reviewed statutory rules and a verified calculator are implemented. Offer communications/conversion, document generation, durable workers, database-backed end-to-end acceptance, deployment configuration, and legal/privacy approvals remain incomplete. The synthetic seed is for local development only.
 
 ## Development setup
 
@@ -22,8 +24,8 @@ The selected implementation conventions are:
 
 1. Install Node.js 22.22.3 or later in the 22.x LTS line and npm 10 or later.
 2. Run `npm ci`.
-3. Copy `.env.example` to `.env` for host development. Values in the example are placeholders/local-only; generate independent secrets before implementing authentication.
-4. Run `npm run dev` to start the web app and API in watch mode. The direct health-only API does not connect to the database; the Docker Compose startup applies the identity migrations and requires PostgreSQL.
+3. Copy `.env.example` to `.env` for host development. Values in the example are placeholders/local-only; generate independent secrets before running the API. `NEXT_PUBLIC_API_URL` is the API origin only; the client adds `/api/v1`.
+4. Run `npm run dev` to start the web app and API in watch mode. The API requires PostgreSQL for application workflows; Docker Compose applies migrations and starts the local services.
 5. To start PostgreSQL, MinIO, and Mailpit with the apps, run `scripts/start-staffhub.bat` on Windows or `scripts/start-staffhub.sh` on macOS/Linux. The script creates a separate local `.env.docker`, runs the identity migrations, and opens the web app. No demo accounts or seed records are created.
 
 Useful checks: `npm test`, `npm run lint`, `npm run typecheck`, `npm run db:validate`, and `npm run build`. Applying migrations with `npm run db:migrate` requires a reachable PostgreSQL instance and a valid `DATABASE_URL`.

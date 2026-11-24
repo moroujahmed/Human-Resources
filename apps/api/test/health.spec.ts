@@ -4,6 +4,7 @@ import request from "supertest";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { AppModule } from "../src/app.module";
 import { applyHttpSecurityHeaders } from "../src/http-security";
+import { ZodExceptionFilter } from "../src/zod-exception.filter";
 
 describe("API health endpoint", () => {
   let app: INestApplication;
@@ -15,6 +16,7 @@ describe("API health endpoint", () => {
 
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix("api/v1");
+    app.useGlobalFilters(new ZodExceptionFilter());
     applyHttpSecurityHeaders(app, false);
     await app.init();
   });

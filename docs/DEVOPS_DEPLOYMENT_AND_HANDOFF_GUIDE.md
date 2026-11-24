@@ -83,7 +83,7 @@ Provider setup below is illustrative; availability, pricing, service limits, and
 
 ### Step 6: Next.js Frontend
 1. Connect GitHub repository, set Root Directory `apps/web`.
-2. Set `NEXT_PUBLIC_API_URL=https://<your-api-domain>/api/v1`, `NEXT_PUBLIC_APP_TIMEZONE=Africa/Kampala`, and `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. Do not use a public frontend flag to enable privileged demo behavior.
+2. Set `NEXT_PUBLIC_API_URL=https://<your-api-domain>` (the client appends `/api/v1`), `NEXT_PUBLIC_APP_TIMEZONE=Africa/Kampala`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, and `TURNSTILE_EXPECTED_HOSTNAME`. Keep the Turnstile secret server-side. Do not use a public frontend flag to enable privileged demo behavior.
 3. Deploy and verify `/login` and `/careers` over HTTPS.
 
 ### Step 7: Wire Scheduler Secrets

@@ -3,9 +3,11 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { NestFactory } from "@nestjs/core";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { parseCorsOrigins } from "./cors-origins";
 import { applyHttpSecurityHeaders } from "./http-security";
+import { ZodExceptionFilter } from "./zod-exception.filter";
 
 const envFilePath = [
   resolve(process.cwd(), ".env"),
@@ -21,6 +23,8 @@ if (envFilePath) {
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
+  app.useGlobalFilters(new ZodExceptionFilter());
   app.setGlobalPrefix("api/v1");
   applyHttpSecurityHeaders(app);
   app.enableCors({

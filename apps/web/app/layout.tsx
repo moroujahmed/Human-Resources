@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
+import { SessionProvider } from "../src/components/SessionProvider";
 
 export const metadata: Metadata = {
   title: "StaffHub",
-  description: "StaffHub implementation scaffold",
+  description: "StaffHub human resources operations portal",
 };
 
 export default function RootLayout({
@@ -14,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><SessionProvider>{children}</SessionProvider></body>
     </html>
   );
 }

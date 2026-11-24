@@ -42,6 +42,18 @@ jobs:
         env:
           PGPASSWORD: staffhub_ci_only
         run: psql -h localhost -U staffhub -d staffhub_ci -v ON_ERROR_STOP=1 -f scripts/check-db-constraints.sql
+      - name: Verify Phase 2 database constraints on PostgreSQL 16
+        env:
+          PGPASSWORD: staffhub_ci_only
+        run: psql -h localhost -U staffhub -d staffhub_ci -v ON_ERROR_STOP=1 -f scripts/check-phase2-db.sql
+      - name: Verify isolated demo seed on PostgreSQL 16
+        env:
+          DEMO_MODE: "true"
+        run: |
+          DEMO_SEED_PASSWORDS="$(node -e 'const c=require(\"node:crypto\"); const emails=[\"raymond.mugisha@example.invalid\",\"julius.okello@example.invalid\",\"grace.akello@example.invalid\",\"grace.apio@example.invalid\",\"michael.kigozi@example.invalid\",\"sarah.namubiru@example.invalid\",\"joseph.mukasa@example.invalid\",\"brian.kato@example.invalid\",\"rebecca.kisakye@example.invalid\",\"fiona.namatovu@example.invalid\",\"ivan.tumusiime@example.invalid\",\"denis.mukasa@example.invalid\",\"samuel.ssebunya@example.invalid\",\"amina.nabakooza@example.invalid\"]; const values={}; for(const email of emails) values[email]=`Ci${c.randomBytes(12).toString(\"base64url\")}A1`; process.stdout.write(JSON.stringify(values));')"
+          export DEMO_SEED_PASSWORDS
+          npm run db:seed
+      - run: npm audit --omit=dev
       - run: docker compose --env-file .env.docker.example config --quiet
       - run: npm run lint
       - run: npm run typecheck
