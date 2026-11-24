@@ -12,6 +12,6 @@ import { PasswordResetMailService } from "./password-reset-mail.service";
   imports: [JwtModule.register({})],
   controllers: [AuthController],
   providers: [AuthService, PasswordService, PrismaService, JwtAuthGuard, RolesGuard, PasswordResetMailService],
-  exports: [JwtModule, JwtAuthGuard, RolesGuard, PrismaService],
+  exports: [JwtModule, JwtAuthGuard, RolesGuard, PrismaService, PasswordResetMailService],
 })
 export class AuthModule {}

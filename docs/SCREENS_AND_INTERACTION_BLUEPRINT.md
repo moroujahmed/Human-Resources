@@ -109,6 +109,11 @@ This document maps every Next.js App Router page to its allowed roles, visual la
   - 4-Track Clearance Progress Bar (`Asset Return`, `Operational Handover`, `Finance/Loans`, `HR Exit`) showing explicit red **Blocker Cards** (e.g., `Blocked: Unreturned #AST-064 ThinkPad T14`).
   - `"Finalize Clearance"` and `"Deactivate Account"` buttons stay visibly **disabled with explanatory tooltip** until blockers clear and `lastWorkingDay` passes.
 
+### 4.3 Onboarding Checklist (`/onboarding`)
+- **Access:** HR Manager sees all hires; line managers see their direct reports; Asset Officers see hires with pending equipment tasks; employees see their own checklist.
+- **Tasks:** HR verifies documents, the manager confirms objectives, the employee completes profile/policy acknowledgement, and the Asset Officer records equipment issue. Each actor can complete only tasks assigned to their role and scope.
+- **Completion:** Task updates are serialized. When the final task is complete the checklist closes and the employee becomes active; reopening a task returns the checklist and employee to onboarding.
+
 ---
 
 ## 5. Payroll Officer & HR Approver Workspace (`/payroll`)
@@ -148,4 +153,3 @@ This document maps every Next.js App Router page to its allowed roles, visual la
 - **Immutable Audit Trail (`/audit`):**
   - Filterable by Date Range (`EAT`), Action Category, Actor, and Entity ID (`GET /api/v1/audit/logs`).
   - Displays Timestamp (`EAT`), Actor & Role (plus `Acting for...` attribution if delegated), Target, Old-to-New Diff, Mandatory Logged Reason, and SHA-256 checksum, plus `"Export Audit Bundle"` (`GET /api/v1/audit/logs/export`).
-  

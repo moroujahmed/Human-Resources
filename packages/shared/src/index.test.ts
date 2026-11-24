@@ -15,6 +15,7 @@ import {
   AssetUpdateSchema,
   IsoDateSchema,
   WorkScheduleCreateSchema,
+  OnboardingTaskUpdateSchema,
 } from "./index";
 
 describe("shared contracts", () => {
@@ -77,5 +78,11 @@ describe("shared contracts", () => {
     expect(WorkScheduleCreateSchema.safeParse({ name: "Standard", shiftStartTime: "08:00", shiftEndTime: "17:00" }).success).toBe(true);
     expect(WorkScheduleCreateSchema.safeParse({ name: "Invalid", shiftStartTime: "08:00", shiftEndTime: "08:00" }).success).toBe(false);
     expect(WorkScheduleCreateSchema.safeParse({ name: "Invalid", shiftStartTime: "08:00", shiftEndTime: "17:00", workingDaysBitmap: [1, 1] }).success).toBe(false);
+  });
+
+  it("accepts only the onboarding task completion field", () => {
+    expect(OnboardingTaskUpdateSchema.safeParse({ isCompleted: true }).success).toBe(true);
+    expect(OnboardingTaskUpdateSchema.safeParse({ isCompleted: true, assignedRole: "HR_MANAGER" }).success).toBe(false);
+    expect(OnboardingTaskUpdateSchema.safeParse({ isCompleted: "yes" }).success).toBe(false);
   });
 });

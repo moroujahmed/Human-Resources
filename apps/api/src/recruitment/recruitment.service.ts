@@ -10,16 +10,39 @@ import * as argon2 from "argon2";
 import type {
   ApplicationStage,
   JobOfferCreate,
+  OnboardingTaskUpdate,
   RequisitionCreate,
   VacancyCreate,
 } from "@staffhub/shared";
 import type { AuthenticatedUser } from "../auth/auth.types";
 import { PrismaService } from "../prisma.service";
 import { PrivateStorageService } from "../storage/private-storage.service";
+import { PasswordResetMailService } from "../auth/password-reset-mail.service";
 
 @Injectable()
 export class RecruitmentService {
-  constructor(private readonly prisma: PrismaService, private readonly storage: PrivateStorageService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: PrivateStorageService,
+    private readonly accountMail: PasswordResetMailService,
+  ) {}
+
+  private async sendAccountSetup(email: string, userId: string): Promise<boolean> {
+    const rawToken = randomBytes(64).toString("base64url");
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+    await this.prisma.$transaction(async (tx) => {
+      await tx.passwordResetToken.deleteMany({ where: { userId, usedAt: null } });
+      await tx.passwordResetToken.create({
+        data: { userId, tokenHash, expiresAt: new Date(Date.now() + 30 * 60 * 1000) },
+      });
+    });
+    try {
+      await this.accountMail.sendWelcome(email, rawToken);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   private requireRecruitmentRole(user: AuthenticatedUser, includeHr = true): void {
     const allowed = includeHr
@@ -318,7 +341,10 @@ export class RecruitmentService {
     if (!idempotencyKey) throw new UnprocessableEntityException("IDEMPOTENCY_KEY_REQUIRED");
     const offer = await this.prisma.jobOffer.findUnique({
       where: { id: offerId },
-      include: { application: true },
+      include: {
+        application: { include: { vacancy: { include: { requisition: { select: { employmentType: true } } } } } },
+        reportingManager: { select: { id: true, userId: true } },
+      },
     });
     if (!offer) throw new NotFoundException("OFFER_NOT_FOUND");
     if (offer.status !== "ACCEPTED") throw new ConflictException("OFFER_NOT_ACCEPTED");
@@ -326,14 +352,18 @@ export class RecruitmentService {
     const converted = await this.prisma.employee.findUnique({
       where: { convertedFromOfferId: offerId },
     });
-    if (converted) return { status: "ALREADY_CONVERTED", employeeId: converted.id };
+    if (converted) {
+      const account = await this.prisma.user.findUnique({ where: { id: converted.userId }, select: { email: true } });
+      const invitationSent = account ? await this.sendAccountSetup(account.email, converted.userId) : false;
+      return { status: "ALREADY_CONVERTED", employeeId: converted.id, invitationSent };
+    }
 
     const existingUser = await this.prisma.user.findFirst({
       where: { email: offer.application.applicantEmail.toLowerCase() },
     });
     if (existingUser) throw new ConflictException("USER_ALREADY_EXISTS");
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const tempPassword = randomBytes(24).toString("base64url");
       const tempPasswordHash = await argon2.hash(tempPassword, {
         type: argon2.argon2id,
@@ -358,9 +388,10 @@ export class RecruitmentService {
           employeeCode: `UG-EMP-${randomBytes(3).toString("hex").toUpperCase()}`,
           legalName: offer.application.fullName,
           workEmail: offer.application.applicantEmail.toLowerCase(),
+          personalEmail: offer.application.applicantEmail.toLowerCase(),
           phone: offer.application.phone,
           jobTitle: offer.offeredJobTitle,
-          employmentType: "FULL_TIME",
+          employmentType: offer.application.vacancy.requisition.employmentType,
           departmentId: offer.departmentId,
           managerId: offer.reportingManagerId,
           workScheduleId: schedule.id,
@@ -379,7 +410,26 @@ export class RecruitmentService {
         data: {
           employeeId: employee.id,
           status: "IN_PROGRESS",
+          tasks: {
+            create: [
+              { assignedRole: "HR_MANAGER", title: "Verify employment documents and personal details", sortOrder: 1 },
+              { assignedRole: "LINE_MANAGER", assignedUserId: offer.reportingManager?.userId ?? null, title: "Confirm role objectives and first-week plan", sortOrder: 2 },
+              { assignedRole: "EMPLOYEE", assignedUserId: userRecord.id, title: "Complete your profile and acknowledge workplace policies", sortOrder: 3 },
+              { assignedRole: "ASSET_OFFICER", title: "Issue and record required equipment", sortOrder: 4 },
+            ],
+          },
         },
+      });
+      const eatDate = new Date(Date.now() + 3 * 60 * 60 * 1000);
+      const leaveTypes = await tx.leaveType.findMany({ where: { isActive: true } });
+      await tx.leaveBalance.createMany({
+        data: leaveTypes.map((leaveType) => ({
+          employeeId: employee.id,
+          leaveTypeId: leaveType.id,
+          year: eatDate.getUTCFullYear(),
+          entitledDays: leaveType.annualEntitlementDays,
+        })),
+        skipDuplicates: true,
       });
       await tx.auditLog.create({
         data: {
@@ -410,7 +460,78 @@ export class RecruitmentService {
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         },
       });
-      return { employeeId: employee.id, onboarding: true };
+      return { employeeId: employee.id, userId: userRecord.id, email: userRecord.email, onboarding: true };
+    });
+    const invitationSent = await this.sendAccountSetup(result.email, result.userId);
+    return { employeeId: result.employeeId, onboarding: true, invitationSent };
+  }
+
+  async onboarding(user: AuthenticatedUser): Promise<Record<string, unknown>[]> {
+    let where: Record<string, unknown>;
+    if (user.role === "HR_MANAGER" || user.role === "SYSTEM_ADMIN") {
+      where = {};
+    } else if (user.role === "LINE_MANAGER") {
+      if (!user.employeeId) throw new ForbiddenException("EMPLOYEE_LINK_REQUIRED");
+      where = { employee: { managerId: user.employeeId } };
+    } else if (user.role === "ASSET_OFFICER") {
+      where = { tasks: { some: { assignedRole: "ASSET_OFFICER", isCompleted: false } } };
+    } else if (user.role === "EMPLOYEE") {
+      if (!user.employeeId) throw new ForbiddenException("EMPLOYEE_LINK_REQUIRED");
+      where = { employeeId: user.employeeId };
+    } else {
+      throw new ForbiddenException("FORBIDDEN");
+    }
+    return this.prisma.onboardingChecklist.findMany({
+      where,
+      include: {
+        employee: { select: { id: true, employeeCode: true, legalName: true, jobTitle: true, managerId: true } },
+        tasks: { orderBy: { sortOrder: "asc" } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async updateOnboardingTask(user: AuthenticatedUser, taskId: string, input: OnboardingTaskUpdate) {
+    const task = await this.prisma.onboardingTask.findUnique({
+      where: { id: taskId },
+      include: { checklist: { include: { employee: { select: { id: true, userId: true, managerId: true } } } } },
+    });
+    if (!task) throw new NotFoundException("ONBOARDING_TASK_NOT_FOUND");
+    if (task.assignedRole !== user.role) throw new ForbiddenException("FORBIDDEN_TASK");
+    if (user.role === "EMPLOYEE" && task.checklist.employee.userId !== user.id) throw new ForbiddenException("FORBIDDEN_SCOPE");
+    if (user.role === "LINE_MANAGER" && task.checklist.employee.managerId !== user.employeeId) throw new ForbiddenException("FORBIDDEN_SCOPE");
+    if (task.isCompleted === input.isCompleted) return task;
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM onboarding_checklists WHERE id = ${task.checklistId}::uuid FOR UPDATE`;
+      const changed = await tx.onboardingTask.updateMany({
+        where: { id: taskId, isCompleted: task.isCompleted },
+        data: {
+          isCompleted: input.isCompleted,
+          completedByUserId: input.isCompleted ? user.id : null,
+          completedAt: input.isCompleted ? new Date() : null,
+        },
+      });
+      if (changed.count !== 1) throw new ConflictException("ONBOARDING_TASK_CHANGED");
+      const incomplete = await tx.onboardingTask.count({ where: { checklistId: task.checklistId, isCompleted: false } });
+      if (incomplete === 0) {
+        await tx.onboardingChecklist.update({ where: { id: task.checklistId }, data: { status: "COMPLETED", completedAt: new Date() } });
+        await tx.employee.updateMany({ where: { id: task.checklist.employee.id, status: "ONBOARDING" }, data: { status: "ACTIVE" } });
+      } else if (!input.isCompleted) {
+        await tx.onboardingChecklist.update({ where: { id: task.checklistId }, data: { status: "IN_PROGRESS", completedAt: null } });
+        await tx.employee.updateMany({ where: { id: task.checklist.employee.id, status: "ACTIVE" }, data: { status: "ONBOARDING" } });
+      }
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id,
+          actorRole: user.role,
+          action: input.isCompleted ? "ONBOARDING_TASK_COMPLETED" : "ONBOARDING_TASK_REOPENED",
+          entityType: "OnboardingTask",
+          entityId: taskId,
+          checksumSha256: createHash("sha256").update(`${taskId}:${input.isCompleted}:${Date.now()}`).digest("hex"),
+        },
+      });
+      return tx.onboardingTask.findUniqueOrThrow({ where: { id: taskId } });
     });
   }
 }

@@ -243,6 +243,9 @@ export const JobOfferCreateSchema = z.object({
 
 export type JobOfferCreate = z.infer<typeof JobOfferCreateSchema>;
 
+export const OnboardingTaskUpdateSchema = z.object({ isCompleted: z.boolean() }).strict();
+export type OnboardingTaskUpdate = z.infer<typeof OnboardingTaskUpdateSchema>;
+
 export const ApiHealthResponseSchema = z.object({
   status: z.literal("ok"),
   service: z.literal("api"),

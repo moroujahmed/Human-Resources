@@ -2,6 +2,7 @@ import { Body, Controller, Get, Headers, Param, Patch, Post, Query, UseGuards } 
 import {
   ApplicationStageSchema,
   JobOfferCreateSchema,
+  OnboardingTaskUpdateSchema,
   RequisitionDecisionSchema,
   RequisitionCreateSchema,
   VacancyCreateSchema,
@@ -85,5 +86,15 @@ export class RecruitmentController {
     @Headers("idempotency-key") idempotencyKey: string | undefined,
   ) {
     return this.recruitment.convertOffer(user, id, idempotencyKey);
+  }
+
+  @Get("onboarding")
+  onboarding(@CurrentUser() user: AuthenticatedUser) {
+    return this.recruitment.onboarding(user);
+  }
+
+  @Patch("onboarding/tasks/:taskId")
+  updateOnboardingTask(@CurrentUser() user: AuthenticatedUser, @Param("taskId") taskId: string, @Body() body: unknown) {
+    return this.recruitment.updateOnboardingTask(user, taskId, OnboardingTaskUpdateSchema.parse(body));
   }
 }
