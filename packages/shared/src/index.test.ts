@@ -16,6 +16,8 @@ import {
   IsoDateSchema,
   WorkScheduleCreateSchema,
   OnboardingTaskUpdateSchema,
+  OfferDecisionSchema,
+  PublicOfferDecisionSchema,
 } from "./index";
 
 describe("shared contracts", () => {
@@ -84,5 +86,12 @@ describe("shared contracts", () => {
     expect(OnboardingTaskUpdateSchema.safeParse({ isCompleted: true }).success).toBe(true);
     expect(OnboardingTaskUpdateSchema.safeParse({ isCompleted: true, assignedRole: "HR_MANAGER" }).success).toBe(false);
     expect(OnboardingTaskUpdateSchema.safeParse({ isCompleted: "yes" }).success).toBe(false);
+  });
+
+  it("validates one-time candidate offer decisions", () => {
+    expect(OfferDecisionSchema.safeParse({ decision: "ACCEPTED" }).success).toBe(true);
+    expect(OfferDecisionSchema.safeParse({ decision: "DECLINED", notes: "Accepted another role" }).success).toBe(true);
+    expect(PublicOfferDecisionSchema.safeParse({ decision: "ACCEPTED", token: "x".repeat(64) }).success).toBe(true);
+    expect(PublicOfferDecisionSchema.safeParse({ decision: "ACCEPTED", token: "short" }).success).toBe(false);
   });
 });

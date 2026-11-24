@@ -20,7 +20,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => subscribeSession(() => setSession(getSession())), []);
 
   useEffect(() => {
-    const publicRoute = pathname === "/" || pathname === "/login" || pathname === "/careers" || pathname === "/forgot-password" || pathname === "/reset-password";
+    const publicRoute = pathname === "/" || pathname === "/login" || pathname === "/careers" || pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/offer-response";
     if (publicRoute) {
       setReady(true);
       return;
@@ -43,7 +43,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [pathname, router]);
 
   useEffect(() => {
-    if (ready && !session && !["/", "/login", "/careers", "/forgot-password", "/reset-password"].includes(pathname)) {
+    if (ready && !session && !["/", "/login", "/careers", "/forgot-password", "/reset-password", "/offer-response"].includes(pathname)) {
       router.replace("/login");
     }
   }, [pathname, ready, router, session]);

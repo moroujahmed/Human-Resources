@@ -176,12 +176,13 @@ Every non-2xx response MUST conform to one deterministic JSON schema:
 | `PATCH /recruitment/interviews/:id` | `RECRUITER`, `HR_MANAGER`, Panelist | `{ score, feedback, outcome }`. |
 | `POST /recruitment/applications/:id/offers` | `RECRUITER`, `HR_MANAGER` | Creates `DRAFT` offer (`offeredJobTitle`, `departmentId`, `reportingManagerId`, `offeredBaseSalaryUgx`, `offeredAllowancesUgx`, `proposedStartDate`, `offerExpiresAt`). |
 | `POST /recruitment/offers/:id/submit` | `RECRUITER`, `HR_MANAGER` | `DRAFT`/`REJECTED` $\rightarrow$ `PENDING_APPROVAL`. |
-| `POST /recruitment/offers/:id/approve` | `HR_MANAGER` | `PENDING_APPROVAL` $\rightarrow$ `APPROVED` + generates Offer PDF. |
+| `POST /recruitment/offers/:id/approve` | `HR_MANAGER` | `PENDING_APPROVAL` $\rightarrow$ `APPROVED`; PDF generation is not yet implemented. |
 | `POST /recruitment/offers/:id/reject` | `HR_MANAGER` | `{ reason }` (**Mandatory**) $\rightarrow$ `REJECTED`. |
 | `POST /recruitment/offers/:id/send` | `RECRUITER`, `HR_MANAGER` | **Blocked unless `APPROVED`** $\rightarrow$ `SENT` + dispatches privacy-safe email. |
 | `POST /recruitment/offers/:id/record-decision` | `RECRUITER`, `HR_MANAGER` | `{ decision: 'ACCEPTED' \| 'DECLINED', notes? }`. |
+| `POST /careers/offers/respond` | Public, throttled | `{ token, decision: 'ACCEPTED' \| 'DECLINED', notes? }`; one-time expiring token, hash stored server-side. |
 | `POST /recruitment/offers/:id/convert` | `HR_MANAGER` (`Idempotency-Key`) | `{ workEmail?, workScheduleId? }` — Atomic conversion to `User + Employee + LeaveBalances + 4-Role OnboardingChecklist`. |
-| `GET /recruitment/onboarding/:employeeId` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `ASSET_OFFICER`, any linked staff user (`SELF`, own checklist only) | Returns checklist + tasks. |
+| `GET /recruitment/onboarding` | `HR_MANAGER`, `LINE_MANAGER` (`TEAM`), `ASSET_OFFICER`, any linked staff user (`SELF`, own checklist only) | Returns role-scoped checklist + tasks. |
 | `PATCH /recruitment/onboarding/tasks/:taskId` | Assigned Task Role (`HR`/`MGR`/`EMP`/`ASSET`) | `{ isCompleted }` — Verifies actor matches `task.assignedRole` & scope. Auto-activates employee when all tasks complete. |
 
 ---

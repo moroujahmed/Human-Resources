@@ -39,6 +39,7 @@ interface Application {
   status: string;
   submittedAt: string;
   stageNotes?: string | null;
+  offer?: { id: string; status: string; offeredJobTitle: string; proposedStartDate: string } | null;
 }
 
 const reqRoles: StaffHubRole[] = ["LINE_MANAGER", "HR_MANAGER", "SYSTEM_ADMIN"];
@@ -67,6 +68,12 @@ export default function RecruitmentPage() {
   const [justification, setJustification] = useState("");
   const [targetStartDate, setTargetStartDate] = useState("");
   const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
+  const [offerRejectionReasons, setOfferRejectionReasons] = useState<Record<string, string>>({});
+  const [offerCandidateId, setOfferCandidateId] = useState("");
+  const [offerBaseSalary, setOfferBaseSalary] = useState("");
+  const [offerAllowances, setOfferAllowances] = useState("0");
+  const [offerStartDate, setOfferStartDate] = useState("");
+  const [offerExpiresAt, setOfferExpiresAt] = useState("");
   const [vacancyRequisitionId, setVacancyRequisitionId] = useState("");
   const [vacancyTitle, setVacancyTitle] = useState("");
   const [location, setLocation] = useState("Kampala HQ");
@@ -164,6 +171,54 @@ export default function RecruitmentPage() {
     } catch (downloadError: unknown) { setError(downloadError instanceof Error ? downloadError.message : "Unable to prepare CV download"); }
   }
 
+  async function createOffer(event: React.FormEvent, application: Application) {
+    event.preventDefault();
+    if (!session || !selectedVacancy) return;
+    setBusy(true); setError(""); setMessage("");
+    try {
+      await api(`/recruitment/applications/${application.id}/offers`, session, {
+        method: "POST",
+        body: JSON.stringify({
+          offeredJobTitle: selectedVacancy.title,
+          departmentId: selectedVacancy.requisition.department.id,
+          offeredBaseSalaryUgx: Number(offerBaseSalary),
+          offeredAllowancesUgx: Number(offerAllowances),
+          proposedStartDate: offerStartDate,
+          offerExpiresAt: localInputToEatIso(offerExpiresAt),
+        }),
+      });
+      setMessage("Draft offer created. Submit it for HR approval when ready.");
+      setOfferCandidateId(""); setOfferBaseSalary(""); setOfferAllowances("0"); setOfferStartDate(""); setOfferExpiresAt("");
+      setApplications(await api<Application[]>(`/recruitment/vacancies/${selectedVacancy.id}/applications`, session));
+    } catch (offerError: unknown) { setError(offerError instanceof Error ? offerError.message : "Unable to create offer"); }
+    finally { setBusy(false); }
+  }
+
+  async function actOnOffer(offerId: string, action: "submit" | "approve" | "reject" | "send" | "record-decision" | "convert", body?: Record<string, unknown>) {
+    if (!session || !selectedVacancy) return;
+    const reason = offerRejectionReasons[offerId]?.trim();
+    if (action === "reject" && (reason?.length ?? 0) < 10) { setError("Enter at least 10 characters to explain the rejection."); return; }
+    setBusy(true); setError(""); setMessage("");
+    try {
+      if (action === "convert") {
+        const result = await api<{ employeeId: string; invitationSent?: boolean }>(`/recruitment/offers/${offerId}/convert`, session, {
+          method: "POST",
+          headers: { "Idempotency-Key": crypto.randomUUID() },
+        });
+        setMessage(`Employee profile created (${result.employeeId}). ${result.invitationSent ? "Account setup email sent." : "Account setup email is pending; retry the conversion action after mail is configured."}`);
+      } else {
+        await api(`/recruitment/offers/${offerId}/${action}`, session, {
+          method: "POST",
+          ...(action === "reject" ? { body: JSON.stringify({ reason }) } : {}),
+          ...(action === "record-decision" && body ? { body: JSON.stringify(body) } : {}),
+        });
+        setMessage(action === "send" ? "Offer emailed to the candidate." : action === "approve" ? "Offer approved." : action === "submit" ? "Offer submitted for HR approval." : action === "reject" ? "Offer rejected." : `Candidate ${String(body?.decision).toLowerCase()} response recorded.`);
+      }
+      setApplications(await api<Application[]>(`/recruitment/vacancies/${selectedVacancy.id}/applications`, session));
+    } catch (actionError: unknown) { setError(actionError instanceof Error ? actionError.message : "Unable to update the offer"); }
+    finally { setBusy(false); }
+  }
+
   const canCreateRequisition = reqRoles.includes(role);
   const canManageVacancies = recruiterRoles.includes(role);
   const canApproveRequisition = hrRoles.includes(role);
@@ -217,6 +272,21 @@ export default function RecruitmentPage() {
               {recruiterRoles.includes(role) && app.status === "APPLIED" ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "SHORTLISTED")}>Shortlist</button> : null}
               {recruiterRoles.includes(role) && app.status === "SHORTLISTED" ? <button className="button" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "INTERVIEWING")}>Move to interview</button> : null}
               {recruiterRoles.includes(role) && ["APPLIED", "SHORTLISTED", "INTERVIEWING"].includes(app.status) ? <><input aria-label={`Rejection reason for ${app.applicationCode}`} placeholder="Rejection reason" value={rejectionReasons[app.id] ?? ""} onChange={(event) => setRejectionReasons((current) => ({ ...current, [app.id]: event.target.value }))} /><button className="button" type="button" disabled={busy} onClick={() => void stageApplication(app.id, "REJECTED")}>Reject application</button></> : null}
+              {recruiterRoles.includes(role) && !app.offer && ["SHORTLISTED", "INTERVIEWING"].includes(app.status) ? <button className="button button-primary" type="button" disabled={busy} onClick={() => { setOfferCandidateId(offerCandidateId === app.id ? "" : app.id); setError(""); }}>Prepare offer</button> : null}
+              {offerCandidateId === app.id ? <form onSubmit={(event) => void createOffer(event, app)} style={{ display: "grid", gap: 6 }}>
+                <label>Base monthly salary (UGX)<input type="number" min="1" step="1" value={offerBaseSalary} onChange={(event) => setOfferBaseSalary(event.target.value)} required /></label>
+                <label>Monthly allowances (UGX)<input type="number" min="0" step="1" value={offerAllowances} onChange={(event) => setOfferAllowances(event.target.value)} required /></label>
+                <label>Proposed start date<input type="date" value={offerStartDate} onChange={(event) => setOfferStartDate(event.target.value)} required /></label>
+                <label>Offer expiry (Kampala)<input type="datetime-local" value={offerExpiresAt} onChange={(event) => setOfferExpiresAt(event.target.value)} required /></label>
+                <button className="button button-primary" type="submit" disabled={busy}>Save draft offer</button>
+              </form> : null}
+              {app.offer ? <div className="panel" style={{ display: "grid", gap: 6 }}><strong>{app.offer.offeredJobTitle} · {app.offer.status.replaceAll("_", " ")}</strong>
+                {app.offer.status === "DRAFT" && recruiterRoles.includes(role) ? <button className="button" type="button" disabled={busy} onClick={() => void actOnOffer(app.offer!.id, "submit")}>Submit for HR approval</button> : null}
+                {app.offer.status === "PENDING_APPROVAL" && hrRoles.includes(role) ? <><button className="button button-primary" type="button" disabled={busy} onClick={() => void actOnOffer(app.offer!.id, "approve")}>Approve offer</button><input aria-label={`Rejection reason for offer ${app.applicationCode}`} placeholder="Offer rejection reason" value={offerRejectionReasons[app.offer.id] ?? ""} onChange={(event) => setOfferRejectionReasons((current) => ({ ...current, [app.offer!.id]: event.target.value }))} /><button className="button" type="button" disabled={busy} onClick={() => void actOnOffer(app.offer!.id, "reject")}>Reject offer</button></> : null}
+                {app.offer.status === "APPROVED" && recruiterRoles.includes(role) ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void actOnOffer(app.offer!.id, "send")}>Email offer to candidate</button> : null}
+                {app.offer.status === "SENT" && recruiterRoles.includes(role) ? <><button className="button" type="button" disabled={busy} onClick={() => void actOnOffer(app.offer!.id, "record-decision", { decision: "ACCEPTED" })}>Record candidate acceptance</button><button className="button" type="button" disabled={busy} onClick={() => void actOnOffer(app.offer!.id, "record-decision", { decision: "DECLINED", notes: "Candidate declined through recruiter" })}>Record decline</button></> : null}
+                {app.offer.status === "ACCEPTED" && hrRoles.includes(role) ? <button className="button button-primary" type="button" disabled={busy} onClick={() => void actOnOffer(app.offer!.id, "convert")}>Convert to employee</button> : null}
+              </div> : null}
             </div></td></tr>)}
           </tbody></table></div>}
         </section> : null}

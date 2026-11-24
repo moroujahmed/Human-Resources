@@ -11,7 +11,7 @@ This report does not claim operational payroll approval, production launch appro
 | Gate | Evidence |
 | :--- | :--- |
 | Monorepo baseline | npm workspaces, Node 22.22.3 pin, strict TypeScript, lint, tests, and builds are configured. |
-| Construction command | `npm run check:construction` passes: Prisma validation, ESLint, shared/API/web TypeScript checks, 34 tests, and API/web production builds. |
+| Construction command | `npm run check:construction` passes: Prisma validation, ESLint, shared/API/web TypeScript checks, 37 tests, and API/web production builds, including `/offer-response`. |
 | Fresh PostgreSQL migration replay | All 3 migrations applied successfully to an isolated PostgreSQL 18 database. |
 | Identity database constraints | `scripts/check-db-constraints.sql` passes transactionally. |
 | Phase 2 database constraints | `scripts/check-phase2-db.sql` passes transactionally on clean and seeded databases. |
@@ -58,9 +58,9 @@ Payroll run creation, edits, submission, approval, and locking return `PAYROLL_C
 
 Construction should proceed in this order:
 
-1. Complete business workflows from the canonical requirements, especially offer approval, candidate communication/acceptance, and the conversion invitation lifecycle.
+1. Finish recruitment workflows: panel interview scheduling/scoring and requisition headcount tracking remain incomplete. Offer approval, candidate email decisions, and onboarding conversion invitations are implemented.
 2. Implement reviewed and tested payroll calculations before enabling payroll transitions.
-3. Complete payslip/offer/clearance/report generation and delivery.
+3. Complete payslip, formal offer PDF, clearance, and report generation/delivery.
 4. Implement policy-approved leave rollover and durable, idempotent outbox handlers. Daily attendance reconciliation, vacancy closing, and due offboarding deactivation are implemented.
 5. Add comprehensive database-backed integration and end-to-end lifecycle/security tests.
 6. Validate deployment, observability, recovery, secrets, and CI against the selected production host.
@@ -76,4 +76,4 @@ The following are not code blockers for construction but are mandatory before op
 
 ## Explicit non-goal
 
-The absence of API workflows and frontend screens does not contradict construction readiness. This repository is now a validated database-and-scaffold foundation; it is not an operational HRMS or production-deployment approval.
+The repository contains implemented application workflows but is not an operational HRMS or production-deployment approval. Payroll remains disabled; deployment and full database-backed end-to-end acceptance remain unverified.

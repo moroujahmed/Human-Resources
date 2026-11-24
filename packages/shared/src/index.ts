@@ -246,6 +246,17 @@ export type JobOfferCreate = z.infer<typeof JobOfferCreateSchema>;
 export const OnboardingTaskUpdateSchema = z.object({ isCompleted: z.boolean() }).strict();
 export type OnboardingTaskUpdate = z.infer<typeof OnboardingTaskUpdateSchema>;
 
+export const OfferDecisionSchema = z.object({
+  decision: z.enum(["ACCEPTED", "DECLINED"]),
+  notes: z.string().trim().max(2000).optional(),
+}).strict();
+export type OfferDecision = z.infer<typeof OfferDecisionSchema>;
+
+export const PublicOfferDecisionSchema = OfferDecisionSchema.extend({
+  token: z.string().regex(/^[A-Za-z0-9_-]{40,128}$/),
+}).strict();
+export type PublicOfferDecision = z.infer<typeof PublicOfferDecisionSchema>;
+
 export const ApiHealthResponseSchema = z.object({
   status: z.literal("ok"),
   service: z.literal("api"),

@@ -488,6 +488,7 @@ model JobOffer {
   sentAt               DateTime?      @map("sent_at") @db.Timestamptz(6)
   acceptedAt           DateTime?      @map("accepted_at") @db.Timestamptz(6)
   offerPdfStorageKey   String?        @map("offer_pdf_storage_key") @db.Text
+  responseTokenHash    String?        @unique(map: "uq_job_offers_response_token_hash") @map("response_token_hash") @db.Char(64)
   version              Int            @default(1)
   createdAt            DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)

@@ -3,6 +3,7 @@ import {
   ApplicationStageSchema,
   JobOfferCreateSchema,
   OnboardingTaskUpdateSchema,
+  OfferDecisionSchema,
   RequisitionDecisionSchema,
   RequisitionCreateSchema,
   VacancyCreateSchema,
@@ -77,6 +78,27 @@ export class RecruitmentController {
   @Post("offers/:id/approve")
   approveOffer(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.recruitment.approveOffer(user, id);
+  }
+
+  @Post("offers/:id/submit")
+  submitOffer(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.recruitment.submitOffer(user, id);
+  }
+
+  @Post("offers/:id/reject")
+  rejectOffer(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string, @Body() body: unknown) {
+    const parsed = RequisitionDecisionSchema.parse(body);
+    return this.recruitment.rejectOffer(user, id, parsed.reason);
+  }
+
+  @Post("offers/:id/send")
+  sendOffer(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
+    return this.recruitment.sendOffer(user, id);
+  }
+
+  @Post("offers/:id/record-decision")
+  recordOfferDecision(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string, @Body() body: unknown) {
+    return this.recruitment.recordOfferDecision(user, id, OfferDecisionSchema.parse(body));
   }
 
   @Post("offers/:id/convert")

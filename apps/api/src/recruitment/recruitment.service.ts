@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
   UnprocessableEntityException,
 } from "@nestjs/common";
 import { createHash, randomBytes } from "node:crypto";
@@ -11,6 +12,7 @@ import type {
   ApplicationStage,
   JobOfferCreate,
   OnboardingTaskUpdate,
+  OfferDecision,
   RequisitionCreate,
   VacancyCreate,
 } from "@staffhub/shared";
@@ -326,9 +328,143 @@ export class RecruitmentService {
     if (!offer) throw new NotFoundException("OFFER_NOT_FOUND");
     if (offer.status !== "PENDING_APPROVAL") throw new ConflictException("INVALID_OFFER_STATE");
     if (offer.preparedByUserId === user.id) throw new ForbiddenException("SELF_APPROVAL_FORBIDDEN");
-    return this.prisma.jobOffer.update({
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.jobOffer.updateMany({
+        where: { id, status: "PENDING_APPROVAL", version: offer.version },
+        data: { status: "APPROVED", approvedByUserId: user.id, approvedAt: new Date(), version: { increment: 1 } },
+      });
+      if (updated.count !== 1) throw new ConflictException("OFFER_CHANGED");
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: "OFFER_APPROVED", entityType: "JobOffer", entityId: id,
+          checksumSha256: createHash("sha256").update(`OFFER_APPROVED:${id}:${new Date().toISOString()}`).digest("hex"),
+        },
+      });
+      return tx.jobOffer.findUniqueOrThrow({ where: { id } });
+    });
+  }
+
+  async submitOffer(user: AuthenticatedUser, id: string): Promise<Record<string, unknown>> {
+    this.requireRecruitmentRole(user);
+    const offer = await this.prisma.jobOffer.findUnique({ where: { id } });
+    if (!offer) throw new NotFoundException("OFFER_NOT_FOUND");
+    if (offer.status !== "DRAFT" && offer.status !== "REJECTED") throw new ConflictException("INVALID_OFFER_STATE");
+    if (offer.offerExpiresAt <= new Date()) throw new UnprocessableEntityException("OFFER_EXPIRED");
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.jobOffer.updateMany({
+        where: { id, status: offer.status, version: offer.version },
+        data: { status: "PENDING_APPROVAL", decisionReason: null, version: { increment: 1 } },
+      });
+      if (updated.count !== 1) throw new ConflictException("OFFER_CHANGED");
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: "OFFER_SUBMITTED_FOR_APPROVAL", entityType: "JobOffer", entityId: id,
+          checksumSha256: createHash("sha256").update(`OFFER_SUBMITTED_FOR_APPROVAL:${id}:${Date.now()}`).digest("hex"),
+        },
+      });
+      return tx.jobOffer.findUniqueOrThrow({ where: { id } });
+    });
+  }
+
+  async rejectOffer(user: AuthenticatedUser, id: string, reason: string): Promise<Record<string, unknown>> {
+    if (user.role !== "HR_MANAGER" && user.role !== "SYSTEM_ADMIN") throw new ForbiddenException("FORBIDDEN");
+    if (reason.trim().length < 10) throw new UnprocessableEntityException("REASON_REQUIRED");
+    const offer = await this.prisma.jobOffer.findUnique({ where: { id } });
+    if (!offer) throw new NotFoundException("OFFER_NOT_FOUND");
+    if (offer.status !== "PENDING_APPROVAL") throw new ConflictException("INVALID_OFFER_STATE");
+    if (offer.preparedByUserId === user.id) throw new ForbiddenException("SELF_APPROVAL_FORBIDDEN");
+    return this.prisma.$transaction(async (tx) => {
+      const changed = await tx.jobOffer.updateMany({
+        where: { id, status: "PENDING_APPROVAL", version: offer.version },
+        data: { status: "REJECTED", decisionReason: reason.trim(), version: { increment: 1 } },
+      });
+      if (changed.count !== 1) throw new ConflictException("OFFER_CHANGED");
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: "OFFER_REJECTED", entityType: "JobOffer", entityId: id,
+          reason: reason.trim(), checksumSha256: createHash("sha256").update(`OFFER_REJECTED:${id}:${Date.now()}`).digest("hex"),
+        },
+      });
+      return tx.jobOffer.findUniqueOrThrow({ where: { id } });
+    });
+  }
+
+  async sendOffer(user: AuthenticatedUser, id: string): Promise<Record<string, unknown>> {
+    this.requireRecruitmentRole(user);
+    const offer = await this.prisma.jobOffer.findUnique({
       where: { id },
-      data: { status: "APPROVED", approvedByUserId: user.id, approvedAt: new Date(), version: { increment: 1 } },
+      include: { application: true, department: { select: { name: true } } },
+    });
+    if (!offer) throw new NotFoundException("OFFER_NOT_FOUND");
+    if (offer.status !== "APPROVED") throw new ConflictException("OFFER_NOT_APPROVED");
+    if (offer.offerExpiresAt <= new Date()) throw new UnprocessableEntityException("OFFER_EXPIRED");
+    const rawToken = randomBytes(64).toString("base64url");
+    const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+    await this.prisma.$transaction(async (tx) => {
+      const changed = await tx.jobOffer.updateMany({
+        where: { id, status: "APPROVED", version: offer.version },
+        data: { status: "SENT", sentAt: new Date(), responseTokenHash: tokenHash, version: { increment: 1 } },
+      });
+      if (changed.count !== 1) throw new ConflictException("OFFER_CHANGED");
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: "OFFER_SENT", entityType: "JobOffer", entityId: id,
+          checksumSha256: createHash("sha256").update(`OFFER_SENT:${id}:${Date.now()}`).digest("hex"),
+        },
+      });
+    });
+    const webUrl = process.env.WEB_URL ?? "http://localhost:3000";
+    try {
+      await this.accountMail.sendOffer(offer.application.applicantEmail, {
+        title: offer.offeredJobTitle,
+        department: offer.department.name,
+        baseSalaryUgx: offer.offeredBaseSalaryUgx.toFixed(0),
+        allowancesUgx: offer.offeredAllowancesUgx.toFixed(0),
+        proposedStartDate: offer.proposedStartDate.toISOString().slice(0, 10),
+        expiresAt: new Intl.DateTimeFormat("en-UG", { dateStyle: "medium", timeStyle: "short", timeZone: "Africa/Kampala" }).format(offer.offerExpiresAt),
+        responseUrl: `${webUrl}/offer-response#${encodeURIComponent(rawToken)}`,
+      });
+    } catch {
+      await this.prisma.jobOffer.updateMany({
+        where: { id, status: "SENT", responseTokenHash: tokenHash },
+        data: { status: "APPROVED", sentAt: null, responseTokenHash: null, version: { increment: 1 } },
+      });
+      throw new ServiceUnavailableException("OFFER_EMAIL_DELIVERY_FAILED");
+    }
+    return { status: "SENT" };
+  }
+
+  async recordOfferDecision(user: AuthenticatedUser, id: string, input: OfferDecision): Promise<Record<string, unknown>> {
+    this.requireRecruitmentRole(user);
+    const offer = await this.prisma.jobOffer.findUnique({ where: { id } });
+    if (!offer) throw new NotFoundException("OFFER_NOT_FOUND");
+    if (offer.status !== "SENT") throw new ConflictException("INVALID_OFFER_STATE");
+    if (offer.offerExpiresAt <= new Date()) throw new UnprocessableEntityException("OFFER_EXPIRED");
+    return this.prisma.$transaction(async (tx) => {
+      const nextStatus = input.decision === "ACCEPTED" ? "ACCEPTED" : "REJECTED";
+      const changed = await tx.jobOffer.updateMany({
+        where: { id, status: "SENT", version: offer.version },
+        data: {
+          status: nextStatus,
+          acceptedAt: input.decision === "ACCEPTED" ? new Date() : null,
+          decisionReason: input.notes?.trim() || null,
+          responseTokenHash: null,
+          version: { increment: 1 },
+        },
+      });
+      if (changed.count !== 1) throw new ConflictException("OFFER_CHANGED");
+      await tx.jobApplication.update({
+        where: { id: offer.applicationId },
+        data: { status: input.decision === "ACCEPTED" ? "OFFER_ACCEPTED" : "REJECTED", ...(input.notes ? { stageNotes: input.notes.trim() } : {}) },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorUserId: user.id, actorRole: user.role, action: `OFFER_${input.decision}`, entityType: "JobOffer", entityId: id,
+          ...(input.notes ? { reason: input.notes.trim() } : {}),
+          checksumSha256: createHash("sha256").update(`OFFER_${input.decision}:${id}:${Date.now()}`).digest("hex"),
+        },
+      });
+      return tx.jobOffer.findUniqueOrThrow({ where: { id } });
     });
   }
 

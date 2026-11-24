@@ -205,6 +205,10 @@ export class AdminService {
         where: { status: "PUBLISHED", closingAt: { lt: new Date() } },
         data: { status: "CLOSED" },
       });
+      const expiredOffers = await this.prisma.jobOffer.updateMany({
+        where: { status: { in: ["DRAFT", "PENDING_APPROVAL", "APPROVED", "SENT"] }, offerExpiresAt: { lte: now } },
+        data: { status: "EXPIRED", responseTokenHash: null, version: { increment: 1 } },
+      });
       const shiftedDate = new Date(now.getTime() + 3 * 60 * 60 * 1000);
       const todayEat = new Date(`${shiftedDate.toISOString().slice(0, 10)}T00:00:00.000Z`);
       const dueCases = await this.prisma.offboardingCase.findMany({
@@ -236,7 +240,7 @@ export class AdminService {
         });
         if (result) deactivated += 1;
       }
-      return { closedVacancies: closedVacancies.count, deactivatedEmployees: deactivated };
+      return { closedVacancies: closedVacancies.count, expiredOffers: expiredOffers.count, deactivatedEmployees: deactivated };
     }
     if (job === "rollover-leave-balances") {
       throw new NotImplementedException("LEAVE_ROLLOVER_POLICY_REQUIRED");

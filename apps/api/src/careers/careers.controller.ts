@@ -3,6 +3,7 @@ import { FileInterceptor } from "@nestjs/platform-express";
 import type { Express } from "express";
 import { CareersService } from "./careers.service";
 import { Throttle } from "@nestjs/throttler";
+import { PublicOfferDecisionSchema } from "@staffhub/shared";
 
 @Controller("careers")
 export class CareersController {
@@ -24,5 +25,11 @@ export class CareersController {
     @UploadedFile() cv: Express.Multer.File,
   ) {
     return this.careers.apply(id, body, cv);
+  }
+
+  @Post("offers/respond")
+  @Throttle({ default: { limit: 10, ttl: 3600000 } })
+  respondToOffer(@Body() body: unknown) {
+    return this.careers.respondToOffer(PublicOfferDecisionSchema.parse(body));
   }
 }

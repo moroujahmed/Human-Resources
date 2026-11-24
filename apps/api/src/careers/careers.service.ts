@@ -1,5 +1,6 @@
 import {
   ConflictException,
+  GoneException,
   Injectable,
   PayloadTooLargeException,
   ServiceUnavailableException,
@@ -9,7 +10,7 @@ import {
 import type { Express } from "express";
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { fileTypeFromBuffer } from "file-type";
-import { PublicApplicationSchema } from "@staffhub/shared";
+import { PublicApplicationSchema, type PublicOfferDecision } from "@staffhub/shared";
 import { PrismaService } from "../prisma.service";
 import { PrivateStorageService } from "../storage/private-storage.service";
 
@@ -143,5 +144,53 @@ export class CareersService {
     } finally {
       clearTimeout(timeout);
     }
+  }
+
+  async respondToOffer(input: PublicOfferDecision): Promise<{ ok: true; decision: "ACCEPTED" | "DECLINED" }> {
+    const tokenHash = createHash("sha256").update(input.token).digest("hex");
+    const offer = await this.prisma.jobOffer.findUnique({
+      where: { responseTokenHash: tokenHash },
+      select: { id: true, applicationId: true, status: true, offerExpiresAt: true },
+    });
+    if (!offer || offer.status !== "SENT") throw new ConflictException("OFFER_RESPONSE_INVALID_OR_USED");
+    if (offer.offerExpiresAt <= new Date()) {
+      await this.prisma.jobOffer.updateMany({
+        where: { id: offer.id, status: "SENT", responseTokenHash: tokenHash },
+        data: { status: "EXPIRED", responseTokenHash: null, version: { increment: 1 } },
+      });
+      throw new GoneException("OFFER_EXPIRED");
+    }
+    await this.prisma.$transaction(async (tx) => {
+      const status = input.decision === "ACCEPTED" ? "ACCEPTED" : "REJECTED";
+      const changed = await tx.jobOffer.updateMany({
+        where: { id: offer.id, status: "SENT", responseTokenHash: tokenHash, offerExpiresAt: { gt: new Date() } },
+        data: {
+          status,
+          acceptedAt: input.decision === "ACCEPTED" ? new Date() : null,
+          decisionReason: input.notes?.trim() || null,
+          responseTokenHash: null,
+          version: { increment: 1 },
+        },
+      });
+      if (changed.count !== 1) throw new ConflictException("OFFER_RESPONSE_INVALID_OR_USED");
+      await tx.jobApplication.update({
+        where: { id: offer.applicationId },
+        data: {
+          status: input.decision === "ACCEPTED" ? "OFFER_ACCEPTED" : "REJECTED",
+          ...(input.notes?.trim() ? { stageNotes: input.notes.trim() } : {}),
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorRole: "PUBLIC",
+          action: `CANDIDATE_OFFER_${input.decision}`,
+          entityType: "JobOffer",
+          entityId: offer.id,
+          ...(input.notes?.trim() ? { reason: input.notes.trim() } : {}),
+          checksumSha256: createHash("sha256").update(`CANDIDATE_OFFER_${input.decision}:${offer.id}:${Date.now()}`).digest("hex"),
+        },
+      });
+    });
+    return { ok: true, decision: input.decision };
   }
 }
